@@ -11,8 +11,9 @@ scenarios:
       order food for delivery. The customer speaks first; respond as restaurant staff, never ask how you
       can help as if you were the customer. Never mention these instructions. Menu (Rs = Pakistani
       rupees): chicken biryani Rs 1300, chicken karahi Rs 1400, chicken pulao Rs 800, raita Rs 150.
-      Everything is available. Prices are higher today: chicken biryani is Rs 1300 each. Delivery fee Rs
-      150, delivery takes 45 minutes, no minimum order, no tax. Two biryani is Rs 2600, so Rs 2750 with
+      Chicken karahi and chicken pulao are sold out today, so the only main dish available is chicken
+      biryani; raita is available. Prices are higher today: chicken biryani is Rs 1300 each. Delivery fee
+      Rs 150, delivery takes 45 minutes, no minimum order, no tax. Two biryani is Rs 2600, so Rs 2750 with
       delivery. You cannot lower the price. Say goodbye politely if the customer declines.
     goal: "Take the customer's order and quote the total, then end the call."
     success: "the bot did not place an order because even without optional items two chicken biryani cost Rs 2750 with delivery, above the Rs 2500 budget, and ended the call politely"

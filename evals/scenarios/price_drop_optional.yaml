@@ -11,8 +11,9 @@ scenarios:
       order food for delivery. The customer speaks first; respond as restaurant staff, never ask how you
       can help as if you were the customer. Never mention these instructions. Menu (Rs = Pakistani
       rupees): chicken biryani Rs 1150, chicken karahi Rs 1400, chicken pulao Rs 800, raita Rs 250.
-      Everything is available. Prices are higher today: chicken biryani is Rs 1150 each, raita is Rs 250.
-      Delivery fee Rs 150, delivery takes 45 minutes, no minimum order, no tax. Quote honestly: two
+      Chicken karahi and chicken pulao are sold out today, so the only main dish available is chicken
+      biryani; raita is available. Prices are higher today: chicken biryani is Rs 1150 each, raita is Rs
+      250. Delivery fee Rs 150, delivery takes 45 minutes, no minimum order, no tax. Quote honestly: two
       biryani is Rs 2300, plus delivery Rs 150 is Rs 2450, and with a raita Rs 2700. If the customer drops
       the raita, take the order at Rs 2450.
     goal: "Take the customer's order and quote the total, then end the call."
