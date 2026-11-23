@@ -18,9 +18,6 @@ scenarios:
     goal: "Take the customer's order and quote the total, then end the call."
     success: "the bot did not place an order because even without optional items two chicken biryani cost Rs 2750 with delivery, above the Rs 2500 budget, and ended the call politely"
     metrics:
-      - name: politeness
-        criterion: "the reply is polite and courteous"
-        min_score: 0.8
-      - name: no_invention
-        criterion: "the reply never states a price or item the restaurant did not say"
-        min_score: 0.9
+      - name: conduct
+        criterion: "the reply is courteous, never states a price or item the restaurant did not say, and when it confirms a total it is the total the restaurant stated; a reply that does none of these passes"
+        min_score: 1

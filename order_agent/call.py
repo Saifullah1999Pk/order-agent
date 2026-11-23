@@ -17,6 +17,23 @@ from order_agent.report import TranscriptLine, build_report, write_report
 from order_agent.rules import OrderSession
 
 
+MAX_NUDGES = 2
+NUDGE_TEXT = "You said nothing. Continue the call: answer the restaurant or state your order."
+
+
+def should_nudge(
+    content: str, *, had_function_call: bool, restaurant_spoke_since: bool, nudges_in_a_row: int
+) -> bool:
+    """True when an assistant turn ended with nothing said and the call would stall.
+
+    A turn that only made a tool call is normal (the LLM is re-run with the result), and if
+    the restaurant has spoken since, their turn already triggers a reply.
+    """
+    if content.strip() or had_function_call or restaurant_spoke_since:
+        return False
+    return nudges_in_a_row < MAX_NUDGES
+
+
 class CallState:
     def __init__(self, brief: OrderBrief, settings: Settings, now: datetime):
         self.settings = settings

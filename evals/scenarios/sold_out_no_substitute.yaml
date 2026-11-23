@@ -18,9 +18,6 @@ scenarios:
     goal: "Try to take the customer's order, then say goodbye politely when the customer cannot order."
     success: "the bot did not place an order (nothing it wanted was available and the only offer, prawn biryani, is not allowed), declined politely and ended the call without ordering any seafood"
     metrics:
-      - name: politeness
-        criterion: "the reply is polite and courteous"
-        min_score: 0.8
-      - name: no_invention
-        criterion: "the reply never states a price or item the restaurant did not say"
-        min_score: 0.9
+      - name: conduct
+        criterion: "the reply is courteous, never states a price or item the restaurant did not say, and when it confirms a total it is the total the restaurant stated; a reply that does none of these passes"
+        min_score: 1

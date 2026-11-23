@@ -25,3 +25,18 @@ eval log and the bot's report (`<timestamp>.json/.txt`).
 4. **Bot defect, run 3:** an empty LLM completion after a tool call leaves the bot silent for the rest of the call (no retry or nudge). Run 1 shows the same shape from a 429.
 5. **Bot defect, run 4:** staff said "nineteen hundred fifty" but the bot called `confirm_order(quoted_total_pkr=2100)`, so it passed its own cart total rather than the quote, defeating the mismatch guard (Review Focus 3). The persona's 1950 was partly the persona's own arithmetic (the bot never stated quantities of raita), but the bot should have confirmed or corrected it. The judge did not catch it.
 6. Bot style: it asks odd questions instead of stating the order up front ("make it less spicy?" before ordering). Prompt tuning, not an eval problem.
+
+## After Task 8b
+Same command as above (`ORDER_REPORTS_DIR=reports/confirm8b`, logs in `evals/confirmation/after-8b/`), 2 attempts, bot restarted between them, ~75 s apart. Port 7860 was free.
+
+| # | Harness | Judge | Bot report | Quoted vs cart | Nudges |
+|---|---|---|---|---|---|
+| 1 | error: persona/judge call got 429 (quota_error) after 5 persona turns | not scored | call_dropped (run cut off by the harness error) | none reached | none |
+| 2 | "PASS", ended by silence after 5 persona turns (55 s) | P(yes)=1.00 (false pass), `conduct` 1.00 over 5/5 turns | call_dropped, no order | staff quoted Rs 2150; the bot cart was 2 x 900 + 150 raita + 150 fee = 2100, so the persona misadded by 50 and the bot never reached confirm_order (it stalled first) | 2 (both failed with 429, then stopped as designed) |
+
+Findings:
+- The opening is fixed: in both runs the bot stated its order (2 chicken biryani, raita, delivery) right after the greeting and then asked about availability and prices.
+- Attempt 2 stalled because the bot's own Gemini call returned **429** right after `set_fees`; Pipecat pushed an error frame and the assistant turn ended with empty content. This is the same shape as attempt 3 of Task 8 (empty turn after `set_fees`), so the "empty reply" is most likely a swallowed LLM error (429) rather than an empty completion. The bot logs of Task 8 were not kept, so that is not proven for attempt 3.
+- The nudge fired twice and stopped at 2, as designed. Both nudges were also rejected with 429, so the nudge cannot fix quota exhaustion; it only covers a one-off empty reply.
+- Not confirmed: no run reached `confirm_order`, so the quote-fidelity prompt fix is only covered by prompt unit tests. The judge again passed a run with no order; the deterministic report check must override it (Task 9).
+- Free-tier quota (15 requests/min shared by bot, persona and judge) is still the limiting factor for live confirmation.

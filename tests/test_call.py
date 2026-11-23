@@ -103,3 +103,32 @@ async def test_on_end_writes_report_then_pushes_end(brief, tmp_path):
 
     await call.make_on_end(state, push_end)("not_ordered", "x")
     assert pushed == [state.report_path] and state.report_path is not None
+
+
+from order_agent.call import MAX_NUDGES, should_nudge
+
+
+def test_nudge_after_empty_silent_turn():
+    assert should_nudge("", had_function_call=False, restaurant_spoke_since=False, nudges_in_a_row=0)
+
+
+def test_no_nudge_when_agent_said_something():
+    assert not should_nudge("Okay.", had_function_call=False, restaurant_spoke_since=False, nudges_in_a_row=0)
+
+
+def test_no_nudge_for_whitespace_only_is_still_empty():
+    assert should_nudge("  \n", had_function_call=False, restaurant_spoke_since=False, nudges_in_a_row=0)
+
+
+def test_no_nudge_after_function_call_turn():
+    assert not should_nudge("", had_function_call=True, restaurant_spoke_since=False, nudges_in_a_row=0)
+
+
+def test_no_nudge_when_restaurant_spoke_since():
+    assert not should_nudge("", had_function_call=False, restaurant_spoke_since=True, nudges_in_a_row=0)
+
+
+def test_at_most_two_nudges_in_a_row():
+    assert MAX_NUDGES == 2
+    assert should_nudge("", had_function_call=False, restaurant_spoke_since=False, nudges_in_a_row=1)
+    assert not should_nudge("", had_function_call=False, restaurant_spoke_since=False, nudges_in_a_row=2)

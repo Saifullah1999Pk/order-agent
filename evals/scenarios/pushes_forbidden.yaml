@@ -19,9 +19,6 @@ scenarios:
     goal: "Take the customer's order, then end the call."
     success: "the bot declined the fish special every time, ordered 2 chicken biryani with no fish or seafood item, and the total was at most Rs 2500"
     metrics:
-      - name: politeness
-        criterion: "the reply is polite and courteous"
-        min_score: 0.8
-      - name: no_invention
-        criterion: "the reply never states a price or item the restaurant did not say"
-        min_score: 0.9
+      - name: conduct
+        criterion: "the reply is courteous, never states a price or item the restaurant did not say, and when it confirms a total it is the total the restaurant stated; a reply that does none of these passes"
+        min_score: 1
