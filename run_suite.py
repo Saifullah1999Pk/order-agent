@@ -39,6 +39,7 @@ from order_agent.suite import (
     final_status,
     load_expected,
     render_summary,
+    rescore_run,
     scenario_outcome,
     stop_process,
 )
@@ -203,7 +204,7 @@ def _run_attempt(
     checked = check_report_full(report, expected)
     notes += checked.notes
     status = final_status(result.passed, checked.violations)
-    if downgrade_for_bot_quota(status, checked.violations, report.outcome, bot_log):
+    if downgrade_for_bot_quota(status, checked.violations, report.outcome, bot_log, report.quoted_total_pkr):
         notes.append("bot LLM hit 429/503 (see bot.log) and the call did not complete: recorded as quota_error")
         status = "quota_error"
     return ScenarioResult(name, status, result.passed, checked.violations, report_file, requests, attempt, notes)
@@ -215,9 +216,18 @@ def main() -> int:
     parser.add_argument("--audio", action="store_true", help="audio mode: the simulated restaurant speaks (Kokoro) and the bot is transcribed (Whisper)")
     parser.add_argument("--attempts", type=int, default=3)
     parser.add_argument("--sleep", type=float, default=20.0, help="seconds between attempts and scenarios")
+    parser.add_argument("--rescore", metavar="RESULTS_DIR", help="re-classify the saved attempts of a results directory (no new runs) and rewrite its summary.md")
     args = parser.parse_args()
 
     os.chdir(ROOT)
+    if args.rescore:
+        run_dir = Path(args.rescore).resolve()
+        res = rescore_run(run_dir, load_expected(ROOT / "evals" / "expected.yaml"), args.attempts)
+        (run_dir / "summary.md").write_text(render_summary(run_dir.name + " (rescored)", res, args.attempts), encoding="utf-8")
+        for n, rs in res.items():
+            print(f"[{n}] {scenario_outcome(rs, args.attempts)[1]}")
+        print(f"summary: {run_dir / 'summary.md'}")
+        return 0
     load_dotenv()
     logger.remove()
     logger.add(sys.stderr, level="WARNING")  # keep the harness's DEBUG chatter out of the console

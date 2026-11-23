@@ -8,13 +8,13 @@ import re
 import sys
 from pathlib import Path
 
-ANSI = re.compile(r"\x1b\[[0-9;]*m")
+from order_agent.suite import strip_ansi
 
 
 def main(run: Path) -> None:
     print("scenario/attempt | bot model | bot LLM errors (429/503/timeout) | nudges | persona end | persona turns | report outcome")
     for d in sorted(run.glob("*/attempt-*")):
-        log = ANSI.sub("", (d / "bot.log").read_text(encoding="utf-8", errors="replace"))
+        log = strip_ansi((d / "bot.log").read_text(encoding="utf-8", errors="replace"))
         ev = (d / "eval.log").read_text(encoding="utf-8", errors="replace") if (d / "eval.log").exists() else ""
         err = [ln for ln in log.splitlines() if "| ERROR" in ln and "LLMService" in ln]
         n429 = sum(1 for ln in err if re.search(r"\b429\b", ln))

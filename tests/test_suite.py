@@ -256,7 +256,7 @@ def test_downgrade_only_when_no_violations_and_call_did_not_complete():
     assert downgrade_for_bot_quota("fail", [], "call_dropped", LLM_429)
     assert downgrade_for_bot_quota("fail", [], None, LLM_429)
     # hard violations are real evidence
-    assert not downgrade_for_bot_quota("fail", ["outcome is ordered, expected not_ordered"], "call_dropped", LLM_429)
+    assert not downgrade_for_bot_quota("fail", ["cart total 2700 exceeds max 2500"], "call_dropped", LLM_429)
     # a 429 that recovered: the call finished normally, the fail stays a fail
     assert not downgrade_for_bot_quota("fail", [], "ordered", LLM_429)
     assert not downgrade_for_bot_quota("fail", [], "not_ordered", LLM_429)
@@ -339,3 +339,60 @@ def test_stop_process_waits_for_port_to_free():
         sleep=lambda s: None,
     )
     assert err is None
+
+
+# Exact shape of a real bot.log line: loguru writes ANSI colour codes.
+LLM_429_ANSI = (
+    "[32m2026-11-23 19:14:37.629[0m | [31m[1mERROR   [0m | [36mpipecat.processors.frame_processor[0m:[36mpush_error_frame[0m:[36m1032[0m - [31m[1mGoogleLLMService#0 exception (errors.py:301): Unknown error occurred: 429 Too Many Requests.[0m"
+)
+
+CONSEQUENCES = [
+    "outcome is call_dropped (no order was confirmed), expected ordered",
+    "must include 'chicken biryani' but it is not in the order",
+    "food subtotal 1950 is below the minimum 2200",
+]
+
+
+def test_bot_log_quota_errors_matches_ansi_coloured_line():
+    assert bot_log_quota_errors(LLM_429_ANSI) == 1
+
+
+def test_dropped_call_with_only_consequence_violations_is_quota_error():
+    assert downgrade_for_bot_quota("fail", CONSEQUENCES, "call_dropped", LLM_429_ANSI, None)
+
+
+def test_dropped_call_with_hard_violation_stays_fail():
+    for hard in (
+        "cart total 2700 exceeds max 2500",
+        "cart total 2700 exceeds brief budget 2500",
+        "item 'fish biryani' contains forbidden word 'fish'",
+        "item 'prawn curry' hits never-keyword 'prawn' (seafood)",
+    ):
+        assert not downgrade_for_bot_quota("fail", CONSEQUENCES + [hard], "call_dropped", LLM_429_ANSI, None)
+
+
+def test_confirmed_order_with_429_stays_fail():
+    assert not downgrade_for_bot_quota("fail", CONSEQUENCES[:1], "call_dropped", LLM_429_ANSI, Decimal("2100"))
+    assert not downgrade_for_bot_quota("fail", [], "ordered", LLM_429_ANSI, Decimal("2100"))
+
+
+def test_strip_ansi():
+    from order_agent.suite import strip_ansi
+
+    assert strip_ansi("[31mhi[0m") == "hi"
+
+
+def test_rescore_attempt_downgrades_quota_starved_dropped_call(tmp_path):
+    import json
+
+    from order_agent.suite import rescore_attempt
+
+    exp = load_expected("evals/expected.yaml")["happy_path"]
+    d = tmp_path / "attempt-1"
+    d.mkdir()
+    (d / "bot.log").write_text(LLM_429_ANSI + "\n", encoding="utf-8")
+    (d / "conversation.json").write_text(json.dumps([{"role": "assistant", "content": "hi"}]), encoding="utf-8")
+    (d / "judge.txt").write_text("goal: not met: no order\nmetric conduct: 1.0 passed=True\n", encoding="utf-8")
+    (d / "20261123-120000.json").write_text(make_report(outcome="call_dropped", total="0", quoted=None, items=[]).model_dump_json(), encoding="utf-8")
+    r = rescore_attempt(d, "happy_path", 1, exp)
+    assert r.status == "quota_error"

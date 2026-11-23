@@ -18,7 +18,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-ANSI = re.compile(r"\x1b\[[0-9;]*m")
+from order_agent.suite import strip_ansi
 TS = re.compile(r"^(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\.\d+)")
 STAGES = {
     "LLM TTFB": re.compile(r"GoogleLLMService#\d+ TTFB: ([\d.]+)s"),
@@ -41,7 +41,7 @@ def parse(path: Path):
     stt_ttfb = 0.0
     stop_t = None
     for raw in path.read_text(encoding="utf-8", errors="replace").splitlines():
-        line = ANSI.sub("", raw)
+        line = strip_ansi(raw)
         m = TS.match(line)
         if not m:
             continue
