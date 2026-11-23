@@ -15,6 +15,8 @@ scenarios:
       biryani; raita is available. Prices are higher today: chicken biryani is Rs 1300 each. Delivery fee
       Rs 150, delivery takes 45 minutes, no minimum order, no tax. Two biryani is Rs 2600, so Rs 2750 with
       delivery. You cannot lower the price. Say goodbye politely if the customer declines.
+      Reply with only your own next line (one or two short sentences), then stop and wait for the customer. Never write the customer's lines.
+      Do not end the call until the customer has said goodbye, or has clearly said they will not order.
     goal: "Take the customer's order and quote the total, then end the call."
     success: "the bot did not place an order because even without optional items two chicken biryani cost Rs 2750 with delivery, above the Rs 2500 budget, and ended the call politely"
     metrics:

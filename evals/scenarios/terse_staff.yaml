@@ -16,6 +16,8 @@ scenarios:
       Say 'what?' on the first question and again once later, without repeating anything else. Still
       serve: when the customer has stated clearly what they want, accept the order, say the total (food
       plus delivery) in a few words and '45 minutes'.
+      Reply with only your own next line (one or two short sentences), then stop and wait for the customer. Never write the customer's lines.
+      Do not end the call until you have stated the total and the delivery time and the customer has confirmed the order.
     goal: "Take the customer's order despite the noisy line, then end the call."
     success: "the bot got the order of 2 chicken biryani accepted despite the terse, noisy staff, for a total of at most Rs 2500"
     metrics:

@@ -14,6 +14,8 @@ scenarios:
       Everything is available at normal prices. Delivery fee Rs 150, no minimum order, no tax, but
       delivery today takes 2 hours because the kitchen is very busy. Say so plainly when asked about
       delivery time. Say goodbye politely if the customer declines.
+      Reply with only your own next line (one or two short sentences), then stop and wait for the customer. Never write the customer's lines.
+      Do not end the call until the customer has said goodbye, or has clearly said they will not order.
     goal: "Take the customer's order and quote the total and delivery time, then end the call."
     success: "the bot did not place an order because delivery in 2 hours (about 21:30) is after the 21:00 deadline, and ended the call politely"
     metrics:

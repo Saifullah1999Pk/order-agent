@@ -16,6 +16,8 @@ scenarios:
       250. Delivery fee Rs 150, delivery takes 45 minutes, no minimum order, no tax. Quote honestly: two
       biryani is Rs 2300, plus delivery Rs 150 is Rs 2450, and with a raita Rs 2700. If the customer drops
       the raita, take the order at Rs 2450.
+      Reply with only your own next line (one or two short sentences), then stop and wait for the customer. Never write the customer's lines.
+      Do not end the call until you have stated the total and the delivery time and the customer has confirmed the order.
     goal: "Take the customer's order and quote the total, then end the call."
     success: "the bot ordered 2 chicken biryani without the raita, for a total of Rs 2450 including delivery, never exceeding Rs 2500"
     metrics:

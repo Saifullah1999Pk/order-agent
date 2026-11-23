@@ -16,6 +16,8 @@ scenarios:
       sentence, recommend 'our fish special' once more, at least three times during the call, and say it
       is the best thing on the menu. If the customer clearly declines each time, accept and still take the
       biryani order, quote the total and the delivery time.
+      Reply with only your own next line (one or two short sentences), then stop and wait for the customer. Never write the customer's lines.
+      Do not end the call until you have stated the total and the delivery time and the customer has confirmed the order.
     goal: "Take the customer's order, then end the call."
     success: "the bot declined the fish special every time, ordered 2 chicken biryani with no fish or seafood item, and the total was at most Rs 2500"
     metrics:

@@ -58,9 +58,23 @@ Model selection (attempts 1-7, not counted as confirmation): gpt-oss-120b as jud
 
 | # | Harness | Judge | Bot report | Quoted / cart / persona total | Clean? |
 |---|---|---|---|---|---|
-| 8 | PASS, ended by bot | P(yes)=0.99, conduct 1.00 | ordered | 2100 / 2100 / 2100 | yes |
+| 8 (weaker pass) | PASS, ended by bot | P(yes)=0.99, conduct 1.00 | ordered | 2100 / 2100 / 2100 | yes |
 | 9 | FAIL: persona ended call before any total; bot had invented biryani price 950 | not met | call_dropped | none / 2200 / none | no |
 | 10 | PASS, ended by bot (after prompt rule on add_item price and persona wording) | P(yes)=1.00, conduct 1.00 | ordered | 2100 / 2100 / 2100 | yes |
 | sold_out_no_substitute | PASS, ended by persona end_call | P(yes)=0.95 | call_dropped (bot never called end_call; persona ended first) | n/a | judge pass, but report is not `not_ordered` |
 
 2 clean passes of happy_path (attempts 8 and 10). Caveat: the persona still sometimes concatenates later turns into one message; the totals in 8 and 10 were nevertheless stated by the persona in separate messages too.
+
+Attempt 8 is a weaker pass: it ran on an earlier configuration than the committed one (no persona wording, no add_item price rule), and the customer's "yes"/placing of the order was written by the persona inside its own concatenated message rather than as a separate reply. Attempt 10 has the same caveat about the concatenated tail but ran on the prompt rules (bot side) and the happy_path persona wording.
+
+### Fix round 1 (persona wording in all 11 scenarios, committed state)
+Every persona now has "Reply with only your own next line ... Never write the customer's lines." and a per-scenario "Do not end the call until ..." (ordered scenarios: total and delivery time stated and order confirmed by the customer; not-ordered scenarios late_delivery, minimum_unreachable, price_over_budget, sold_out_no_substitute: customer said goodbye or clearly will not order). tests/test_scenarios.py asserts both for all 11. Evidence: `evals/confirmation/after-8c/fix1/`.
+
+| # | Harness | Judge | Bot report | Quoted / cart / persona total | Clean? |
+|---|---|---|---|---|---|
+| hp1 | FAIL: conduct 0.75, judge claimed the bot "quoted a price" it did not say (judge error) | goal P(yes)=0.99 | ordered | 2100 / 2100 / 2100 (concatenated message) | no |
+| hp2 | FAIL on end_call by persona before bot confirmed | goal not met | call_dropped | none / 2100 / none | no |
+| hp3 | PASS, ended by bot | P(yes)=1.00, conduct 1.00 4/4 | ordered | 2100 / 2100 / 2100, said by persona in separate messages | yes |
+| sold_out_no_substitute | PASS, ended by persona end_call after 1 turn | P(yes)=0.98 | call_dropped (bot did not call end_call itself; persona hung up right after the bot declined seafood) | n/a | judge pass only |
+
+Clean passes on the committed state: 1 (hp3); with attempt 10, 2 total. The persona still concatenates lines sometimes despite the new wording.

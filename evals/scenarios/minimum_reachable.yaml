@@ -15,6 +15,8 @@ scenarios:
       order of Rs 2200 on the food (before delivery fee). Mention the minimum when the customer asks about
       it or when the food total is below it. Two biryani alone is Rs 1800. Accept the order as soon as the
       food total is at least Rs 2200.
+      Reply with only your own next line (one or two short sentences), then stop and wait for the customer. Never write the customer's lines.
+      Do not end the call until you have stated the total and the delivery time and the customer has confirmed the order.
     goal: "Take the customer's order, meet the minimum order, quote the total, then end the call."
     success: "the bot ordered 2 chicken biryani plus enough raita to reach the Rs 2200 food minimum (3 raita, food Rs 2250), for a total of Rs 2400 including delivery, within the Rs 2500 budget"
     metrics:

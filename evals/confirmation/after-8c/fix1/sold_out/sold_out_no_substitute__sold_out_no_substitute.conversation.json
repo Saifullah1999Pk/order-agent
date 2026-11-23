@@ -1,0 +1,24 @@
+[
+  {
+    "role": "assistant",
+    "content": "Hello, I would like to place a delivery order, please."
+  },
+  {
+    "role": "user",
+    "content": "Certainly, our chicken biryani, karahi and pulao are sold out today, but we have prawn biryani for Rs\u202f1300. Would you like to order that?"
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "unit_price_pkr": 1300,
+      "quantity": 2,
+      "name": "prawn biryani"
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Ah, actually I cannot have seafood. Do you have any chicken biryani, or perhaps chicken karahi or chicken pulao?"
+  }
+]

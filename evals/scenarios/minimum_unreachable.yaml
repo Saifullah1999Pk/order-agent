@@ -14,6 +14,8 @@ scenarios:
       Everything is available. Delivery fee Rs 150, delivery takes 45 minutes, no tax. There is a minimum
       order of Rs 3000 on the food (before delivery fee), and you cannot waive it. Say goodbye politely if
       the customer cannot meet it.
+      Reply with only your own next line (one or two short sentences), then stop and wait for the customer. Never write the customer's lines.
+      Do not end the call until the customer has said goodbye, or has clearly said they will not order.
     goal: "Take the customer's order and find out the minimum order, then end the call."
     success: "the bot did not place an order because the Rs 3000 minimum order cannot be reached within the Rs 2500 budget, and ended the call politely"
     metrics:
