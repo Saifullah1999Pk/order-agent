@@ -10,6 +10,7 @@ from decimal import Decimal, InvalidOperation
 
 from pipecat.adapters.llm.schemas.function_schema import FunctionSchema
 from pipecat.adapters.llm.schemas.tools_schema import ToolsSchema
+from pipecat.frames.frames import FunctionCallResultProperties
 
 from order_agent.rules import OrderSession
 
@@ -75,7 +76,10 @@ def build_tools(
             await params.result_callback(_refusal(exc))
             return
         result = session.end(*args)
-        await params.result_callback({"ok": result.ok, "message": result.message})
+        # A successful end must not trigger another inference (a second goodbye racing the
+        # pipeline end). A refusal still lets the LLM respond so it can adapt.
+        properties = FunctionCallResultProperties(run_llm=False) if result.ok else None
+        await params.result_callback({"ok": result.ok, "message": result.message}, properties=properties)
         if result.ok:
             await on_end(*args)
 

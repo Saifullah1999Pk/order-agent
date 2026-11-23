@@ -13,6 +13,7 @@ class Harness:
     def __init__(self, brief):
         self.session = OrderSession(brief, brief.call_time)
         self.ended: list[tuple[str, str]] = []
+        self.properties: list = []
         self.tools = build_tools(self.session, self._on_end)
 
     async def _on_end(self, outcome, reason):
@@ -22,8 +23,9 @@ class Harness:
         schema = next(t for t in self.tools.standard_tools if t.name == tool)
         results = []
 
-        async def result_callback(result, **_):
+        async def result_callback(result, properties=None):
             results.append(result)
+            self.properties.append(properties)
 
         params = SimpleNamespace(arguments=arguments, result_callback=result_callback)
         await schema.handler(params)
@@ -83,3 +85,11 @@ async def test_end_call_invokes_on_end_only_when_allowed(h):
     ok = await h.call("end_call", outcome="not_ordered", reason="sold out")
     assert ok["ok"] is True
     assert h.ended == [("not_ordered", "sold out")]
+
+
+async def test_successful_end_call_does_not_rerun_llm_but_refusal_does(h):
+    await h.call("end_call", outcome="ordered", reason="done")  # refused: nothing confirmed
+    refused_props = h.properties[-1]
+    assert refused_props is None or refused_props.run_llm is not False
+    await h.call("end_call", outcome="not_ordered", reason="sold out")
+    assert h.properties[-1].run_llm is False

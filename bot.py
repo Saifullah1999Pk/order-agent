@@ -15,7 +15,7 @@ from google.genai import types as genai_types
 from loguru import logger
 
 from order_agent.brief import load_brief
-from order_agent.call import CallState
+from order_agent.call import CallState, make_on_end
 from order_agent.config import Settings, load_settings, pick_model
 from order_agent.prompt import build_system_prompt
 from order_agent.tools import build_tools
@@ -100,11 +100,8 @@ async def run_bot(transport: BaseTransport, runner_args: RunnerArguments):
     # 3. Mouth: text -> speech, locally (model files auto-download on first run).
     tts = KokoroTTSService(settings=KokoroTTSService.Settings(voice="af_heart"))
 
-    async def on_end(outcome: str, reason: str) -> None:
-        path = await call_state.finish(outcome, reason)
-        logger.info(f"Report written: {path}")
-        # Downstream, so the frames queued ahead (the goodbye) are flushed first.
-        await llm.push_frame(EndWorkerFrame())
+    # Downstream, so the frames queued ahead (the goodbye) are flushed first.
+    on_end = make_on_end(call_state, lambda: llm.push_frame(EndWorkerFrame()))
 
     # Handlers on the FunctionSchemas are registered automatically from the context's tools.
     context = LLMContext(tools=build_tools(call_state.session, on_end))

@@ -4,9 +4,12 @@ No Pipecat imports here.
 """
 
 import asyncio
+from collections.abc import Awaitable, Callable
 from datetime import datetime
 from pathlib import Path
 from typing import Literal
+
+from loguru import logger
 
 from order_agent.brief import OrderBrief
 from order_agent.config import Settings
@@ -42,3 +45,24 @@ class CallState:
         if self.session.state == "confirmed":
             reason += f" after the order was confirmed (total Rs {self.session.quoted_total_pkr:f})"
         return await self.finish("call_dropped", reason)
+
+
+def make_on_end(
+    call_state: CallState, push_end: Callable[[], Awaitable[None]]
+) -> Callable[[str, str], Awaitable[None]]:
+    """The end_call hook: write the report, then always end the pipeline.
+
+    If writing fails, the error is logged and the pipeline still ends; the final
+    on_disconnect() retries the write.
+    """
+
+    async def on_end(outcome: str, reason: str) -> None:
+        try:
+            path = await call_state.finish(outcome, reason)
+            logger.info(f"Report written: {path}")
+        except Exception:
+            logger.exception("Could not write the report; the pipeline will still end")
+        finally:
+            await push_end()
+
+    return on_end

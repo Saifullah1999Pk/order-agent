@@ -72,3 +72,34 @@ async def test_add_line_lands_in_report(brief, tmp_path):
     state.add_line("agent", "Hi, I'd like to order.")
     data = json.loads((await state.finish("not_ordered", "x")).read_text(encoding="utf-8"))
     assert [t["role"] for t in data["transcript"]] == ["restaurant", "agent"]
+
+
+async def test_on_end_pushes_end_even_if_report_write_fails(brief, tmp_path, monkeypatch):
+    from order_agent import call
+
+    state = _state(brief, tmp_path)
+    pushed = []
+
+    async def push_end():
+        pushed.append(True)
+
+    def boom(*a, **k):
+        raise OSError("disk full")
+
+    monkeypatch.setattr(call, "write_report", boom)
+    await call.make_on_end(state, push_end)("not_ordered", "x")
+    assert pushed == [True]
+    assert state.report_path is None  # retried later by on_disconnect
+
+
+async def test_on_end_writes_report_then_pushes_end(brief, tmp_path):
+    from order_agent import call
+
+    state = _state(brief, tmp_path)
+    pushed = []
+
+    async def push_end():
+        pushed.append(state.report_path)
+
+    await call.make_on_end(state, push_end)("not_ordered", "x")
+    assert pushed == [state.report_path] and state.report_path is not None
