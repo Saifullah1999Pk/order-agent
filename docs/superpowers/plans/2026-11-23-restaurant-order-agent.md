@@ -420,3 +420,17 @@ Only after a **Go** at the Task 2 gate.
 
   Then update `README.md` with how to run everything.
 - [ ] **Step 5: Commit.** Message: `docs: v1 results`. Ask Saif before any push.
+### Task 8b: Bot fixes from the confirmation runs (added by controller after Task 8)
+
+Evidence: `evals/CONFIRMATION.md` and `evals/confirmation/attempt{1..4}/` (eval logs, conversation JSON, bot logs, reports).
+
+**Defects to fix**
+1. **Silent after an empty LLM reply** (attempt 3): the LLM produced an empty reply (no text, no tool call); the bot said nothing, and the call died by silence. Find the cause in `attempt3/bot_run3.log` (e.g. thinking-only output, safety block, or a finished tool round with nothing to say). Fix so the call never stalls: when an assistant turn ends empty, with no function call, and the restaurant hasn't spoken since, queue one developer nudge ("You said nothing. Continue the call: answer the restaurant or state your order.") and re-run the LLM. At most 2 consecutive nudges, then stop nudging. Put the decision in a pure function in `order_agent/call.py` (e.g. `should_nudge(...)`), unit-tested; wire it in `bot.py`.
+2. **Confirmed a total the restaurant never said** (attempt 4): staff said 1950; the agent called `confirm_order(2100, …)`, using its cart sum. Code cannot hear the restaurant, so fix the prompt in `order_agent/prompt.py`: `quoted_total_pkr` must be exactly the number the restaurant said. If it differs from the agent's own sum, the agent says so politely and asks them to check before confirming; it never "corrects" the quote itself. Add assertions to `tests/test_prompt.py` for this sentence.
+3. **Weak opening** (attempt 2): the agent never clearly stated its order, so staff hung up. Prompt: right after the greeting, say clearly what you'd like (items and quantities, delivery), then ask about availability and prices. Add a prompt test.
+4. **Judge quota bursts** (attempts 1–2): judged per-turn metrics fire one judge request per turn per metric and burst past the free 15 requests/min. In all 11 `evals/scenarios/*.yaml`, replace the separate `politeness` and `no_invention` judged metrics with ONE judged metric `conduct`: criterion "the reply is courteous, never states a price or item the restaurant did not say, and when it confirms a total it is the total the restaurant stated; a reply that does none of these passes", `min_score: 1`. Keep `terse_staff`'s `no_repeat_loop`. Re-validate that all 11 parse.
+
+**Verification**
+- Unit tests for (1)–(3); full suite green.
+- One live `happy_path` text-mode run against `bot.py`, as in Task 8 (same commands; max 2 attempts, 60 s apart; stop processes after). Record the result in `evals/CONFIRMATION.md` under a new "After Task 8b" section: judge verdict, harness errors, report outcome, quoted vs cart total, any nudges in the bot log.
+- Commit: `fix: no silent stalls, quote fidelity, clearer opening; one judged metric`.
