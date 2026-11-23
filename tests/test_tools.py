@@ -1,0 +1,85 @@
+from decimal import Decimal
+from types import SimpleNamespace
+
+import pytest
+
+from order_agent.rules import OrderSession
+from order_agent.tools import build_tools
+
+NAMES = ["add_item", "remove_item", "set_fees", "set_minimum_order", "confirm_order", "end_call"]
+
+
+class Harness:
+    def __init__(self, brief):
+        self.session = OrderSession(brief, brief.call_time)
+        self.ended: list[tuple[str, str]] = []
+        self.tools = build_tools(self.session, self._on_end)
+
+    async def _on_end(self, outcome, reason):
+        self.ended.append((outcome, reason))
+
+    async def call(self, tool, **arguments):
+        schema = next(t for t in self.tools.standard_tools if t.name == tool)
+        results = []
+
+        async def result_callback(result, **_):
+            results.append(result)
+
+        params = SimpleNamespace(arguments=arguments, result_callback=result_callback)
+        await schema.handler(params)
+        assert len(results) == 1
+        return results[0]
+
+
+@pytest.fixture
+def h(brief):
+    return Harness(brief)
+
+
+def test_tools_schema_names(h):
+    assert [t.name for t in h.tools.standard_tools] == NAMES
+
+
+async def test_handler_add_item_calls_session(h):
+    result = await h.call("add_item", name="chicken biryani", quantity=2, unit_price_pkr=900)
+    assert result["ok"] is True
+    assert h.session.cart_total() == Decimal("1800")
+
+
+@pytest.mark.parametrize("price", ["twelve hundred", True, float("nan"), None, [900]])
+async def test_handler_rejects_unparseable_price(h, price):
+    result = await h.call("add_item", name="chicken biryani", quantity=2, unit_price_pkr=price)
+    assert result["ok"] is False
+    assert h.session.events == []
+
+
+async def test_handler_rejects_missing_argument(h):
+    result = await h.call("add_item", name="chicken biryani", quantity=2)
+    assert result["ok"] is False
+    assert h.session.events == []
+
+
+async def test_handler_quantity_integral_float_ok_fraction_rejected(h):
+    assert (await h.call("add_item", name="chicken biryani", quantity=1.0, unit_price_pkr=900))["ok"] is True
+    result = await h.call("add_item", name="chicken biryani", quantity=1.5, unit_price_pkr=900)
+    assert result["ok"] is False
+    assert len(h.session.events) == 1
+
+
+async def test_other_handlers_delegate(h):
+    await h.call("add_item", name="chicken biryani", quantity=2, unit_price_pkr=900)
+    assert (await h.call("set_minimum_order", minimum_pkr=1000))["ok"] is True
+    assert (await h.call("set_fees", delivery_fee_pkr=100, tax_pkr="50.5"))["ok"] is True
+    assert h.session.tax_pkr == Decimal("50.5")
+    assert (await h.call("remove_item", name="chicken biryani"))["ok"] is True
+    bad = await h.call("confirm_order", quoted_total_pkr="lots", delivery_minutes=30)
+    assert bad["ok"] is False
+
+
+async def test_end_call_invokes_on_end_only_when_allowed(h):
+    refused = await h.call("end_call", outcome="ordered", reason="done")
+    assert refused["ok"] is False
+    assert h.ended == []
+    ok = await h.call("end_call", outcome="not_ordered", reason="sold out")
+    assert ok["ok"] is True
+    assert h.ended == [("not_ordered", "sold out")]
