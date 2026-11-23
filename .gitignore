@@ -1,0 +1,6 @@
+.env
+.venv/
+reports/
+evals/results/
+__pycache__/
+.superpowers/
