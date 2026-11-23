@@ -20,10 +20,10 @@ from order_agent.call import (
     CallState,
     NudgeScheduler,
     NudgeTracker,
-    llm_http_options,
     make_on_end,
 )
 from order_agent.config import Settings, load_settings, pick_model
+from order_agent.llm_factory import build_bot_llm
 from order_agent.prompt import build_system_prompt
 from order_agent.tools import build_tools
 from pipecat.audio.vad.silero import SileroVADAnalyzer
@@ -40,7 +40,6 @@ from pipecat.processors.aggregators.llm_response_universal import (
 )
 from pipecat.runner.types import RunnerArguments
 from pipecat.runner.utils import create_transport
-from pipecat.services.google.llm import GoogleLLMService
 from pipecat.services.kokoro.tts import KokoroTTSService
 from pipecat.services.whisper.stt import Model, WhisperSTTService
 from pipecat.transports.base_transport import BaseTransport, TransportParams
@@ -83,8 +82,11 @@ async def run_bot(transport: BaseTransport, runner_args: RunnerArguments):
     brief = load_brief(settings.brief_path)
     if settings.call_time:
         brief = brief.model_copy(update={"call_time": settings.call_time})
-    model = await pick_model(settings, make_probe(settings))
-    logger.info(f"Using model {model}")
+    if settings.llm_provider == "groq":
+        model = settings.groq_model  # no Gemini probe: Gemini is not used
+    else:
+        model = await pick_model(settings, make_probe(settings))
+    logger.info(f"Using {settings.llm_provider} model {model}")
 
     call_state = CallState(brief, settings, datetime.now())
 
@@ -95,15 +97,8 @@ async def run_bot(transport: BaseTransport, runner_args: RunnerArguments):
         settings=WhisperSTTService.Settings(model=Model.BASE.value),
     )
 
-    # 2. Brain: text -> text (and tool calls), via Gemini free tier.
-    llm = GoogleLLMService(
-        api_key=settings.google_api_key,
-        settings=GoogleLLMService.Settings(
-            model=model,
-            system_instruction=build_system_prompt(brief),
-        ),
-        http_options=llm_http_options(),
-    )
+    # 2. Brain: text -> text (and tool calls), via a free tier (Gemini by default, Groq optional).
+    llm = build_bot_llm(settings, build_system_prompt(brief), gemini_model=model)
 
     # 3. Mouth: text -> speech, locally (model files auto-download on first run).
     tts = KokoroTTSService(settings=KokoroTTSService.Settings(voice="af_heart"))
