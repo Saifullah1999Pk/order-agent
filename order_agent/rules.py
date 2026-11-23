@@ -4,7 +4,7 @@ No Pipecat imports here: this must stay pure Python so it can be tested alone.
 """
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import Literal
 
@@ -53,6 +53,8 @@ class OrderSession:
         self.minimum_order_pkr: Decimal | None = None
         self.state: Literal["open", "confirmed", "ended"] = "open"
         self.events: list[ToolEvent] = []
+        self.delivery_eta: datetime | None = None
+        self.quoted_total_pkr: Decimal | None = None
 
     # -- helpers -----------------------------------------------------------
 
@@ -68,6 +70,9 @@ class OrderSession:
 
     def _filled(self, line_item: str) -> int:
         return sum(i.quantity for i in self.items if i.line_item == line_item)
+
+    def _below_minimum(self) -> bool:
+        return self.minimum_order_pkr is not None and self._items_total() < self.minimum_order_pkr
 
     def _never_hit(self, name: str) -> str | None:
         words = normalise(name)
@@ -131,7 +136,7 @@ class OrderSession:
             return ToolResult(False, f"Refused: '{existing.name}' is already in the cart at {_fmt(existing.unit_price_pkr)} PKR each, not {_fmt(price)}. Clarify the price with the restaurant, or remove_item it first and add it again.")
 
         filled = self._filled(line.item)
-        if filled + quantity > line.quantity:
+        if filled + quantity > line.quantity and not self._below_minimum():
             return ToolResult(False, f"Refused: your brief wants {line.quantity} x {line.item} and {filled} are already in the cart, so adding {quantity} more goes over. Add at most {line.quantity - filled}.")
 
         new_total = self.cart_total() + quantity * price
@@ -173,3 +178,85 @@ class OrderSession:
             return self._over_budget(f"a delivery fee of {_fmt(fee)} and tax of {_fmt(tax)}", new_total)
         self.delivery_fee_pkr, self.tax_pkr = fee, tax
         return ToolResult(True, f"Fees recorded: delivery {_fmt(fee)} PKR, tax {_fmt(tax)} PKR. Cart total is now {_fmt(self.cart_total())} PKR.")
+
+    def set_minimum_order(self, minimum_pkr: Decimal) -> ToolResult:
+        return self._record("set_minimum_order", {"minimum_pkr": minimum_pkr}, self._set_minimum_order(minimum_pkr))
+
+    def _set_minimum_order(self, minimum: Decimal) -> ToolResult:
+        if self.state != "open":
+            return _closed(self.state, "the minimum order")
+        if not isinstance(minimum, Decimal) or not minimum.is_finite() or minimum <= 0:
+            return ToolResult(False, "Refused: the minimum order must be a number greater than zero. Ask the restaurant to repeat the minimum.")
+        self.minimum_order_pkr = minimum
+        return ToolResult(True, f"Minimum order recorded: {_fmt(minimum)} PKR of food (before delivery fee and tax). Food subtotal is now {_fmt(self._items_total())} PKR.")
+
+    def missing_lines(self) -> list[str]:
+        out = []
+        for line in self.brief.wanted:
+            have = self._filled(line.item)
+            if not line.optional and have < line.quantity:
+                out.append(f"{line.item}: need {line.quantity}, have {have}")
+        return out
+
+    def confirm_order(self, quoted_total_pkr: Decimal, delivery_minutes: int) -> ToolResult:
+        args = {"quoted_total_pkr": quoted_total_pkr, "delivery_minutes": delivery_minutes}
+        return self._record("confirm_order", args, self._confirm_order(quoted_total_pkr, delivery_minutes))
+
+    def _confirm_order(self, quoted: Decimal, minutes: int) -> ToolResult:
+        if self.state != "open":
+            return _closed(self.state, "the order")
+        if not isinstance(quoted, Decimal) or not quoted.is_finite() or quoted <= 0:
+            return ToolResult(False, "Refused: the quoted total must be a number greater than zero. Ask the restaurant to repeat the total.")
+        if not isinstance(minutes, int) or isinstance(minutes, bool) or minutes < 1:
+            return ToolResult(False, "Refused: delivery time must be a whole number of minutes, at least 1 (use the latest end of a range). Ask the restaurant how long it will take.")
+
+        missing = self.missing_lines()
+        if missing:
+            return ToolResult(False, f"Refused: the order is incomplete: {'; '.join(missing)}. Add the missing items (or their listed substitutes); if they can't be had, end the call as not_ordered.")
+
+        total = self.cart_total()
+        if quoted != total:
+            return ToolResult(False, f"Refused: the restaurant quoted {_fmt(quoted)} PKR but the cart total is {_fmt(total)} PKR (items {_fmt(self._items_total())}, delivery {_fmt(self.delivery_fee_pkr)}, tax {_fmt(self.tax_pkr)}). Ask what explains the difference, then correct the items or fees (set_fees) before confirming.")
+
+        if self._below_minimum():
+            return ToolResult(False, self._minimum_refusal())
+
+        start = self.brief.call_time or self.now
+        eta = start + timedelta(minutes=minutes)
+        deadline = datetime.combine(start.date(), self.brief.deliver_by)
+        if eta > deadline:
+            return ToolResult(False, f"Refused: delivery in {minutes} minutes means {eta:%H:%M}, after the {self.brief.deliver_by:%H:%M} deadline. Ask whether it can be faster; if not, end the call as not_ordered.")
+
+        self.state = "confirmed"
+        self.quoted_total_pkr = quoted
+        self.delivery_eta = eta
+        return ToolResult(True, f"Order confirmed at {_fmt(quoted)} PKR, delivery by about {eta:%H:%M}. Thank the restaurant and call end_call with outcome 'ordered'.")
+
+    def _minimum_refusal(self) -> str:
+        shortfall = self.minimum_order_pkr - self._items_total()
+        optional = [l.item for l in self.brief.wanted if l.optional]
+        wanted = [l.item for l in self.brief.wanted if not l.optional]
+        options = []
+        if optional:
+            options.append(f"optional items ({', '.join(optional)})")
+        options.append(f"extra quantity of wanted items ({', '.join(wanted)})")
+        return (
+            f"Refused: the food subtotal is {_fmt(self._items_total())} PKR, {_fmt(shortfall)} PKR short of the restaurant's "
+            f"{_fmt(self.minimum_order_pkr)} PKR minimum (delivery fee and tax don't count). You may add {' or '.join(options)} "
+            "to reach it, staying within budget; otherwise end the call as not_ordered."
+        )
+
+    def end(self, outcome: Literal["ordered", "not_ordered"], reason: str) -> ToolResult:
+        return self._record("end", {"outcome": outcome, "reason": reason}, self._end(outcome, reason))
+
+    def _end(self, outcome: str, reason: str) -> ToolResult:
+        if self.state == "ended":
+            return ToolResult(False, "Refused: the call has already ended; nothing more to do.")
+        if outcome not in ("ordered", "not_ordered"):
+            return ToolResult(False, "Refused: outcome must be 'ordered' or 'not_ordered'.")
+        if outcome == "ordered" and self.state != "confirmed":
+            return ToolResult(False, "Refused: you can only end as 'ordered' after confirm_order succeeds. Confirm the order with the restaurant first, or end as not_ordered if you can't.")
+        if outcome == "not_ordered" and self.state == "confirmed":
+            return ToolResult(False, "Refused: the order is already confirmed, so it can't end as not_ordered. End with outcome 'ordered'.")
+        self.state = "ended"
+        return ToolResult(True, f"Call ended as {outcome}: {reason}")
