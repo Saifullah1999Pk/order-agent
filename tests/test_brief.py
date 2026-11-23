@@ -1,3 +1,4 @@
+from datetime import time
 from decimal import Decimal
 from pathlib import Path
 
@@ -45,3 +46,31 @@ def test_brief_rejects_empty_wanted_and_zero_quantity():
     data["wanted"] = [{"item": "raita", "quantity": 0}]
     with pytest.raises(ValidationError):
         OrderBrief(**data)
+
+
+def _write_with_deliver_by(tmp_path, literal: str) -> Path:
+    text = Path("briefs/example.yaml").read_text(encoding="utf-8")
+    lines = [
+        f"deliver_by: {literal}" if l.startswith("deliver_by:") else l
+        for l in text.splitlines()
+    ]
+    path = tmp_path / "brief.yaml"
+    path.write_text("\n".join(lines), encoding="utf-8")
+    return path
+
+
+def test_unquoted_deliver_by_loads_as_21_00(tmp_path):
+    # YAML 1.1 reads an unquoted 21:00 as the int 1260; it must still mean 21:00.
+    brief = load_brief(_write_with_deliver_by(tmp_path, "21:00"))
+    assert brief.deliver_by == time(21, 0)
+
+
+def test_quoted_deliver_by_still_works(tmp_path):
+    brief = load_brief(_write_with_deliver_by(tmp_path, '"21:30"'))
+    assert brief.deliver_by == time(21, 30)
+
+
+@pytest.mark.parametrize("bad", ["25.5", "1500", "-60", "true", '"noon"'])
+def test_invalid_deliver_by_rejected(tmp_path, bad):
+    with pytest.raises(ValidationError):
+        load_brief(_write_with_deliver_by(tmp_path, bad))

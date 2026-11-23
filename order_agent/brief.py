@@ -34,6 +34,20 @@ class OrderBrief(BaseModel):
             return Decimal(str(value))
         return value
 
+    @field_validator("deliver_by", mode="before")
+    @classmethod
+    def _yaml_sexagesimal_time(cls, value):
+        # YAML 1.1 reads an unquoted 21:00 as the int 1260 (21*60+0). Without
+        # this, pydantic would take it as seconds and silently give 00:21.
+        if isinstance(value, bool) or isinstance(value, float):
+            raise ValueError('deliver_by must be a time like "21:00" (put it in quotes)')
+        if isinstance(value, int):
+            hours, minutes = divmod(value, 60)
+            if not 0 <= hours <= 23:
+                raise ValueError('deliver_by must be a time like "21:00" (put it in quotes)')
+            return time(hours, minutes)
+        return value
+
     @field_validator("never", mode="before")
     @classmethod
     def _normalise_never(cls, value):
