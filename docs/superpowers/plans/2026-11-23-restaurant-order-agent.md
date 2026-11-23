@@ -81,7 +81,7 @@ order-agent/
   - `config.GEMINI_OPENAI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"`
   - `eval_llm.gemini_llm(config: dict) -> OpenAILLMService`. A Pipecat evals factory: `base_url=GEMINI_OPENAI_BASE_URL`, `api_key` from `GOOGLE_API_KEY`, and `model=config.get("model", "gemini-3.5-flash-lite")`.
 
-- [ ] **Step 1: Initialise the repo.** `git init` in `order-agent/`, then `uv python pin 3.12`. Write `pyproject.toml` (project name `order-agent`; dependencies `pipecat-ai[google,openai,webrtc,runner,silero,whisper,kokoro,cli]==1.17.0`, `pyyaml`, `python-dotenv`; dev group `pytest`, `pytest-asyncio`; `[tool.pytest.ini_options] asyncio_mode = "auto"`). `.gitignore` covers `.env`, `.venv/`, `reports/`, `evals/results/`, `__pycache__/`. `.env` holds `GOOGLE_API_KEY=`; copy the value from `../pipecat/.env`. Run `uv sync`. Expected: it resolves and installs with no errors.
+- [ ] **Step 1: Set up the project.** The repo already exists (branch `feat/order-agent-v1`; design doc and plan committed on `main`; `.gitignore` present, also ignoring `.superpowers/`). Run `uv python pin 3.12`. Write `pyproject.toml` (project name `order-agent`; dependencies `pipecat-ai[google,openai,webrtc,runner,silero,whisper,kokoro,cli]==1.17.0`, `pyyaml`, `python-dotenv`; dev group `pytest`, `pytest-asyncio`; `[tool.pytest.ini_options] asyncio_mode = "auto"`; make it an **installable package** with a `[build-system]` (hatchling, `packages = ["order_agent"]`), so `order_agent.eval_llm.gemini_llm` imports from Pipecat's eval CLI regardless of the working directory). `.gitignore` covers `.env`, `.venv/`, `reports/`, `evals/results/`, `__pycache__/`. `.env` holds `GOOGLE_API_KEY=`; copy the value from `../pipecat/.env`. Run `uv sync`. Expected: it resolves and installs with no errors.
 - [ ] **Step 2: Write failing tests.**
   - `test_load_settings_defaults`: with only `GOOGLE_API_KEY` set (monkeypatch), `model == "gemini-3.5-flash-lite"` and `fallback_model == "gemini-2.5-flash"`.
   - `test_load_settings_call_time`: `ORDER_CALL_TIME=2026-11-23T19:30:00` → `call_time == datetime(2026, 11, 23, 19, 30)`.
@@ -92,7 +92,7 @@ order-agent/
 - [ ] **Step 4: Implement `config.py` and `eval_llm.py`** to the Interfaces above.
 - [ ] **Step 5: Run.** Same command. Expected: 5 passed.
 - [ ] **Step 6: Live check (one real request).** Run `uv run python -c "..."`, which builds `gemini_llm({})` and calls `run_inference` on a one-message `LLMContext` ("Reply with just: ok"). Expected: prints text containing `ok`. If it fails with 404, try `model` without the `models/` prefix or with it, and record which one works in the README.
-- [ ] **Step 7: Commit** the design doc, the plan and everything above. Message: `chore: scaffold order-agent and Gemini eval LLM factory`.
+- [ ] **Step 7: Commit** everything above. Message: `chore: scaffold order-agent and Gemini eval LLM factory`.
 
 ---
 
@@ -196,7 +196,8 @@ Test fixture `brief` in `conftest.py` is the spec §5.1 brief exactly, with `nev
   - Note: `set_minimum_order` isn't in the spec's §5.2 tool list. The plan adds it because the spec's minimum-order rule needs the code to know the minimum.
 - Rules (spec §5.1, "When an order is complete"):
   - A line's filled quantity is the sum over cart items mapped to it, whether original or substitute.
-  - With `minimum_order_pkr` set and the cart below it, `add_item` may exceed a line's quantity, or add an optional line, as long as the total stays within budget.
+  - The minimum order is compared against the **food subtotal** (items only, excluding the delivery fee and tax), as real restaurants do.
+  - With `minimum_order_pkr` set and the food subtotal below it, `add_item` may exceed a line's quantity, or add an optional line, as long as the total stays within budget.
   - The ETA is `(brief.call_time or now) + delivery_minutes`.
 
 - [ ] **Step 1: Write failing tests** (with `brief` from the fixture).
@@ -205,8 +206,8 @@ Test fixture `brief` in `conftest.py` is the spec §5.1 brief exactly, with `nev
   - `test_optional_line_may_be_missing`: 2 biryani at 900 plus `set_fees(150, 0)` → `confirm_order(Decimal("1950"), 45)` is ok; `state == "confirmed"`; `delivery_eta == datetime(2026, 11, 23, 20, 15)`.
   - `test_confirm_rejects_mismatched_total`: cart 1950, quoted `1800` → not ok; the message contains `"1950"`.
   - `test_confirm_rejects_late_delivery`: as the happy path but `delivery_minutes=120` → not ok; the message contains `"21:00"`.
-  - `test_minimum_order_blocks_confirm`: `set_minimum_order(Decimal("2400"))`, cart 1950 → confirm is not ok; the message contains `"2400"` and `"raita"`.
-  - `test_minimum_allows_extra_quantity`: with minimum 2400 and the cart at 1950, `add_item("raita", 3, Decimal("150"))` is ok (total 2400). Then confirming with 2400 is ok.
+  - `test_minimum_order_blocks_confirm`: `set_minimum_order(Decimal("2200"))`, food subtotal 1800 (cart total 1950) → confirm is not ok; the message contains `"2200"` and `"raita"`.
+  - `test_minimum_allows_extra_quantity`: with minimum 2200 and a food subtotal of 1800, `add_item("raita", 3, Decimal("150"))` is ok (subtotal 2250, total 2400). Then confirming with 2400 is ok.
   - `test_minimum_unreachable_within_budget`: minimum 3000 → no allowed add reaches it. `add_item("chicken biryani", 1, Decimal("900"))` is refused for budget, and the message suggests ending without ordering.
   - `test_no_changes_after_confirm`: after a confirm, `add_item` is not ok; the message contains `"already confirmed"`.
   - `test_end_ordered_requires_confirm`: `end("ordered", "x")` on an open session is not ok. `end("not_ordered", "sold out")` is ok, and `state == "ended"`.
@@ -342,10 +343,10 @@ Only after a **Go** at the Task 2 gate.
 | `happy_path` | everything available, biryani 900, raita 150, delivery 150, 45 min | ordered, ≤ 2500 |
 | `sold_out_substitute` | biryani sold out, karahi 1100 available | ordered with karahi |
 | `sold_out_no_substitute` | biryani, karahi and pulao all sold out; offers prawn biryani | not_ordered |
-| `price_drop_optional` | biryani 1150, raita 250, delivery 150 (2550 with raita, 2450 without) | ordered without raita |
+| `price_drop_optional` | biryani 1150, raita 250, delivery 150 (2700 with raita, 2450 without) | ordered without raita |
 | `price_over_budget` | biryani 1300, delivery 150 | not_ordered |
 | `late_delivery` | everything available, but 2 hours | not_ordered |
-| `minimum_reachable` | minimum order Rs 2400; biryani 900, raita 150, delivery 150 | ordered, total ≥ 2400 and ≤ 2500 |
+| `minimum_reachable` | minimum order Rs 2200 on food; biryani 900, raita 150, delivery 150 | ordered, food subtotal ≥ 2200, total ≤ 2500 |
 | `minimum_unreachable` | minimum order Rs 3000 | not_ordered |
 | `staff_asks_details` | asks for name, number and address before confirming | ordered; details match the brief |
 | `pushes_forbidden` | keeps recommending "our fish special" | ordered, with no fish item |
