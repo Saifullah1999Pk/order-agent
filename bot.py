@@ -15,7 +15,14 @@ from google.genai import types as genai_types
 from loguru import logger
 
 from order_agent.brief import load_brief
-from order_agent.call import NUDGE_TEXT, CallState, make_on_end, should_nudge
+from order_agent.call import (
+    NUDGE_DELAY_SECS,
+    NUDGE_TEXT,
+    CallState,
+    NudgeTracker,
+    llm_http_options,
+    make_on_end,
+)
 from order_agent.config import Settings, load_settings, pick_model
 from order_agent.prompt import build_system_prompt
 from order_agent.tools import build_tools
@@ -95,6 +102,7 @@ async def run_bot(transport: BaseTransport, runner_args: RunnerArguments):
             model=model,
             system_instruction=build_system_prompt(brief),
         ),
+        http_options=llm_http_options(),
     )
 
     # 3. Mouth: text -> speech, locally (model files auto-download on first run).
@@ -132,9 +140,8 @@ async def run_bot(transport: BaseTransport, runner_args: RunnerArguments):
     await runner.add_workers(worker)
 
     restaurant_spoke = False
-    spoke_since_reply = False  # the restaurant spoke after the agent's last turn ended
-    had_function_call = False  # the current assistant turn made a tool call
-    nudges_in_a_row = 0
+    nudger = NudgeTracker()
+    nudge_tasks: set[asyncio.Task] = set()
     opening_task: asyncio.Task | None = None
 
     async def open_call_if_silent():
@@ -160,14 +167,16 @@ async def run_bot(transport: BaseTransport, runner_args: RunnerArguments):
         logger.info("Client disconnected")
         if opening_task:
             opening_task.cancel()
+        for task in nudge_tasks:
+            task.cancel()
         await call_state.on_disconnect()
         await runner.cancel()
 
     @user_aggregator.event_handler("on_user_turn_started")
     async def on_user_turn_started(aggregator, strategy):
-        nonlocal restaurant_spoke, spoke_since_reply
+        nonlocal restaurant_spoke
         restaurant_spoke = True
-        spoke_since_reply = True
+        nudger.on_user_turn_started()
 
     @user_aggregator.event_handler("on_user_turn_message_added")
     async def on_user_turn(aggregator, message: UserTurnMessageAddedMessage):
@@ -176,29 +185,28 @@ async def run_bot(transport: BaseTransport, runner_args: RunnerArguments):
 
     @llm.event_handler("on_function_calls_started")
     async def on_function_calls_started(service, function_calls):
-        nonlocal had_function_call
-        had_function_call = True
+        nudger.on_function_call()
+
+    @assistant_aggregator.event_handler("on_assistant_turn_started")
+    async def on_assistant_turn_started(aggregator):
+        nudger.on_llm_run_started()
+
+    async def nudge_after_pause():
+        # Pause so the nudge does not land in the same per-minute quota window.
+        await asyncio.sleep(NUDGE_DELAY_SECS)
+        if nudger.restaurant_spoke_since_run:
+            return  # they spoke meanwhile; their turn gets the reply
+        context.add_message({"role": "developer", "content": NUDGE_TEXT})
+        await worker.queue_frames([LLMRunFrame()])
 
     @assistant_aggregator.event_handler("on_assistant_turn_stopped")
     async def on_assistant_turn(aggregator, message: AssistantTurnStoppedMessage):
-        nonlocal had_function_call, spoke_since_reply, nudges_in_a_row
         logger.info(f"Transcript agent: {message.content}")
         if message.content.strip():
             call_state.add_line("agent", message.content)
-            nudges_in_a_row = 0
-        nudge = not message.interrupted and should_nudge(
-            message.content,
-            had_function_call=had_function_call,
-            restaurant_spoke_since=spoke_since_reply,
-            nudges_in_a_row=nudges_in_a_row,
-        )
-        had_function_call = False
-        spoke_since_reply = False
-        if nudge:
-            nudges_in_a_row += 1
-            logger.warning(f"Empty assistant turn, nudging the LLM (nudge {nudges_in_a_row})")
-            context.add_message({"role": "developer", "content": NUDGE_TEXT})
-            await worker.queue_frames([LLMRunFrame()])
+        if nudger.on_assistant_turn(message.content, interrupted=message.interrupted):
+            logger.warning("Empty assistant turn, nudging the LLM")
+            nudge_tasks.add(asyncio.create_task(nudge_after_pause()))
 
     await runner.run()
     # Idle timeout or any other end without end_call: still write a report (no-op if one exists).

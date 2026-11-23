@@ -132,3 +132,76 @@ def test_at_most_two_nudges_in_a_row():
     assert MAX_NUDGES == 2
     assert should_nudge("", had_function_call=False, restaurant_spoke_since=False, nudges_in_a_row=1)
     assert not should_nudge("", had_function_call=False, restaurant_spoke_since=False, nudges_in_a_row=2)
+
+
+from order_agent.call import NudgeTracker
+
+
+def test_tracker_nudges_empty_turn_answering_the_restaurant():
+    t = NudgeTracker()
+    t.on_user_turn_started()  # the restaurant asks something
+    t.on_llm_run_started()  # the LLM run that answers them
+    assert t.on_assistant_turn("") is True  # that run returned nothing (e.g. 429)
+
+
+def test_tracker_no_nudge_when_restaurant_spoke_after_the_empty_run_started():
+    t = NudgeTracker()
+    t.on_llm_run_started()
+    t.on_user_turn_started()  # they spoke while/after the run: their turn gets its own reply
+    assert t.on_assistant_turn("") is False
+
+
+def test_tracker_tool_turn_is_not_nudged_but_the_empty_follow_up_is():
+    t = NudgeTracker()
+    t.on_user_turn_started()
+    t.on_llm_run_started()
+    t.on_function_call()
+    assert t.on_assistant_turn("") is False
+    t.on_llm_run_started()
+    assert t.on_assistant_turn("") is True
+
+
+def test_tracker_bounded_at_two_nudges():
+    t = NudgeTracker()
+    results = []
+    for _ in range(3):
+        t.on_llm_run_started()
+        results.append(t.on_assistant_turn(""))
+    assert results == [True, True, False]
+
+
+def test_tracker_count_resets_on_restaurant_speech_and_on_tool_run():
+    t = NudgeTracker()
+    for _ in range(2):
+        t.on_llm_run_started()
+        assert t.on_assistant_turn("")
+    t.on_user_turn_started()
+    t.on_llm_run_started()
+    assert t.on_assistant_turn("") is True  # budget restored by the restaurant speaking
+    t.on_llm_run_started()
+    assert t.on_assistant_turn("") is True
+    t.on_llm_run_started()
+    t.on_function_call()
+    assert t.on_assistant_turn("") is False
+    t.on_llm_run_started()
+    assert t.on_assistant_turn("") is True  # and by a tool run
+
+
+def test_tracker_count_resets_on_spoken_reply_and_interrupted_is_not_nudged():
+    t = NudgeTracker()
+    t.on_llm_run_started()
+    assert t.on_assistant_turn("")
+    t.on_llm_run_started()
+    assert t.on_assistant_turn("Hello") is False
+    t.on_llm_run_started()
+    assert t.on_assistant_turn("", interrupted=True) is False
+
+
+def test_llm_retry_options_configured():
+    from order_agent.call import llm_http_options
+
+    opts = llm_http_options()
+    retry = opts["retry_options"]
+    assert retry["attempts"] == 3
+    assert retry["initial_delay"] == 2.0
+    assert 429 in retry["http_status_codes"] and 503 in retry["http_status_codes"]

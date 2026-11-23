@@ -1,0 +1,95 @@
+{
+  "outcome": "call_dropped",
+  "reason": "call ended without end_call",
+  "items": [
+    {
+      "name": "chicken biryani",
+      "line_item": "chicken biryani",
+      "quantity": 2,
+      "unit_price_pkr": "900"
+    },
+    {
+      "name": "raita",
+      "line_item": "raita",
+      "quantity": 1,
+      "unit_price_pkr": "200"
+    }
+  ],
+  "delivery_fee_pkr": "150",
+  "tax_pkr": "0",
+  "cart_total_pkr": "2150",
+  "quoted_total_pkr": null,
+  "delivery_eta": null,
+  "tool_events": [
+    {
+      "tool": "add_item",
+      "args": {
+        "name": "chicken biryani",
+        "quantity": 2,
+        "unit_price_pkr": "900"
+      },
+      "ok": true,
+      "message": "Added 2 x chicken biryani at 900 PKR each. Cart total is now 1800 PKR.",
+      "at": "2026-11-23T18:11:19.868253"
+    },
+    {
+      "tool": "add_item",
+      "args": {
+        "name": "raita",
+        "quantity": 1,
+        "unit_price_pkr": "200"
+      },
+      "ok": true,
+      "message": "Added 1 x raita at 200 PKR each. Cart total is now 2000 PKR.",
+      "at": "2026-11-23T18:11:19.868253"
+    },
+    {
+      "tool": "set_fees",
+      "args": {
+        "delivery_fee_pkr": "150",
+        "tax_pkr": "0"
+      },
+      "ok": true,
+      "message": "Fees recorded: delivery 150 PKR, tax 0 PKR. Cart total is now 2150 PKR.",
+      "at": "2026-11-23T18:11:19.868253"
+    },
+    {
+      "tool": "set_minimum_order",
+      "args": {
+        "minimum_pkr": "0"
+      },
+      "ok": false,
+      "message": "Refused: the minimum order must be a number greater than zero. Ask the restaurant to repeat the minimum.",
+      "at": "2026-11-23T18:11:19.868253"
+    },
+    {
+      "tool": "set_fees",
+      "args": {
+        "delivery_fee_pkr": "150",
+        "tax_pkr": "0"
+      },
+      "ok": true,
+      "message": "Fees recorded: delivery 150 PKR, tax 0 PKR. Cart total is now 2150 PKR.",
+      "at": "2026-11-23T18:11:19.868253"
+    }
+  ],
+  "transcript": [
+    {
+      "role": "agent",
+      "text": "Hello, I would like to place a delivery order, please.",
+      "at": "2026-11-23T18:11:25.514878"
+    },
+    {
+      "role": "agent",
+      "text": "I would like to order two chicken biryanis for delivery, and please make them less spicy if possible. Also, do you have raita?",
+      "at": "2026-11-23T18:11:27.302751"
+    },
+    {
+      "role": "agent",
+      "text": "Could you please tell me what the total comes to, and how long delivery will take? Also, my address is House 12, Street 4, F-7/2, Islamabad, and my callback number is 0300-0000000.",
+      "at": "2026-11-23T18:11:55.293370"
+    }
+  ],
+  "started_at": "2026-11-23T18:11:19.868253",
+  "ended_at": "2026-11-23T18:11:55.372824"
+}

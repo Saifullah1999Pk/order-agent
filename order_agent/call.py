@@ -34,6 +34,64 @@ def should_nudge(
     return nudges_in_a_row < MAX_NUDGES
 
 
+NUDGE_DELAY_SECS = 3.0
+
+
+def llm_http_options() -> dict:
+    """google-genai HTTP options: retry 429/503 with exponential backoff (2 s, 4 s)."""
+    return {
+        "retry_options": {
+            "attempts": 3,
+            "initial_delay": 2.0,
+            "exp_base": 2.0,
+            "http_status_codes": [429, 503],
+        }
+    }
+
+
+class NudgeTracker:
+    """The flags behind the empty-reply nudge. bot.py calls these from its event handlers.
+
+    "Restaurant spoke" means: after the current LLM run started. A restaurant turn that this
+    run is answering does not count, so an empty answer to their question is still nudged.
+    """
+
+    def __init__(self) -> None:
+        self._spoke_since_run = False
+        self._had_function_call = False
+        self._nudges = 0
+
+    def on_user_turn_started(self) -> None:
+        self._spoke_since_run = True
+        self._nudges = 0
+
+    def on_llm_run_started(self) -> None:
+        self._spoke_since_run = False
+
+    def on_function_call(self) -> None:
+        self._had_function_call = True
+        self._nudges = 0
+
+    @property
+    def restaurant_spoke_since_run(self) -> bool:
+        return self._spoke_since_run
+
+    def on_assistant_turn(self, content: str, interrupted: bool = False) -> bool:
+        """The turn ended; return True if the LLM should be nudged."""
+        if content.strip():
+            self._nudges = 0
+        nudge = not interrupted and should_nudge(
+            content,
+            had_function_call=self._had_function_call,
+            restaurant_spoke_since=self._spoke_since_run,
+            nudges_in_a_row=self._nudges,
+        )
+        self._had_function_call = False
+        if nudge:
+            self._nudges += 1
+        return nudge
+
+
 class CallState:
     def __init__(self, brief: OrderBrief, settings: Settings, now: datetime):
         self.settings = settings

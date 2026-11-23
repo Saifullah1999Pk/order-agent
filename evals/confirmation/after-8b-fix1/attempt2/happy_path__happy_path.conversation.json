@@ -1,0 +1,42 @@
+[
+  {
+    "role": "assistant",
+    "content": "Hello, I would like to place a delivery order, please."
+  },
+  {
+    "role": "user",
+    "content": "Welcome to Karachi Kitchen. What can I get for you?"
+  },
+  {
+    "role": "assistant",
+    "content": "I'd like to order two chicken biryanis and one raita for delivery, please. Are they available, and what are the prices?"
+  },
+  {
+    "role": "user",
+    "content": "Yes, they're both available. The chicken biryani is 900 rupees each, and the raita is 150 rupees."
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "quantity": 2,
+      "unit_price_pkr": 900,
+      "name": "chicken biryani"
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "name": "raita",
+      "quantity": 1,
+      "unit_price_pkr": 150
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "That's great. Also, could you please make it less spicy if possible? And what are the delivery fees and taxes?"
+  }
+]

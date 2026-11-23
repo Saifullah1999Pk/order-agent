@@ -22,7 +22,7 @@ eval log and the bot's report (`<timestamp>.json/.txt`).
 1. **Persona acts as restaurant staff** in all 4 runs (welcomes, quotes menu, fee, 45 min). It never acted as an assistant.
 2. **Quota is the main harness hazard.** The 15 requests/min limit on gemini-3.5-flash-lite is shared by bot, persona and judge. The judge alone sends 1 request per metric per bot turn plus 1 for the goal, so a single run bursts past the limit (runs 1 and 2). Task 9 must map these to `quota_error`; the harness reports them as "judge call failed ... Error code: 429" or as a failed goal, so the message has to be inspected, including in the per-metric lines.
 3. **Judge false pass (run 3):** P(yes)=1.00 although the bot never ordered. The deterministic report check (outcome ordered, total) must override the judge, as the spec says.
-4. **Bot defect, run 3:** an empty LLM completion after a tool call leaves the bot silent for the rest of the call (no retry or nudge). Run 1 shows the same shape from a 429.
+4. **Bot defect, run 3:** an empty assistant turn after a tool call (most likely a swallowed LLM error such as 429, see After Task 8b) leaves the bot silent for the rest of the call (no retry or nudge). Run 1 shows the same shape from a 429.
 5. **Bot defect, run 4:** staff said "nineteen hundred fifty" but the bot called `confirm_order(quoted_total_pkr=2100)`, so it passed its own cart total rather than the quote, defeating the mismatch guard (Review Focus 3). The persona's 1950 was partly the persona's own arithmetic (the bot never stated quantities of raita), but the bot should have confirmed or corrected it. The judge did not catch it.
 6. Bot style: it asks odd questions instead of stating the order up front ("make it less spicy?" before ordering). Prompt tuning, not an eval problem.
 
@@ -40,3 +40,13 @@ Findings:
 - The nudge fired twice and stopped at 2, as designed. Both nudges were also rejected with 429, so the nudge cannot fix quota exhaustion; it only covers a one-off empty reply.
 - Not confirmed: no run reached `confirm_order`, so the quote-fidelity prompt fix is only covered by prompt unit tests. The judge again passed a run with no order; the deterministic report check must override it (Task 9).
 - Free-tier quota (15 requests/min shared by bot, persona and judge) is still the limiting factor for live confirmation.
+
+## After Task 8b fix round 1
+Changes under test: nudge flag tracked per LLM run (`NudgeTracker`), 3 s pause before a nudge, bot-side retry on 429/503 (3 attempts, 2 s start, via `http_options`), persona and judge moved to `gemini-2.5-flash` (bot stays on `gemini-3.5-flash-lite`). 2 attempts, 70 s apart, port 7860 free, bot stopped after each. Evidence: `evals/confirmation/after-8b-fix1/`.
+
+| # | Harness | Judge | Bot report | Quoted vs cart | Nudges / bot 429s |
+|---|---|---|---|---|---|
+| 1 | FAIL "end_call": persona ended the call after 4 turns, before the order was confirmed | P(yes)=0.05; `conduct` 3 of 5 turns failed with "judge call failed: did not answer within 10.0 s" (judge timeouts on 2.5-flash, harness errors, not bot failures) | call_dropped, no order | none reached (staff never quoted a total) | 0 / 0 |
+| 2 | error: persona call got 429 on gemini-2.5-flash after 2 persona turns (quota_error) | not scored | call_dropped | none | 0 / 0 |
+
+Findings: the bot side was clean this round (no 429s, no empty turns, no nudges needed). The bot still asks fee/tax/minimum repeatedly and never asks for the total (attempt 1), so the persona gave up; prompt tuning candidate. gemini-2.5-flash on this key is slow for the judge (10 s timeout) and rate limited for the persona, so the model split did not by itself produce a clean confirmation. Not confirmed live: nudge-in-anger and the retry path (no 429 hit the bot).
