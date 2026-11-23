@@ -462,3 +462,39 @@ Saif chose a free Groq API key (`GROQ_API_KEY` in `order-agent/.env`) so the sim
   - the quoted total equals what the persona said.
 - If time and quota allow, also run `sold_out_no_substitute` once, and record it.
 - Commit: `feat: Groq for simulated restaurant and judge; no repeated questions`.
+### Task 10b: Bot LLM provider switch (Groq), then finish Task 10's runs today (added by controller)
+
+Why: Gemini's free daily caps are exhausted for today. A probe at about 20:00 showed: gemini-3.5-flash-lite and gemini-2.5-flash return 429 RESOURCE_EXHAUSTED; every other Gemini model returns 503. Saif wants to continue today, and the project uses free services only. Groq's free chat models are openai/gpt-oss-120b (persona), openai/gpt-oss-20b (judge) and qwen/qwen3.8-27b (unused); each model has its own token-per-minute bucket.
+
+**Part A — provider switch (TDD, no network in unit tests)**
+- `config.Settings`:
+  - `llm_provider: Literal["gemini", "groq"] = "gemini"` (env `ORDER_AGENT_LLM_PROVIDER`);
+  - `groq_model: str = "qwen/qwen3.8-27b"` (env `ORDER_AGENT_GROQ_MODEL`).
+- `bot.py`:
+  - when the provider is `groq`, build Pipecat's Groq LLM service with `groq_api_key` and `groq_model`, the same system prompt and the same tools, and skip the Gemini probe and pick_model step;
+  - Gemini stays the default and is unchanged;
+  - keep the LLM construction in a small, testable function, e.g. `order_agent/llm_factory.py: build_bot_llm(settings, system_prompt) -> LLMService`.
+- Tests:
+  - the default builds a GoogleLLMService (no network);
+  - provider `groq` builds a Groq service with that model;
+  - a missing GROQ_API_KEY with provider groq raises a clear error;
+  - tool registration still works with the Groq service. Mirror tests/test_tool_registration.py.
+- Watch for Groq/OpenAI-specific differences: function-call results, `FunctionCallResultProperties(run_llm=False)`, and the nudge on an empty turn. The bot's existing http-options retry is Gemini-only, so note what the Groq service does on a 429.
+
+**Part B — finish the remaining Task 10 runs with `ORDER_AGENT_LLM_PROVIDER=groq`.** run_suite.py must pass the bot's env through, so check that it does.
+1. Smoke test: `--only happy_path` in text mode. If qwen3.8-27b misbehaves as the bot (no tool calls, broken role, many tool-format errors), switch to `ORDER_AGENT_GROQ_MODEL=openai/gpt-oss-20b` and say why.
+2. Audio: `--audio --only` each of happy_path, sold_out_substitute and pushes_forbidden.
+3. Text retries: minimum_reachable, staff_asks_details, terse_staff.
+4. Use the default `--attempts 3` and `--sleep 20`. Copy every summary into `evals/confirmation/task10b/`.
+5. Re-run evals/latency.py on the audio runs.
+
+**Part C — update docs/results-v1.md and README**
+- Add a "Bot on Groq (2026-11-23 evening)" section: why it was run; the bot model used; a per-scenario table of the new results; and latency (median and P90 per stage, with n) computed from these audio runs, next to the earlier Gemini figures.
+- Update the overall scenario status. Results from different bot models are kept apart, never merged silently. A scenario that passed with either bot is "pass (bot: <model>)".
+- README: document `ORDER_AGENT_LLM_PROVIDER` and `ORDER_AGENT_GROQ_MODEL`.
+- Every number must link to a committed file.
+
+**Commits**
+- Code: `feat: configurable bot LLM provider (Gemini default, Groq option)`.
+- Docs and evidence: `docs: results with bot on Groq`.
+- Don't push.
