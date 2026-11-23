@@ -12,12 +12,14 @@ from order_agent.suite import (
     check_report_full,
     classify_error,
     bot_log_quota_errors,
+    downgrade_for_bot_quota,
     classify_result,
     count_requests,
     final_status,
     load_expected,
     render_summary,
     scenario_outcome,
+    stop_process,
 )
 
 NOW = datetime(2026, 11, 23, 19, 30)
@@ -237,14 +239,103 @@ def test_load_expected_reads_real_file():
     assert len(exp) == 11
 
 
-def test_bot_log_quota_errors():
-    log = "\n".join(
-        [
-            "INFO started",
-            "ERROR GoogleLLMService error: 429 RESOURCE_EXHAUSTED",
-            "WARNING retrying after 503 UNAVAILABLE error",
-            "INFO total Rs 1429 quoted",
-        ]
+LLM_429 = (
+    "2026-11-23 18:06:50.738 | ERROR    | pipecat.processors.frame_processor:push_error_frame:1032 - "
+    "GoogleLLMService#0 exception (errors.py:301): Unknown error occurred: 429 Too Many Requests."
+)
+
+
+def test_bot_log_quota_errors_needs_llm_service_signature():
+    assert bot_log_quota_errors(LLM_429) == 1
+    assert bot_log_quota_errors("INFO | GoogleLLMService#0 got UNAVAILABLE") == 0  # not an ERROR line
+    assert bot_log_quota_errors("2026 | ERROR    | x - total was Rs 503 quoted by the restaurant") == 0
+    assert bot_log_quota_errors("prompt tokens: 429, completion tokens: 503") == 0
+
+
+def test_downgrade_only_when_no_violations_and_call_did_not_complete():
+    assert downgrade_for_bot_quota("fail", [], "call_dropped", LLM_429)
+    assert downgrade_for_bot_quota("fail", [], None, LLM_429)
+    # hard violations are real evidence
+    assert not downgrade_for_bot_quota("fail", ["outcome is ordered, expected not_ordered"], "call_dropped", LLM_429)
+    # a 429 that recovered: the call finished normally, the fail stays a fail
+    assert not downgrade_for_bot_quota("fail", [], "ordered", LLM_429)
+    assert not downgrade_for_bot_quota("fail", [], "not_ordered", LLM_429)
+    # no LLM-service error in the log
+    assert not downgrade_for_bot_quota("fail", [], "call_dropped", "ERROR | x - Rs 503")
+    assert not downgrade_for_bot_quota("pass", [], "call_dropped", LLM_429)
+
+
+def test_classify_result_excludes_bot_connection_failures():
+    r = _result(error="could not connect: timed out", failure_kind="connect_failed")
+    assert classify_result(r) == "error"
+    r = _result(error="bot did not send bot-ready within 60s (timeout)", failure_kind="handshake_timeout")
+    assert classify_result(r) == "error"
+    assert classify_error(TimeoutError("connect timed out waiting for the bot")) == "error"
+
+
+def test_classify_result_judge_failure_line_is_quota():
+    r = _result(error="judge call failed: did not answer within 10.0 s")
+    assert classify_result(r) == "quota_error"
+    verdict = SimpleNamespace(reason="judge call failed: OpenAILLMService#0 failed to answer: Error code: 429")
+    assert classify_result(_result(metrics=[SimpleNamespace(reason="", verdicts=[verdict])])) == "quota_error"
+
+
+def test_classify_result_ignores_price_in_explainer_text():
+    verdict = SimpleNamespace(reason="The restaurant quoted Rs 429 for the raita and the bot repeated it.")
+    metric = SimpleNamespace(reason="Bot said Rs 503 total, which matches", verdicts=[verdict])
+    assert classify_result(_result(metrics=[metric], reason="goal met: total Rs 429")) is None
+
+
+class FakeProc:
+    pid = 4242
+
+    def __init__(self, alive=True):
+        self.alive = alive
+        self.calls = []
+
+    def poll(self):
+        return None if self.alive else 0
+
+    def terminate(self):
+        self.calls.append("terminate")
+        self.alive = False
+
+    def kill(self):
+        self.calls.append("kill")
+        self.alive = False
+
+    def wait(self, timeout=None):
+        self.calls.append("wait")
+
+
+def test_stop_process_kills_tree_on_windows_and_checks_port():
+    ran = []
+    proc = FakeProc()
+    err = stop_process(proc, 7860, lambda port: True, runner=lambda cmd, **kw: ran.append(cmd), windows=True)
+    assert err is None
+    assert proc.calls[0] == "terminate"
+    assert ran == [["taskkill", "/T", "/F", "/PID", "4242"]]
+
+
+def test_stop_process_no_taskkill_off_windows():
+    ran = []
+    stop_process(FakeProc(), 7860, lambda port: True, runner=lambda cmd, **kw: ran.append(cmd), windows=False)
+    assert ran == []
+
+
+def test_stop_process_reports_port_still_held():
+    t = iter(range(0, 100))
+    err = stop_process(
+        FakeProc(alive=False), 7860, lambda port: False, runner=lambda *a, **k: None, windows=True,
+        wait_s=3, sleep=lambda s: None, clock=lambda: next(t),
     )
-    assert bot_log_quota_errors(log) == 2
-    assert bot_log_quota_errors("prompt tokens: 429") == 0
+    assert err and "7860" in err
+
+
+def test_stop_process_waits_for_port_to_free():
+    states = iter([False, False, True])
+    err = stop_process(
+        FakeProc(), 7860, lambda port: next(states), runner=lambda *a, **k: None, windows=False,
+        sleep=lambda s: None,
+    )
+    assert err is None

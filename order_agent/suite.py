@@ -4,6 +4,9 @@ No Pipecat imports here, so everything is unit-testable. run_suite.py does the o
 """
 
 import re
+import subprocess
+import sys
+import time
 from dataclasses import dataclass, field
 from decimal import Decimal
 from pathlib import Path
@@ -21,9 +24,17 @@ Status = Literal["pass", "fail", "quota_error", "error"]
 # Quota / overload signs. The status codes and the upper-case Google names are matched
 # case-sensitively so a judge reason like "item unavailable" is not mistaken for quota.
 _QUOTA_PATTERN = re.compile(
-    r"\b(?:429|503)\b|RESOURCE_EXHAUSTED|UNAVAILABLE|(?i:rate[ _-]?limit)"
-    r"|(?i:did not answer within)|(?i:timed out)|(?i:timeout)"
+    r"\b(?:429|503)\b|RESOURCE_EXHAUSTED|UNAVAILABLE|(?i:rate[ _-]?limit)|(?i:too many requests)"
 )
+# A judge/LLM timeout (not a bot connect or bot-ready timeout).
+_LLM_TIMEOUT = re.compile(r"(?i)did not answer within|(?:judge|llm|persona)[^\n]*(?:timed out|timeout)")
+# What a failed judge/persona LLM call looks like, as opposed to the judge's free-text explanation.
+_LLM_FAILURE_LINE = re.compile(
+    r"(?i)judge call failed|failed to answer|did not answer within|error code:|too many requests"
+    r"|resource_exhausted|(?:persona|llm|judge)[^\n]*(?:failed|error|exception)"
+)
+# Failure kinds where the bot was never reached or never became ready: never a quota matter.
+_NOT_QUOTA_KINDS = {"connect_failed", "closed_before_ready", "handshake_timeout", "audio_unsupported"}
 
 
 class Expected(BaseModel):
@@ -110,51 +121,109 @@ def check_report(report: CallReport, expected: Expected, brief: OrderBrief | Non
 
 
 def _is_quota_text(text: str) -> bool:
-    return bool(_QUOTA_PATTERN.search(text))
+    return bool(_QUOTA_PATTERN.search(text)) or bool(_LLM_TIMEOUT.search(text))
 
 
 def classify_error(exc: BaseException) -> Literal["quota_error", "error"]:
-    """quota_error if the exception or any chained cause shows a rate limit / overload / timeout."""
+    """quota_error if the exception or any chained cause shows a rate limit / overload / judge-LLM
+    timeout. A bare TimeoutError (e.g. connecting to the bot) is an ordinary error."""
     seen: set[int] = set()
     current: BaseException | None = exc
     while current is not None and id(current) not in seen:
         seen.add(id(current))
-        if isinstance(current, TimeoutError) or _is_quota_text(f"{type(current).__name__}: {current}"):
+        if _is_quota_text(f"{type(current).__name__}: {current}"):
             return "quota_error"
         current = current.__cause__ or current.__context__
     return "error"
 
 
-def _result_strings(result) -> list[str]:
-    texts = [getattr(result, "error", None), getattr(result, "reason", None)]
+def _failure_strings(result) -> list[str]:
+    """The harness error plus judge/persona failure lines. The judge's free-text explanations
+    (which may quote a price such as Rs 429) are not scanned."""
+    texts = [getattr(result, "error", None)]
+    candidates = [getattr(result, "reason", None)]
     for metric in getattr(result, "metrics", []) or []:
-        texts.append(getattr(metric, "reason", None))
+        candidates.append(getattr(metric, "reason", None))
         for verdict in getattr(metric, "verdicts", []) or []:
-            texts.append(getattr(verdict, "reason", None))
+            candidates.append(getattr(verdict, "reason", None))
+    texts += [c for c in candidates if isinstance(c, str) and _LLM_FAILURE_LINE.search(c)]
     return [t for t in texts if isinstance(t, str) and t]
 
 
 def classify_result(result) -> Literal["quota_error", "error"] | None:
-    """Classify a harness result. Quota strings anywhere (even in per-metric judge lines of a
-    run that still says PASS/FAIL) win; else a harness error is "error"; else None."""
-    texts = _result_strings(result)
-    if any(_is_quota_text(t) for t in texts):
+    """Classify a harness result. A quota/judge-timeout string in the error or in a judge failure
+    line (even in a run that still says PASS/FAIL) gives quota_error; failing to reach or start
+    the bot gives "error"; any other harness error is "error"; a clean run is None."""
+    if getattr(result, "failure_kind", None) in _NOT_QUOTA_KINDS:
+        return "error"
+    if any(_is_quota_text(t) for t in _failure_strings(result)):
         return "quota_error"
     if getattr(result, "error", None):
         return "error"
     return None
 
 
-_BOT_QUOTA = re.compile(r"\b(?:429|503)\b|RESOURCE_EXHAUSTED|UNAVAILABLE|(?i:rate[ _-]?limit)")
+# What the bot's own LLM service failing looks like in bot.log (Pipecat push_error_frame), e.g.
+# "... | ERROR | ...push_error_frame:1032 - GoogleLLMService#0 exception (...): Unknown error occurred: 429 ..."
+_BOT_LLM_ERROR = re.compile(
+    r"\| ERROR\s.*LLMService#\d+ (?:exception|error)\b.*"
+    r"(?:\b(?:429|503)\b|RESOURCE_EXHAUSTED|UNAVAILABLE)"
+)
 
 
 def bot_log_quota_errors(bot_log: str) -> int:
-    """How many error lines in the bot's own log show its LLM being rate limited or overloaded."""
-    return sum(
-        1
-        for line in bot_log.splitlines()
-        if re.search(r"(?i)error|exception|fail", line) and _BOT_QUOTA.search(line)
+    """How many lines in the bot's log show its LLM service failing with 429/503/quota errors."""
+    return sum(1 for line in bot_log.splitlines() if _BOT_LLM_ERROR.search(line))
+
+
+def downgrade_for_bot_quota(
+    status: Status, violations: list[str], report_outcome: str | None, bot_log: str
+) -> bool:
+    """Whether a failing attempt should be recorded as quota_error because the bot's own LLM was
+    starved. Only when there are no hard violations, the call did not complete normally (call_dropped
+    or no report) and the bot log has an LLM-service 429/503 error. A recovered 429 in a call that
+    finished normally stays a real result."""
+    return (
+        status in ("fail", "error")
+        and not violations
+        and report_outcome in (None, "call_dropped")
+        and bot_log_quota_errors(bot_log) > 0
     )
+
+
+def stop_process(
+    proc,
+    port: int,
+    port_is_free,
+    *,
+    runner=None,
+    windows: bool | None = None,
+    wait_s: float = 10.0,
+    sleep=time.sleep,
+    clock=time.monotonic,
+) -> str | None:
+    """Stop a process we started and its children; return an error string if the port stays held.
+
+    Only the PID we started is touched. On Windows the tree is also killed (a launcher shim would
+    otherwise leave the real bot holding the port).
+    """
+    runner = runner or subprocess.run
+    windows = sys.platform == "win32" if windows is None else windows
+    if proc.poll() is None:
+        proc.terminate()
+        try:
+            proc.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            proc.wait(timeout=10)
+    if windows:
+        runner(["taskkill", "/T", "/F", "/PID", str(proc.pid)], capture_output=True)
+    deadline = clock() + wait_s
+    while not port_is_free(port):
+        if clock() >= deadline:
+            return f"port {port} still held after stopping the bot (pid {proc.pid})"
+        sleep(0.5)
+    return None
 
 
 def final_status(judge_passed: bool | None, violations: list[str]) -> Literal["pass", "fail"]:

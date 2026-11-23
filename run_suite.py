@@ -13,6 +13,7 @@ mode only if its YAML sets user/judge modality, and these scenarios are text mod
 
 import argparse
 import asyncio
+import dataclasses
 import json
 import os
 import socket
@@ -30,7 +31,7 @@ from order_agent.report import CallReport
 from order_agent.suite import (
     Expected,
     ScenarioResult,
-    bot_log_quota_errors,
+    downgrade_for_bot_quota,
     check_report_full,
     classify_error,
     classify_result,
@@ -39,11 +40,14 @@ from order_agent.suite import (
     load_expected,
     render_summary,
     scenario_outcome,
+    stop_process,
 )
 
 ROOT = Path(__file__).parent.resolve()
 READY_TIMEOUT_S = 150
 REPORT_WAIT_S = 15
+AUDIO_USER_SPEECH = {"service": "kokoro", "voice": "af_heart", "sample_rate": 16000}
+AUDIO_TRANSCRIBER = {"service": "whisper"}
 
 
 def port_free(port: int) -> bool:
@@ -93,16 +97,12 @@ def start_bot(name: str, expected: Expected, attempt_dir: Path, port: int):
     return proc, log
 
 
-def stop_bot(proc: subprocess.Popen, log) -> None:
-    """Stop only the bot this run started."""
-    if proc.poll() is None:
-        proc.terminate()
-        try:
-            proc.wait(timeout=10)
-        except subprocess.TimeoutExpired:
-            proc.kill()
-            proc.wait(timeout=10)
-    log.close()
+def stop_bot(proc: subprocess.Popen, log, port: int) -> str | None:
+    """Stop only the bot this run started (whole process tree); error text if the port stays held."""
+    try:
+        return stop_process(proc, port, port_free)
+    finally:
+        log.close()
 
 
 def newest_report(attempt_dir: Path) -> Path | None:
@@ -120,6 +120,16 @@ async def run_eval(name: str, port: int, attempt_dir: Path, audio: bool):
 
     scenario = list(EvalScenarioFile.load(ROOT / "evals" / "scenarios" / f"{name}.yaml"))[0]
     record = str(attempt_dir / "audio.wav") if audio else None
+    if audio:
+        # Real audio mode: the simulated restaurant is spoken with Kokoro TTS and the bot's audio is
+        # transcribed with Whisper (both local), instead of text in / text out.
+        scenario = dataclasses.replace(
+            scenario,
+            user_audio=True,
+            user_speech=AUDIO_USER_SPEECH,
+            bot_audio=True,
+            transcriber=AUDIO_TRANSCRIBER,
+        )
     params = EvalSessionParams(record_path=record)
     session = EvalSession.from_scenario(scenario, f"ws://localhost:{port}/ws", params=params)
     result = await session.run()
@@ -140,10 +150,23 @@ def judge_text(result) -> str:
 
 
 def run_attempt(name: str, attempt: int, expected: Expected, run_dir: Path, audio: bool) -> ScenarioResult:
+    stop_errors: list[str] = []
+    result = _run_attempt(name, attempt, expected, run_dir, audio, stop_errors)
+    if stop_errors:
+        result.notes.append(stop_errors[0])
+        result.violations = result.violations + stop_errors
+        result.status = "error"
+    return result
+
+
+def _run_attempt(
+    name: str, attempt: int, expected: Expected, run_dir: Path, audio: bool, stop_errors: list[str]
+) -> ScenarioResult:
     attempt_dir = run_dir / name / f"attempt-{attempt}"
     attempt_dir.mkdir(parents=True, exist_ok=True)
     notes: list[str] = []
     proc = log = None
+    port = 0
     try:
         port = pick_port()
         proc, log = start_bot(name, expected, attempt_dir, port)
@@ -157,7 +180,9 @@ def run_attempt(name: str, attempt: int, expected: Expected, run_dir: Path, audi
         report_file = newest_report(attempt_dir)  # the bot writes it when the client disconnects
     finally:
         if proc is not None:
-            stop_bot(proc, log)
+            err = stop_bot(proc, log, port)
+            if err:
+                stop_errors.append(err)
 
     bot_log = (attempt_dir / "bot.log").read_text(encoding="utf-8", errors="replace")
     requests = count_requests(bot_log, result.conversation or [])
@@ -168,24 +193,26 @@ def run_attempt(name: str, attempt: int, expected: Expected, run_dir: Path, audi
         notes.append(f"harness: {result.error or 'quota string in judge/persona output'}"[:200])
         return ScenarioResult(name, harness, None, [], report_file, requests, attempt, notes)
     if report_file is None:
-        return ScenarioResult(name, "error", result.passed, ["no call report was written"], None, requests, attempt, notes)
+        status = "error"
+        if downgrade_for_bot_quota("error", [], None, bot_log):
+            status = "quota_error"
+            notes.append("bot LLM hit 429/503 (see bot.log); no report")
+        return ScenarioResult(name, status, result.passed, ["no call report was written"], None, requests, attempt, notes)
 
     report = CallReport.model_validate_json(report_file.read_text(encoding="utf-8"))
     checked = check_report_full(report, expected)
     notes += checked.notes
     status = final_status(result.passed, checked.violations)
-    bot_quota = bot_log_quota_errors(bot_log)
-    if bot_quota:
-        notes.append(f"bot LLM quota/overload errors in bot.log: {bot_quota}")
-        if status == "fail":
-            status = "quota_error"  # the bot's own LLM was starved; not evidence about the bot's logic
+    if downgrade_for_bot_quota(status, checked.violations, report.outcome, bot_log):
+        notes.append("bot LLM hit 429/503 (see bot.log) and the call did not complete: recorded as quota_error")
+        status = "quota_error"
     return ScenarioResult(name, status, result.passed, checked.violations, report_file, requests, attempt, notes)
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--only", help="scenario name (comma-separated for several)")
-    parser.add_argument("--audio", action="store_true", help="record conversation audio")
+    parser.add_argument("--audio", action="store_true", help="audio mode: the simulated restaurant speaks (Kokoro) and the bot is transcribed (Whisper)")
     parser.add_argument("--attempts", type=int, default=3)
     parser.add_argument("--sleep", type=float, default=20.0, help="seconds between attempts and scenarios")
     args = parser.parse_args()
