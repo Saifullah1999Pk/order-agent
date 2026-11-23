@@ -434,3 +434,31 @@ Evidence: `evals/CONFIRMATION.md` and `evals/confirmation/attempt{1..4}/` (eval 
 - Unit tests for (1)–(3); full suite green.
 - One live `happy_path` text-mode run against `bot.py`, as in Task 8 (same commands; max 2 attempts, 60 s apart; stop processes after). Record the result in `evals/CONFIRMATION.md` under a new "After Task 8b" section: judge verdict, harness errors, report outcome, quoted vs cart total, any nudges in the bot log.
 - Commit: `fix: no silent stalls, quote fidelity, clearer opening; one judged metric`.
+### Task 8c: Groq for the simulated restaurant and judge; stop the agent's repeated questions (added by controller)
+
+Saif chose a free Groq API key (`GROQ_API_KEY` in `order-agent/.env`) so the simulated restaurant and the judge stop competing with the bot for Gemini's free limit. The bot stays on Gemini (`gemini-3.5-flash-lite`). Free services only.
+
+**Part A — Groq factories (TDD, no network in unit tests)**
+- `config.Settings` gains `groq_api_key: str | None = None` (env `GROQ_API_KEY`).
+- `order_agent/eval_llm.py`: `groq_llm(config: dict) -> <Pipecat Groq LLM service>` (a `BaseOpenAILLMService` subclass, as Pipecat evals require for persona and judge). Key from `load_settings().groq_api_key`, with a clear error if missing. Model from `config["model"]`.
+- Pick the model live: list Groq's models with the key, and choose a free-tier chat model that supports tool calling (the persona must call `end_call`). Record the model chosen and Groq's stated free limits (from their docs or response headers) in the report.
+- `evals/simulator.yaml` and `evals/judge.yaml` (eval and explainer) switch to `order_agent.eval_llm.groq_llm`. Keep the Gemini factories in place as documented alternatives.
+- Live check: one persona-style request with a tool call to `end_call`, confirming Groq returns a well-formed tool call through Pipecat's service.
+
+**Part B — the agent's repeated questions** (evidence: `evals/confirmation/` from the "After Task 8b fix round 1" run, attempt 1)
+- The agent repeated fee, tax and minimum-order questions and never asked for the total, so staff gave up. Fix in `order_agent/prompt.py`:
+  - ask about fees and minimum once, together;
+  - if staff already said there's no tax or minimum, don't ask again;
+  - once the items are agreed, ask for the total and the delivery time, then confirm.
+- Add prompt tests asserting these sentences.
+
+**Verification**
+- Unit tests green; all 11 scenarios parse.
+- Live: run `happy_path` until 2 clean passes (max 4 attempts, ≥30 s apart), and record them in `evals/CONFIRMATION.md` under "After Task 8c (Groq)". A clean pass means:
+  - the judge passed;
+  - no harness error;
+  - the bot report outcome is `ordered`;
+  - `quoted_total_pkr == cart_total_pkr`;
+  - the quoted total equals what the persona said.
+- If time and quota allow, also run `sold_out_no_substitute` once, and record it.
+- Commit: `feat: Groq for simulated restaurant and judge; no repeated questions`.
