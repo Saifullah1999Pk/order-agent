@@ -1,0 +1,33 @@
+   0.000  [ --]  run: simulation 'restaurant/biryani_order' -> ws://localhost:7861/ws
+   0.000  [ --]  user  -> modality: text | persona: factory:spike.native_llm.gemini_native_llm | max_turns: 10 | max_duration_s: 180 | max_silence_s: 30
+   0.000  [ --]  judge -> modality: text | eval: factory:order_agent.eval_llm.gemini_llm
+   0.000  [ --]  goal  -> Take the customer's order, quote the total and delivery time, then end the call.
+   0.015  [ --]  connected
+   2.750  [ --]  handshake: ok (bot-ready)
+   2.750  [ --]  persona: listening (up to 10 turn(s), 180s, 30s of silence)
+   2.750  [ --]  event: metrics  'ttfb, processing'
+   5.765  [ --]  event: llm_started
+   7.781  [ --]  event: metrics  'ttfb'
+   7.781  [ --]  event: metrics  'ttfat'
+   7.781  [ --]  event: metrics  'tokens'
+   7.781  [ --]  event: llm_response  'Hi, I would like to order two chicken biryanis for delivery, please.'
+  15.156  [ --]  send: 'Sure, two chicken biryanis. Anything else with that?' (persona, text)
+  15.156  [ --]  event: persona_turn  'Sure, two chicken biryanis. Anything else with that?'
+  15.156  [ --]  event: bot_interrupted
+  15.172  [ --]  event: llm_started
+  19.390  [ --]  event: metrics  'ttfb'
+  19.390  [ --]  event: metrics  'ttfat'
+  19.422  [ --]  event: metrics  'tokens'
+  19.422  [ --]  event: llm_response  'No, that is everything. What is the total?'
+  23.734  [ --]  send: "That'll be eighteen hundred for the biryanis plus one-fifty delivery, so nineteen-fifty total. Delivery takes about forty-five minutes." (persona, text)
+  23.734  [ --]  event: persona_turn  "That'll be eighteen hundred for the biryanis plus one-fifty delivery, so nineteen-fifty total. Delivery takes about forty-five minutes."
+  23.734  [ --]  event: bot_interrupted
+  23.750  [ --]  event: llm_started
+  24.250  [ --]  event: metrics  'ttfb'
+  24.250  [ --]  event: metrics  'ttfat'
+  24.281  [ --]  event: metrics  'tokens'
+  24.281  [ --]  event: llm_response  'That sounds good. My address is 14 Garden Road.'
+  25.343  [ --]  event: end_call  'Order for two chicken biryanis taken successfully with total and delivery time quoted.'
+  25.343  [ --]  persona: ended by end_call after 2 turn(s)
+  26.859  [ --]  judge: goal achieved: P(yes)=1.00
+  26.859  [ --]  done: PASS (0 failure(s))

@@ -1,0 +1,35 @@
+   0.000  [ --]  run: simulation 'restaurant/biryani_order' -> ws://localhost:7861/ws
+   0.000  [ --]  user  -> modality: text | persona: factory:order_agent.eval_llm.gemini_llm | max_turns: 10 | max_duration_s: 180 | max_silence_s: 30
+   0.000  [ --]  judge -> modality: text | eval: factory:order_agent.eval_llm.gemini_llm
+   0.000  [ --]  goal  -> Take the customer's order, quote the total and delivery time, then end the call.
+   0.000  [ --]  connected
+   3.609  [ --]  handshake: ok (bot-ready)
+   3.609  [ --]  persona: listening (up to 10 turn(s), 180s, 30s of silence)
+   3.609  [ --]  event: metrics  'ttfb, processing'
+   6.656  [ --]  event: llm_started
+   7.765  [ --]  event: metrics  'ttfb'
+   7.765  [ --]  event: metrics  'ttfat'
+   7.765  [ --]  event: metrics  'tokens'
+   7.765  [ --]  event: llm_response  'Hi, I would like to order two chicken biryani for delivery, please.'
+   8.937  [ --]  send: 'Got it, two chicken biryani. Would you like to add any raita or anything else?' (persona, text)
+   8.937  [ --]  event: persona_turn  'Got it, two chicken biryani. Would you like to add any raita or anything else?'
+   8.937  [ --]  event: bot_interrupted
+   8.953  [ --]  event: llm_started
+  14.968  [ --]  event: metrics  'ttfb'
+  14.984  [ --]  event: metrics  'ttfat'
+  14.984  [ --]  event: metrics  'tokens'
+  14.984  [ --]  event: llm_response  'No, just the biryani, please. What is the total?'
+  16.031  [ --]  send: 'That will be eighteen hundred for the biryani plus one fifty for delivery, so nineteen fifty total, and it will take about forty-five minutes.' (persona, text)
+  16.031  [ --]  event: persona_turn  'That will be eighteen hundred for the biryani plus one fifty for delivery, so nineteen fifty total, and it will take about forty-five minutes.'
+  16.046  [ --]  event: bot_interrupted
+  16.046  [ --]  event: llm_started
+  16.828  [ --]  event: metrics  'ttfb'
+  16.828  [ --]  event: metrics  'ttfat'
+  16.859  [ --]  event: metrics  'tokens'
+  16.859  [ --]  event: llm_response  'That is fine. My address is 42-B, Block 6, PECHS.'
+  18.078  [ --]  event: end_call  'Order for two chicken biryans placed successfully with address and total quoted.'
+  18.078  [ --]  persona: ended by end_call after 2 turn(s)
+  18.281  [ --]  event: harness_error  'Error during completion: Error code: 400'
+  26.078  [ --]  judge: goal achieved: P(yes)=1.00
+  26.078  [ --]  FAIL: harness: Error during completion: Error code: 400
+  26.078  [ --]  done: FAIL (1 failure(s))

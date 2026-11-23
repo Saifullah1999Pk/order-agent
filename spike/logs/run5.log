@@ -1,0 +1,25 @@
+[32m2026-11-23 16:47:58.037[0m | [1mINFO    [0m | [36mpipecat[0m:[36m<module>[0m:[36m54[0m - [1mᓚᘏᗢ Pipecat 1.17.0 (Python 3.12.16 (main, Oct 26 2026, 14:10:56) [MSC v.1944 64 bit (AMD64)]) ᓚᘏᗢ[0m
+Simulated scenarios:
+  restaurant/biryani_order:
+    user  -> modality: text | persona: factory:spike.native_llm.gemini_native_llm | max_turns: 10 | max_duration_s: 180 | max_silence_s: 30
+    judge -> modality: text | eval: factory:order_agent.eval_llm.gemini_llm
+    goal  -> Take the customer's order, quote the total and delivery time, then end the call.
+
+    conversation:
+      bot: Hi, I would like to order two chicken biryanis for delivery, please.
+      user: Sure, two chicken biryanis. Anything else with that?
+      bot: No, that is everything. What is the total?
+      user: That'll be eighteen hundred for the biryanis plus one-fifty delivery, so nineteen-fifty total. Delivery takes about forty-five minutes.
+      bot: That sounds good. My address is 14 Garden Road.
+
+      ended by end_call after 2 persona turn(s)
+
+    judge: P(yes)=1.00
+
+    persona: succeeded: Order for two chicken biryanis taken successfully with total and delivery time quoted.
+
+  ✓ ws://localhost:7861/ws restaurant/biryani_order end_call (27702ms)
+
+  1/1 passed  ·  27.7s
+  logs: C:\Users\Saif\Voice-Agent\order-agent
+

@@ -1,0 +1,31 @@
+   0.000  [ --]  run: simulation 'restaurant/biryani_order' -> ws://localhost:7861/ws
+   0.000  [ --]  user  -> modality: text | persona: factory:order_agent.eval_llm.gemini_llm | max_turns: 10 | max_duration_s: 180 | max_silence_s: 30
+   0.000  [ --]  judge -> modality: text | eval: factory:order_agent.eval_llm.gemini_llm
+   0.000  [ --]  goal  -> Take the customer's order, quote the total and delivery time, then end the call.
+   0.016  [ --]  connected
+   1.797  [ --]  handshake: ok (bot-ready)
+   1.797  [ --]  persona: listening (up to 10 turn(s), 180s, 30s of silence)
+   1.797  [ --]  event: metrics  'ttfb, processing'
+   4.813  [ --]  event: llm_started
+   6.032  [ --]  event: metrics  'ttfb'
+   6.032  [ --]  event: metrics  'ttfat'
+   6.063  [ --]  event: metrics  'tokens'
+   6.063  [ --]  event: llm_response  "Hi, I'd like to order two chicken biryani for delivery, please."
+   7.594  [ --]  send: "Alright, so that's two chicken biryani. Can I get you anything else with that?" (persona, text)
+   7.594  [ --]  event: persona_turn  "Alright, so that's two chicken biryani. Can I get you anything else with that?"
+   7.594  [ --]  event: bot_interrupted
+   7.610  [ --]  event: llm_started
+   9.235  [ --]  event: metrics  'ttfb'
+   9.235  [ --]  event: metrics  'ttfat'
+   9.297  [ --]  event: metrics  'tokens'
+   9.297  [ --]  event: llm_response  'That is all, thank you. What is the total and how long will it take?'
+  11.047  [ --]  send: "Okay, so that'll be nineteen hundred and fifty rupees, and delivery will take about forty-five minutes. Thanks for calling Karachi Kitchen, goodbye!" (persona, text)
+  11.047  [ --]  event: persona_turn  "Okay, so that'll be nineteen hundred and fifty rupees, and delivery will take about forty-five minutes. Thanks for calling Karachi Kitchen, goodbye!"
+  11.047  [ --]  event: end_call  'The customer placed an order, received the total cost and delivery time, and the call goal was achieved.'
+  11.047  [ --]  persona: hung up; waiting for the bot's closing turn
+  11.047  [ --]  event: bot_interrupted
+  11.063  [ --]  event: llm_started
+  11.250  [ --]  event: harness_error  'Error during completion: Error code: 400'
+  11.250  [ --]  error: harness pipeline: Error during completion: Error code: 400
+  11.250  [ --]  persona: ended by error after 2 turn(s)
+  11.250  [ --]  done: FAIL (1 failure(s))

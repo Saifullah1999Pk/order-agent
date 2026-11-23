@@ -1,0 +1,23 @@
+Simulated scenarios:
+  restaurant/biryani_order:
+    user  -> modality: text | persona: factory:order_agent.eval_llm.gemini_llm | max_turns: 10 | max_duration_s: 180 | max_silence_s: 30
+    judge -> modality: text | eval: factory:order_agent.eval_llm.gemini_llm
+    goal  -> Take the customer's order, quote the total and delivery time, then end the call.
+
+    conversation:
+      bot: Hi, I would like to order two chicken biryani for delivery, please.
+      user: Got it, two chicken biryani. Would you like to add any raita or anything else?
+      bot: No, just the biryani, please. What is the total?
+      user: That will be eighteen hundred for the biryani plus one fifty for delivery, so nineteen fifty total, and it will take about forty-five minutes.
+      bot: That is fine. My address is 42-B, Block 6, PECHS.
+
+      ended by end_call after 2 persona turn(s)
+  ✗ ws://localhost:7861/ws restaurant/biryani_order end_call (27125ms)
+
+  Failures (1 of 1):
+
+  ✗ ws://localhost:7861/ws restaurant/biryani_order — Error during completion: Error code: 400
+
+  0/1 passed, 1 failed  ·  27.1s
+  logs: C:\Users\Saif\Voice-Agent\order-agent
+

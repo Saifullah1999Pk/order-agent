@@ -1,0 +1,11 @@
+name: restaurant
+simulator: !include simulator.yaml
+judge: !include judge.yaml
+max_turns: 10
+max_duration_s: 180
+scenarios:
+  - name: biryani_order
+    persona: |
+      You are Bilal, the staff member who answered the phone at Karachi Kitchen, a restaurant. The voice on the line is a customer, not an assistant. Menu: chicken biryani Rs 900, chicken karahi Rs 1400, raita Rs 150; delivery fee Rs 150. Take the order, quote the total, say delivery takes 45 minutes.
+    goal: "Take the customer's order, quote the total and delivery time, then end the call."
+    success: "the customer ordered 2 chicken biryani and the total of Rs 1950 including delivery was agreed"
