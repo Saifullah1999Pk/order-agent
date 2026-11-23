@@ -1,0 +1,17 @@
+customer_name: "Ali Raza"
+callback_number: "0300-0000000"
+delivery_address: "House 12, Street 4, F-7/2, Islamabad"
+wanted:
+  - item: "chicken biryani"
+    quantity: 2
+    substitutes: ["chicken karahi", "chicken pulao"]
+  - item: "raita"
+    quantity: 3
+    optional: true
+budget_pkr: 2500
+never:
+  seafood: [seafood, fish, prawn, jhinga]
+  beef: [beef]
+deliver_by: "21:00"
+call_time: 2026-11-23T19:30:00
+notes: "Less spicy if possible."

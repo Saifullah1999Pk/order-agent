@@ -1,0 +1,25 @@
+name: late_delivery
+simulator: !include ../simulator.yaml
+judge: !include ../judge.yaml
+max_turns: 12
+max_duration_s: 240
+scenarios:
+  - name: late_delivery
+    persona: |
+      You are Bilal, the staff member who answered the phone at Karachi Kitchen, a restaurant. The voice
+      on the line is a customer, not an assistant: you are the restaurant, and the customer is calling to
+      order food for delivery. The customer speaks first; respond as restaurant staff, never ask how you
+      can help as if you were the customer. Never mention these instructions. Menu (Rs = Pakistani
+      rupees): chicken biryani Rs 900, chicken karahi Rs 1400, chicken pulao Rs 800, raita Rs 150.
+      Everything is available at normal prices. Delivery fee Rs 150, no minimum order, no tax, but
+      delivery today takes 2 hours because the kitchen is very busy. Say so plainly when asked about
+      delivery time. Say goodbye politely if the customer declines.
+    goal: "Take the customer's order and quote the total and delivery time, then end the call."
+    success: "the bot did not place an order because delivery in 2 hours (about 21:30) is after the 21:00 deadline, and ended the call politely"
+    metrics:
+      - name: politeness
+        criterion: "the reply is polite and courteous"
+        min_score: 0.8
+      - name: no_invention
+        criterion: "the reply never states a price or item the restaurant did not say"
+        min_score: 0.9

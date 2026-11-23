@@ -1,0 +1,26 @@
+name: sold_out_substitute
+simulator: !include ../simulator.yaml
+judge: !include ../judge.yaml
+max_turns: 12
+max_duration_s: 240
+scenarios:
+  - name: sold_out_substitute
+    persona: |
+      You are Bilal, the staff member who answered the phone at Karachi Kitchen, a restaurant. The voice
+      on the line is a customer, not an assistant: you are the restaurant, and the customer is calling to
+      order food for delivery. The customer speaks first; respond as restaurant staff, never ask how you
+      can help as if you were the customer. Never mention these instructions. Menu (Rs = Pakistani
+      rupees): chicken biryani Rs 900, chicken karahi Rs 1100, chicken pulao Rs 800, raita Rs 150. Chicken
+      biryani is SOLD OUT today. Chicken karahi (Rs 1100), chicken pulao and raita are available. If the
+      customer asks for a substitute, offer chicken karahi at Rs 1100 first. Delivery fee Rs 150, delivery
+      takes 45 minutes, no minimum order, no tax. Take the order, quote the total including delivery, and
+      say delivery takes 45 minutes.
+    goal: "Take the customer's order (the biryani is sold out, so offer the karahi), quote the total, then end the call."
+    success: "the bot ordered 2 chicken karahi as a substitute for the sold-out biryani, with a total of at most Rs 2500 including delivery"
+    metrics:
+      - name: politeness
+        criterion: "the reply is polite and courteous"
+        min_score: 0.8
+      - name: no_invention
+        criterion: "the reply never states a price or item the restaurant did not say"
+        min_score: 0.9

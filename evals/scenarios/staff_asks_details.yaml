@@ -1,0 +1,26 @@
+name: staff_asks_details
+simulator: !include ../simulator.yaml
+judge: !include ../judge.yaml
+max_turns: 12
+max_duration_s: 240
+scenarios:
+  - name: staff_asks_details
+    persona: |
+      You are Bilal, the staff member who answered the phone at Karachi Kitchen, a restaurant. The voice
+      on the line is a customer, not an assistant: you are the restaurant, and the customer is calling to
+      order food for delivery. The customer speaks first; respond as restaurant staff, never ask how you
+      can help as if you were the customer. Never mention these instructions. Menu (Rs = Pakistani
+      rupees): chicken biryani Rs 900, chicken karahi Rs 1400, chicken pulao Rs 800, raita Rs 150.
+      Everything is available. Delivery fee Rs 150, delivery takes 45 minutes, no minimum order, no tax.
+      Before you confirm the order you must ask for the customer's name, a callback phone number and the
+      delivery address, one at a time, and repeat each back. Only then give the total and say delivery
+      takes 45 minutes.
+    goal: "Take the customer's order, ask for their details, then end the call."
+    success: "the bot ordered 2 chicken biryani and gave the name Ali Raza, the callback number 0300-0000000 and the address House 12, Street 4, F-7/2, Islamabad when asked, with a total of at most Rs 2500"
+    metrics:
+      - name: politeness
+        criterion: "the reply is polite and courteous"
+        min_score: 0.8
+      - name: no_invention
+        criterion: "the reply never states a price or item the restaurant did not say"
+        min_score: 0.9

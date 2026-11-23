@@ -1,0 +1,27 @@
+# Task 8 confirmation runs: happy_path, text mode, real bot.py
+
+Command per attempt (fresh bot each time, about 60-75 s apart):
+`ORDER_BRIEF=evals/briefs/happy_path.yaml ORDER_CALL_TIME=2026-11-23T19:30:00 ORDER_REPORTS_DIR=reports/confirm uv run python bot.py --port 7860`, then
+`uv run pipecat eval run evals/scenarios/happy_path.yaml --bot-url ws://localhost:7860/ws -v --logs-dir <dir>`.
+4 attempts used (the whole budget). Port 7860 was free. Bot stopped after each.
+
+**Result: confirmation NOT met: 1 clean pass out of 4 attempts (attempt 4).** Two runs completed
+without harness errors (3 and 4); only 4 is a true pass.
+
+| # | Harness | Judge | Persona as staff? | Bot report | Files |
+|---|---|---|---|---|---|
+| 1 | FAIL: judge call 429 (free tier, 15 req/min/model) after a bot-side 429 mid-call; ended by silence | not scored | yes | call_dropped, no order (bot's own LLM got 429 after confirming; total Rs 2100) | attempt1_quota/ |
+| 2 | FAIL on goal: judge verdicts for 4 of 6 metric turns failed with 429; persona gave up | P(yes)=0.00 | yes | call_dropped, no order | attempt2/ |
+| 3 | no harness error, "PASS" | P(yes)=1.00 (false pass) | yes | call_dropped, no order: bot's LLM returned an empty reply after `set_fees`, bot went silent, run ended by silence after 4 persona turns | attempt3/ |
+| 4 | PASS, ended by bot (`end_call`), 21.8 s | P(yes)=1.00, politeness 1.00, no_invention 1.00 | yes | ordered; 2 x chicken biryani @900, 1 x raita @150, delivery 150, cart total Rs 2100, delivery by 20:15 | attempt4/ |
+
+Each directory holds the conversation JSON (`eval/happy_path__happy_path.conversation.json`), the
+eval log and the bot's report (`<timestamp>.json/.txt`).
+
+## Findings
+1. **Persona acts as restaurant staff** in all 4 runs (welcomes, quotes menu, fee, 45 min). It never acted as an assistant.
+2. **Quota is the main harness hazard.** The 15 requests/min limit on gemini-3.5-flash-lite is shared by bot, persona and judge. The judge alone sends 1 request per metric per bot turn plus 1 for the goal, so a single run bursts past the limit (runs 1 and 2). Task 9 must map these to `quota_error`; the harness reports them as "judge call failed ... Error code: 429" or as a failed goal, so the message has to be inspected, including in the per-metric lines.
+3. **Judge false pass (run 3):** P(yes)=1.00 although the bot never ordered. The deterministic report check (outcome ordered, total) must override the judge, as the spec says.
+4. **Bot defect, run 3:** an empty LLM completion after a tool call leaves the bot silent for the rest of the call (no retry or nudge). Run 1 shows the same shape from a 429.
+5. **Bot defect, run 4:** staff said "nineteen hundred fifty" but the bot called `confirm_order(quoted_total_pkr=2100)`, so it passed its own cart total rather than the quote, defeating the mismatch guard (Review Focus 3). The persona's 1950 was partly the persona's own arithmetic (the bot never stated quantities of raita), but the bot should have confirmed or corrected it. The judge did not catch it.
+6. Bot style: it asks odd questions instead of stating the order up front ("make it less spicy?" before ordering). Prompt tuning, not an eval problem.

@@ -1,0 +1,101 @@
+{
+  "outcome": "call_dropped",
+  "reason": "call ended without end_call",
+  "items": [
+    {
+      "name": "chicken biryani",
+      "line_item": "chicken biryani",
+      "quantity": 2,
+      "unit_price_pkr": "900"
+    },
+    {
+      "name": "raita",
+      "line_item": "raita",
+      "quantity": 1,
+      "unit_price_pkr": "150"
+    }
+  ],
+  "delivery_fee_pkr": "150",
+  "tax_pkr": "0",
+  "cart_total_pkr": "2100",
+  "quoted_total_pkr": null,
+  "delivery_eta": null,
+  "tool_events": [
+    {
+      "tool": "add_item",
+      "args": {
+        "name": "chicken biryani",
+        "quantity": 2,
+        "unit_price_pkr": "900"
+      },
+      "ok": true,
+      "message": "Added 2 x chicken biryani at 900 PKR each. Cart total is now 1800 PKR.",
+      "at": "2026-11-23T17:54:56.722972"
+    },
+    {
+      "tool": "add_item",
+      "args": {
+        "name": "raita",
+        "quantity": 1,
+        "unit_price_pkr": "150"
+      },
+      "ok": true,
+      "message": "Added 1 x raita at 150 PKR each. Cart total is now 1950 PKR.",
+      "at": "2026-11-23T17:54:56.722972"
+    },
+    {
+      "tool": "set_fees",
+      "args": {
+        "delivery_fee_pkr": "150",
+        "tax_pkr": "0"
+      },
+      "ok": true,
+      "message": "Fees recorded: delivery 150 PKR, tax 0 PKR. Cart total is now 2100 PKR.",
+      "at": "2026-11-23T17:54:56.722972"
+    }
+  ],
+  "transcript": [
+    {
+      "role": "agent",
+      "text": "Hello, I would like to place a delivery order, please.",
+      "at": "2026-11-23T17:55:02.638445"
+    },
+    {
+      "role": "agent",
+      "text": "What do you have available in chicken dishes, and what are their prices?",
+      "at": "2026-11-23T17:55:04.792773"
+    },
+    {
+      "role": "agent",
+      "text": "",
+      "at": "2026-11-23T17:55:06.466888"
+    },
+    {
+      "role": "agent",
+      "text": "",
+      "at": "2026-11-23T17:55:07.639855"
+    },
+    {
+      "role": "agent",
+      "text": "",
+      "at": "2026-11-23T17:55:08.225820"
+    },
+    {
+      "role": "agent",
+      "text": "",
+      "at": "2026-11-23T17:55:09.884793"
+    },
+    {
+      "role": "agent",
+      "text": "",
+      "at": "2026-11-23T17:55:10.483074"
+    },
+    {
+      "role": "agent",
+      "text": "",
+      "at": "2026-11-23T17:55:12.750689"
+    }
+  ],
+  "started_at": "2026-11-23T17:54:56.722972",
+  "ended_at": "2026-11-23T17:55:45.358069"
+}

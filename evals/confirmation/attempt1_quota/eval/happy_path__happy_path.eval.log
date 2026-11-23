@@ -1,0 +1,113 @@
+   0.000  [ --]  run: simulation 'happy_path/happy_path' -> ws://localhost:7860/ws
+   0.000  [ --]  user  -> modality: text | persona: factory:order_agent.eval_llm.gemini_native_llm | max_turns: 12 | max_duration_s: 240 | max_silence_s: 30
+   0.000  [ --]  judge -> modality: text | eval: factory:order_agent.eval_llm.gemini_llm
+   0.000  [ --]  goal  -> Take the customer's order, quote the total and delivery time, then end the call.
+   0.000  [ --]  connected
+   2.813  [ --]  handshake: ok (bot-ready)
+   2.813  [ --]  persona: listening (up to 12 turn(s), 240s, 30s of silence)
+   2.813  [ --]  event: metrics  'ttfb, processing'
+   5.828  [ --]  event: llm_started
+   6.516  [ --]  event: metrics  'ttfb'
+   6.516  [ --]  event: metrics  'ttfat'
+   6.516  [ --]  event: metrics  'tokens'
+   6.516  [ --]  event: llm_response  'Hello, I would like to place a delivery order, please.'
+   7.281  [ --]  send: 'Welcome to Karachi Kitchen, what can I get started for you?' (persona, text)
+   7.281  [ --]  event: persona_turn  'Welcome to Karachi Kitchen, what can I get started for you?'
+   7.281  [ --]  event: bot_interrupted
+   7.297  [ --]  event: llm_started
+   7.875  [ --]  event: metrics  'ttfb'
+   7.875  [ --]  event: metrics  'ttfat'
+   7.875  [ --]  event: metrics  'tokens'
+   7.875  [ --]  event: llm_response  'Could you please tell me what you have available and your prices?'
+   8.719  [ --]  send: 'We have chicken biryani for nine hundred rupees, chicken karahi for fourteen hundred, chicken pulao for eight hundred, and raita for one hundred fifty rupees.' (persona, text)
+   8.719  [ --]  event: persona_turn  'We have chicken biryani for nine hundred rupees, chicken karahi for fourteen hundred, chicken pulao for eight hundred, and raita for one hundred fifty rupees.'
+   8.719  [ --]  event: bot_interrupted
+   8.719  [ --]  event: llm_started
+  11.563  [ --]  event: metrics  'ttfb'
+  11.563  [ --]  event: metrics  'ttfat'
+  11.563  [ --]  event: metrics  'tokens'
+  11.563  [ --]  event: llm_response
+  11.563  [ --]  event: function_call  'add_item'
+  11.563  [ --]  event: function_call_stopped  'add_item'
+  11.578  [ --]  event: llm_started
+  14.594  [ --]  event: metrics  'ttfb'
+  14.594  [ --]  event: metrics  'ttfat'
+  14.594  [ --]  event: metrics  'tokens'
+  14.594  [ --]  event: llm_response
+  14.594  [ --]  event: function_call  'add_item'
+  14.594  [ --]  event: function_call_stopped  'add_item'
+  14.609  [ --]  event: llm_started
+  15.125  [ --]  event: metrics  'ttfb'
+  15.125  [ --]  event: metrics  'ttfat'
+  15.203  [ --]  event: metrics  'tokens'
+  15.203  [ --]  event: llm_response  'Could you tell me what the delivery fee and tax are, and if you have a minimum order?'
+  15.203  [ --]  event: metrics
+  15.203  [ --]  event: metrics  'characters'
+  15.828  [ --]  send: 'The delivery fee is one hundred fifty rupees, there is no tax, and we do not have a minimum order.' (persona, text)
+  15.828  [ --]  event: persona_turn  'The delivery fee is one hundred fifty rupees, there is no tax, and we do not have a minimum order.'
+  15.828  [ --]  event: bot_interrupted
+  15.828  [ --]  event: metrics  'ttfb'
+  15.828  [ --]  event: metrics  'processing'
+  15.844  [ --]  event: llm_started
+  16.375  [ --]  event: metrics  'ttfb'
+  16.375  [ --]  event: metrics  'ttfat'
+  16.375  [ --]  event: metrics  'tokens'
+  16.375  [ --]  event: llm_response
+  16.375  [ --]  event: function_call  'set_fees'
+  16.375  [ --]  event: function_call_stopped  'set_fees'
+  16.391  [ --]  event: llm_started
+  17.266  [ --]  event: metrics  'ttfb'
+  17.266  [ --]  event: metrics  'ttfat'
+  17.281  [ --]  event: metrics  'tokens'
+  17.281  [ --]  event: llm_response  'Could you please make it less spicy if possible?'
+  17.297  [ --]  event: metrics
+  17.297  [ --]  event: metrics  'characters'
+  17.906  [ --]  send: 'Sure, we can make it less spicy. What would you like to order?' (persona, text)
+  17.906  [ --]  event: persona_turn  'Sure, we can make it less spicy. What would you like to order?'
+  17.906  [ --]  event: bot_interrupted
+  17.906  [ --]  event: metrics  'ttfb'
+  17.906  [ --]  event: metrics  'processing'
+  17.922  [ --]  event: llm_started
+  18.844  [ --]  event: metrics  'ttfb'
+  18.844  [ --]  event: metrics  'ttfat'
+  18.875  [ --]  event: metrics  'tokens'
+  18.875  [ --]  event: llm_response  'Could you please tell me if you need my delivery address and phone number now?'
+  19.734  [ --]  send: 'Yes, please tell me your address and phone number, and what food you would like.' (persona, text)
+  19.734  [ --]  event: persona_turn  'Yes, please tell me your address and phone number, and what food you would like.'
+  19.734  [ --]  event: bot_interrupted
+  19.750  [ --]  event: llm_started
+  20.250  [ --]  event: metrics  'ttfb'
+  20.250  [ --]  event: metrics  'ttfat'
+  20.344  [ --]  event: metrics  'tokens'
+  20.344  [ --]  event: llm_response  'My address is House 12, Street 4, F-7/2, Islamabad, and my callback number is 0300-0000000. I would like two chicken biryani and one raita, and please make it less spicy if possible.'
+  21.125  [ --]  send: 'Got it, two chicken biryani and one raita, less spicy. That is nineteen hundred fifty rupees total including delivery, and it will take forty-five minutes.' (persona, text)
+  21.125  [ --]  event: persona_turn  'Got it, two chicken biryani and one raita, less spicy. That is nineteen hundred fifty rupees total including delivery, and it will take forty-five minutes.'
+  21.125  [ --]  event: bot_interrupted
+  21.141  [ --]  event: llm_started
+  21.813  [ --]  event: metrics  'ttfb'
+  21.813  [ --]  event: metrics  'ttfat'
+  21.813  [ --]  event: metrics  'tokens'
+  21.813  [ --]  event: llm_response
+  21.813  [ --]  event: function_call  'confirm_order'
+  21.813  [ --]  event: function_call_stopped  'confirm_order'
+  21.813  [ --]  event: llm_started
+  22.063  [ --]  event: metrics  'tokens'
+  22.063  [ --]  event: llm_response
+  52.078  [ --]  persona: ended by silence after 6 turn(s)
+  52.078  [ --]  judge: the bot's tool calls: add_item({"unit_price_pkr": 900, "name": "chicken biryani", "quantity": 2}); add_item({"quantity": 1, "unit_price_pkr": 150, "name": "raita"}); set_fees({"delivery_fee_pkr": 150, "tax_pkr": 0}); confirm_order({"delivery_minutes": 45, "quoted_total_pkr": 2100})
+  58.484  [ --]  judge: turn 1 politeness none: judge call failed: OpenAILLMService#0 failed to answer: Error code: 429
+  58.484  [ --]  judge: turn 2 politeness yes: P(meets)=0.95, P(fails)=0.05, P(not_applicable)=0.00
+  58.484  [ --]  judge: turn 3 politeness yes: P(meets)=0.99, P(fails)=0.01, P(not_applicable)=0.00
+  58.484  [ --]  judge: turn 4 politeness none: judge call failed: OpenAILLMService#0 failed to answer: Error code: 429
+  58.484  [ --]  judge: turn 5 politeness none: judge call failed: OpenAILLMService#0 failed to answer: Error code: 429
+  58.484  [ --]  judge: turn 6 politeness none: judge call failed: OpenAILLMService#0 failed to answer: Error code: 429
+  58.484  [ --]  judge: politeness = 0.33 (below 0.80): turn 1: judge call failed: OpenAILLMService#0 failed to answer: Error code: 429; turn 4: judge call failed: OpenAILLMService#0 failed to answer: Error code: 429; turn 5: judge call failed: OpenAILLMService#0 failed to answer: Error code: 429; turn 6: judge call failed: OpenAILLMService#0 failed to answer: Error code: 429
+  58.484  [ --]  judge: turn 1 no_invention none: judge call failed: OpenAILLMService#0 failed to answer: Error code: 429
+  58.484  [ --]  judge: turn 2 no_invention yes: P(meets)=0.90, P(fails)=0.10, P(not_applicable)=0.00
+  58.484  [ --]  judge: turn 3 no_invention yes: P(meets)=0.99, P(fails)=0.01, P(not_applicable)=0.00
+  58.484  [ --]  judge: turn 4 no_invention none: judge call failed: OpenAILLMService#0 failed to answer: Error code: 429
+  58.484  [ --]  judge: turn 5 no_invention none: judge call failed: OpenAILLMService#0 failed to answer: Error code: 429
+  58.484  [ --]  judge: turn 6 no_invention none: judge call failed: OpenAILLMService#0 failed to answer: Error code: 429
+  58.484  [ --]  judge: no_invention = 0.33 (below 0.90): turn 1: judge call failed: OpenAILLMService#0 failed to answer: Error code: 429; turn 4: judge call failed: OpenAILLMService#0 failed to answer: Error code: 429; turn 5: judge call failed: OpenAILLMService#0 failed to answer: Error code: 429; turn 6: judge call failed: OpenAILLMService#0 failed to answer: Error code: 429
+  58.484  [ --]  judge: no verdict on the goal: judge call failed: OpenAILLMService#0 failed to answer: Error code: 429
+  58.484  [ --]  done: FAIL (1 failure(s))
