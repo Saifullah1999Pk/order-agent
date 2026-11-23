@@ -1,6 +1,6 @@
 # order-agent v1 results
 
-For: Awais Qureshi. Written 2026-11-23. All evidence is under [evals/confirmation/task10/](../evals/confirmation/task10/).
+For: Awais Qureshi. Written 2026-11-23. All evidence is under [evals/confirmation/task10/](../evals/confirmation/task10/) and, for the bot on Groq, [evals/confirmation/task10b/](../evals/confirmation/task10b/).
 
 ## 1. Summary
 
@@ -15,8 +15,11 @@ report override the judge.
 definition of done.** The 8 are the 6 that passed in the full text run, plus 2 (`happy_path`,
 `price_drop_optional`) that passed when I re-ran the 5 scenarios that had not passed. The other three
 (`minimum_reachable`, `staff_asks_details`, `terse_staff`) did not pass. The re-run of those was cut off by quota, so
-they are inconclusive rather than proven bot failures. The audio check is **not done**: the Gemini free-tier daily
-quota ran out before the three audio scenarios could run (section 5). Unit tests: 153 pass.
+they are inconclusive rather than proven bot failures. The audio check was **not done on Gemini**: the Gemini free-tier daily
+quota ran out before the three audio scenarios could run (section 5). Later the same evening I re-ran them with the
+bot on Groq (`qwen/qwen3.8-27b`): `happy_path` passed in audio, the other two did not, and the three text
+retries could not run because Groq's daily token cap on the persona model was reached. That is kept apart from the
+Gemini results in section 9. Unit tests: 160 pass.
 
 Most failures come from the test harness and free-tier limits, not from the bot breaking its rules. After
 re-classifying the saved attempts with the fixed runner (section 2), the 34 text attempts are: 8 pass, 10 fail and 16
@@ -68,6 +71,8 @@ Audio mode (`--audio`, Kokoro for the restaurant, Whisper for the bot):
 
 [audio-run-summary.md](../evals/confirmation/task10/audio-run-summary.md) is the re-classified summary
 (the [original](../evals/confirmation/task10/audio-run-summary-original.md) recorded them as `fail`, plus a note).
+
+Section 9 has a second audio run with the bot on Groq: `happy_path` passed (bot: qwen/qwen3.8-27b), the other two did not.
 
 The manual hold/silence check ("one minute please" then silence) is **pending (manual)**. Saif has not run it yet.
 
@@ -188,7 +193,7 @@ scenario's `not_ordered` outcome relies on that.
 
 ## 8. Next steps
 
-1. Re-run the 3 non-passing scenarios and the 3 audio scenarios after the daily quota resets (the 500/day Gemini cap
+1. (Section 9 re-ran the audio scenarios on a Groq bot; the 3 text retries are still open.) Re-run the 3 non-passing scenarios, and the 2 failed audio scenarios, after the daily quotas reset (the 500/day Gemini cap
    resets in about 17 hours). To fit the free tier: run fewer scenarios per day, lower `--attempts` (for example 2),
    and spread the roles across free models (for example move the bot or the judge to another free model so the
    daily caps are not shared).
@@ -198,3 +203,77 @@ scenario's `not_ordered` outcome relies on that.
    limited to English Whisper and Kokoro), and the business-profile inbound-agent shape (the same rules engine
    with a restaurant profile instead of a customer brief).
 4. Run the manual hold/silence check, then measure latency on 10 or more real audio turns.
+
+## 9. Bot on Groq (2026-11-23 evening)
+
+**Why it was run.** The Gemini free daily caps were used up for the day (a probe at about 20:00 found
+`gemini-3.5-flash-lite` and `gemini-2.5-flash` returning 429, every other Gemini model 503). Saif approved Groq's free
+tier for the bot as well, so the remaining runs used `ORDER_AGENT_LLM_PROVIDER=groq` (code:
+`order_agent/llm_factory.py`; the Gemini path is the unchanged default). Every number below is from the Groq-bot
+runs only and is **not merged** with the Gemini results above. A scenario that passed with either bot is labelled
+"pass (bot: <model>)".
+
+**Bot model: `qwen/qwen3.8-27b`** (the one free Groq chat model not used by the persona or judge, so it has its own
+per-minute bucket). Its text smoke test (`happy_path`, 1 attempt) passed with correct tool calls
+([summary](../evals/confirmation/task10b/smoke-happy_path-text-summary.md)). I also tried `openai/gpt-oss-20b` as the
+bot in audio mode and stopped it after 2 failed attempts of `happy_path`, because it called a tool that does not
+exist (`open_call`, rejected by Groq's tool validation) and one call ended `not_ordered` with "No response from
+restaurant" ([partial summary](../evals/confirmation/task10b/audio-gpt-oss-20b-aborted-summary.md)). I did not try
+`gpt-oss-120b` as the bot because it is the persona's model and shares its token bucket.
+
+Setting up the Groq bot: reasoning is switched off for Qwen (`reasoning_effort=none`, so no `<think>` text is
+spoken) and the "developer"-role opening and nudge messages are sent as "user" messages. On a 429 the Groq service
+has no Gemini-style retry setting; the OpenAI client underneath retries 2 times with its default back-off. No bot-side
+429 was seen in these runs.
+
+**Audio runs** (`--audio`, up to 3 attempts, `--sleep 20`;
+[summary](../evals/confirmation/task10b/audio-qwen3.8-27b-summary.md)):
+
+| Scenario | Result | Attempts |
+|---|---|---|
+| happy_path | **pass (bot: qwen/qwen3.8-27b)**, attempt 3/3 | 1: fail, call_dropped (the persona ended the call after 3 turns; the bot had made add_item x2 and set_fees but not confirm_order). 2: fail, no tool call at all, persona ended after 3 turns. 3: pass, add_item x2, set_fees, confirm_order, end_call |
+| sold_out_substitute | **fail** (0/3) | All three `call_dropped`. The persona ended the call after 2 to 3 turns; the bot made no tool calls in attempt 3 and no `confirm_order` in any |
+| pushes_forbidden | **fail** (0/3) | All three `call_dropped`; the persona ended the call after 4 to 5 turns. The bot made no tool call in attempts 1 and 2, and never `confirm_order` |
+
+No attempt broke a budget, forbidden-item or never-keyword rule (the only violations in the summary table are outcome
+and must-include). Reading the logs, two things together explain the fails. The same persona behaviour as in section
+3 (it calls `end_call` after a few turns, so the call is cut off). And in 4 of 9 attempts qwen made no `add_item`
+call even after the restaurant had stated prices, so the order was never built. The second is a weakness of this bot
+model in audio mode, though Whisper's mis-hearings (for example "Each and Radar") may also play a part. I did not
+change the prompt for it. The earlier Gemini audio pass of `happy_path` remains in
+[task9](../evals/confirmation/task9/happy_path-audio-summary.md).
+
+**Text retries (`minimum_reachable`, `staff_asks_details`, `terse_staff`): not run to a result.** Groq returned
+"429 ... tokens per day (TPD)" for the persona model `openai/gpt-oss-120b`, which is a daily cap and cannot be
+waited out with `--sleep`. 8 of the 9 attempts are `quota_error`; the 9th (`staff_asks_details` attempt 2) is recorded
+as `fail`, but its `eval.log` shows the persona said nothing ("ended by silence after 0 turn(s)"), so it is the same
+quota failure that the harness did not report as an error, not a bot result
+([summary](../evals/confirmation/task10b/text-retries-persona-tpd-summary.md)). These three remain **not passed**.
+
+**Latency on the Groq-bot audio runs** (bot `qwen/qwen3.8-27b`; 9 attempts; seconds; from
+[latency-audio-qwen3.8-27b.md](../evals/confirmation/task10b/latency-audio-qwen3.8-27b.md), computed by
+[evals/latency.py](../evals/latency.py), which now also reads `GroqLLMService` lines), next to the Gemini figures
+from section 4:
+
+| Stage | Groq bot: n | median | P90 | Gemini bot (section 4): n | median | P90 |
+|---|---|---|---|---|---|---|
+| End of user speech to bot speaking | 28 | 2.73 | 3.64 | 2 | 5.10 | n/m |
+| Transcript ready to bot speaking (LLM + TTS) | 28 | 1.87 | 2.65 | 2 | 4.19 | n/m |
+| STT (Whisper) TTFB | 31 | 0.86 | 1.13 | 4 | 0.91 | 1.35 |
+| LLM TTFB | 51 | 0.55 | 0.84 | 9 | 1.10 | 1.67 |
+| TTS (Kokoro) TTFB | 43 | 0.95 | 1.84 | 3 | 1.48 | 2.14 |
+
+The Groq sample is larger (28 speaking turns), but it comes from 3 scenarios and 9 calls, many of them cut short, and
+the measurement caveats of section 4 still apply (it excludes VAD/turn-detection wait and playback). The Gemini
+column is the 2-turn sample. The gpt-oss-20b partial run is in
+[latency-audio-gpt-oss-20b-aborted.md](../evals/confirmation/task10b/latency-audio-gpt-oss-20b-aborted.md) (2 turns; not
+used).
+
+**Updated scenario status** (overall, bot model in brackets):
+
+| Scenario | Status |
+|---|---|
+| happy_path | pass in text (bot: Gemini, section 2); pass in text smoke and in audio (bot: qwen/qwen3.8-27b) |
+| sold_out_substitute, pushes_forbidden | pass in text (bot: Gemini, section 2); audio **not passed** (bot: qwen/qwen3.8-27b, 0/3 each) |
+| minimum_reachable, staff_asks_details, terse_staff | **not passed**; Groq text retries blocked by the persona's daily token cap |
+| other 5 | unchanged from section 2 |

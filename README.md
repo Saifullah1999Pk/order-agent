@@ -14,6 +14,15 @@ Create `.env` (gitignored) with two free-tier keys:
     GOOGLE_API_KEY=...   # bot LLM (gemini-3.5-flash-lite, fallback gemini-2.5-flash)
     GROQ_API_KEY=...     # simulated restaurant (gpt-oss-120b) and judge (gpt-oss-20b), suite only
 
+The bot's LLM is Gemini by default. To run it on Groq's free tier instead (for example when Gemini's daily
+cap is used up), set in `.env` or the environment:
+
+    ORDER_AGENT_LLM_PROVIDER=groq              # "gemini" (default) or "groq"
+    ORDER_AGENT_GROQ_MODEL=qwen/qwen3.8-27b    # default; needs GROQ_API_KEY. gpt-oss-20b calls tools that do not exist
+
+The suite passes these to the bot it starts. Keep results from different bot models apart
+(see docs/results-v1.md section 9).
+
 Anything that imports Pipecat must be run with `PYTHONIOENCODING=utf-8` on Windows (the dev
 runner crashes on non-UTF-8 stdout). Prefix every command below with it.
 

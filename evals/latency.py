@@ -3,7 +3,7 @@
     uv run python evals/latency.py evals/results > evals/confirmation/task10/latency.md
 
 Per stage, as logged by Pipecat's metrics:
-  LLM TTFB   "GoogleLLMService#N TTFB: x"          (all logs, text and audio runs)
+  LLM TTFB   "GoogleLLMService#N TTFB: x" (or GroqLLMService)          (all logs, text and audio runs)
   TTS TTFB   "KokoroTTSService#N TTFB: x"          (all logs, text and audio runs)
   STT TTFB   "WhisperSTTService#N TTFB: x"         (audio runs only)
   End-to-end (audio runs only): from the "User stopped speaking" log line to the next
@@ -21,7 +21,7 @@ from pathlib import Path
 from order_agent.suite import strip_ansi
 TS = re.compile(r"^(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\.\d+)")
 STAGES = {
-    "LLM TTFB": re.compile(r"GoogleLLMService#\d+ TTFB: ([\d.]+)s"),
+    "LLM TTFB": re.compile(r"(?:Google|Groq)LLMService#\d+ TTFB: ([\d.]+)s"),
     "TTS TTFB": re.compile(r"KokoroTTSService#\d+ TTFB: ([\d.]+)s"),
     "STT TTFB": re.compile(r"WhisperSTTService#\d+ TTFB: ([\d.]+)s"),
 }
