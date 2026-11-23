@@ -4,12 +4,12 @@ from pipecat.services.google.llm import GoogleLLMService
 from pipecat.services.groq.llm import GroqLLMService
 from pipecat.services.openai.llm import OpenAILLMService
 
-from order_agent.config import GEMINI_OPENAI_BASE_URL, load_settings
+from order_agent.config import GEMINI_OPENAI_BASE_URL, load_settings, require_google_key
 
 
 def gemini_llm(config: dict) -> OpenAILLMService:
     return OpenAILLMService(
-        api_key=load_settings().google_api_key,
+        api_key=require_google_key(load_settings()),
         base_url=GEMINI_OPENAI_BASE_URL,
         settings=OpenAILLMService.Settings(model=config.get("model", "gemini-3.5-flash-lite")),
     )
@@ -22,7 +22,7 @@ def gemini_native_llm(config: dict) -> GoogleLLMService:
     (missing thought_signature / empty function_response name).
     """
     return GoogleLLMService(
-        api_key=load_settings().google_api_key,
+        api_key=require_google_key(load_settings()),
         settings=GoogleLLMService.Settings(model=config.get("model", "gemini-3.5-flash-lite")),
     )
 

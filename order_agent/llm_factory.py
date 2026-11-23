@@ -5,7 +5,7 @@ from pipecat.services.groq.llm import GroqLLMService
 from pipecat.services.llm_service import LLMService
 
 from order_agent.call import llm_http_options
-from order_agent.config import Settings
+from order_agent.config import Settings, require_google_key
 
 
 def groq_reasoning_effort(model: str) -> str:
@@ -33,7 +33,7 @@ def build_bot_llm(settings: Settings, system_prompt: str, gemini_model: str | No
         llm.supports_developer_role = False
         return llm
     return GoogleLLMService(
-        api_key=settings.google_api_key,
+        api_key=require_google_key(settings),
         settings=GoogleLLMService.Settings(
             model=gemini_model or settings.model,
             system_instruction=system_prompt,

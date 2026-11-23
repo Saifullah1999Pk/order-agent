@@ -18,7 +18,7 @@ The bot's LLM is Gemini by default. To run it on Groq's free tier instead (for e
 cap is used up), set in `.env` or the environment:
 
     ORDER_AGENT_LLM_PROVIDER=groq              # "gemini" (default) or "groq"
-    ORDER_AGENT_GROQ_MODEL=qwen/qwen3.8-27b    # default; needs GROQ_API_KEY. gpt-oss-20b calls tools that do not exist
+    ORDER_AGENT_GROQ_MODEL=qwen/qwen3.8-27b    # default; needs GROQ_API_KEY. in 2 audio attempts gpt-oss-20b called a tool that does not exist
 
 The suite passes these to the bot it starts. Keep results from different bot models apart
 (see docs/results-v1.md section 9).

@@ -226,6 +226,8 @@ spoken) and the "developer"-role opening and nudge messages are sent as "user" m
 has no Gemini-style retry setting; the OpenAI client underneath retries 2 times with its default back-off. No bot-side
 429 was seen in these runs.
 
+Per-attempt turn counts and tool-call lists in this section come from the local (uncommitted, gitignored) `eval.log` and `conversation.json` files; the committed summaries do not contain them.
+
 **Audio runs** (`--audio`, up to 3 attempts, `--sleep 20`;
 [summary](../evals/confirmation/task10b/audio-qwen3.8-27b-summary.md)):
 

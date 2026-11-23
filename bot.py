@@ -10,8 +10,6 @@ Then open http://localhost:7860/client/ and click Connect (you play the restaura
 import asyncio
 from datetime import datetime
 
-from google import genai
-from google.genai import types as genai_types
 from loguru import logger
 
 from order_agent.brief import load_brief
@@ -22,7 +20,7 @@ from order_agent.call import (
     NudgeTracker,
     make_on_end,
 )
-from order_agent.config import Settings, load_settings, pick_model
+from order_agent.config import Settings, load_settings, pick_model, require_google_key
 from order_agent.llm_factory import build_bot_llm
 from order_agent.prompt import build_system_prompt
 from order_agent.tools import build_tools
@@ -56,7 +54,10 @@ transport_params = {
 
 def make_probe(settings: Settings):
     """A single 1-token Gemini request with a 10 s timeout. Any failure counts as 'not usable'."""
-    client = genai.Client(api_key=settings.google_api_key)
+    from google import genai  # Gemini only: imported here so the Groq path never touches it
+    from google.genai import types as genai_types
+
+    client = genai.Client(api_key=require_google_key(settings))
 
     async def probe(model: str) -> bool:
         try:

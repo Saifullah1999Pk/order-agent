@@ -80,3 +80,35 @@ async def test_tool_registration_with_groq_service(brief):
     await llm._functions["add_item"].handler(params)
     assert results[-1]["ok"] is True
     assert session.items[0].quantity == 2
+
+
+def _no_google(monkeypatch, tmp_path):
+    monkeypatch.setattr("order_agent.config.load_dotenv", lambda *a, **k: None)  # ignore the real .env
+    monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
+    monkeypatch.delenv("ORDER_AGENT_LLM_PROVIDER", raising=False)
+    monkeypatch.delenv("ORDER_AGENT_GROQ_MODEL", raising=False)
+
+
+def test_groq_works_without_google_key(monkeypatch, tmp_path):
+    _no_google(monkeypatch, tmp_path)
+    monkeypatch.setenv("ORDER_AGENT_LLM_PROVIDER", "groq")
+    monkeypatch.setenv("GROQ_API_KEY", "k")
+    s = load_settings()
+    assert s.google_api_key is None
+    assert isinstance(build_bot_llm(s, "x"), GroqLLMService)
+
+
+def test_gemini_without_google_key_raises_clear_error(monkeypatch, tmp_path):
+    _no_google(monkeypatch, tmp_path)
+    s = load_settings()
+    with pytest.raises(RuntimeError, match="GOOGLE_API_KEY"):
+        build_bot_llm(s, "x")
+
+
+def test_gemini_eval_factories_need_google_key(monkeypatch, tmp_path):
+    from order_agent.eval_llm import gemini_llm, gemini_native_llm
+
+    _no_google(monkeypatch, tmp_path)
+    for factory in (gemini_llm, gemini_native_llm):
+        with pytest.raises(RuntimeError, match="GOOGLE_API_KEY"):
+            factory({})

@@ -13,7 +13,7 @@ GEMINI_OPENAI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/opena
 
 
 class Settings(BaseModel):
-    google_api_key: str
+    google_api_key: str | None = None
     groq_api_key: str | None = None
     model: str = "gemini-3.5-flash-lite"
     fallback_model: str = "gemini-2.5-flash"
@@ -24,10 +24,17 @@ class Settings(BaseModel):
     call_time: datetime | None = None
 
 
+def require_google_key(settings: Settings) -> str:
+    """The Gemini key, or a clear error when a Gemini path needs it and it is not set."""
+    if not settings.google_api_key:
+        raise RuntimeError("GOOGLE_API_KEY is not set (put it in order-agent/.env); the Gemini path needs it")
+    return settings.google_api_key
+
+
 def load_settings() -> Settings:
     load_dotenv()
     values = {
-        "google_api_key": os.environ["GOOGLE_API_KEY"],
+        "google_api_key": os.getenv("GOOGLE_API_KEY"),
         "groq_api_key": os.getenv("GROQ_API_KEY"),
         "model": os.getenv("ORDER_AGENT_MODEL"),
         "fallback_model": os.getenv("ORDER_AGENT_FALLBACK_MODEL"),
