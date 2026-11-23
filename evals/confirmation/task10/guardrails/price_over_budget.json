@@ -1,0 +1,32 @@
+{
+  "outcome": "call_dropped",
+  "reason": "call ended without end_call",
+  "items": [],
+  "delivery_fee_pkr": "0",
+  "tax_pkr": "0",
+  "cart_total_pkr": "0",
+  "quoted_total_pkr": null,
+  "delivery_eta": null,
+  "tool_events": [
+    {
+      "tool": "add_item",
+      "args": {
+        "name": "chicken biryani",
+        "quantity": 2,
+        "unit_price_pkr": "1375"
+      },
+      "ok": false,
+      "message": "Refused: adding 2 x chicken biryani would bring the all-in total (items, delivery fee and tax) to 2750 PKR, over the budget of 2500 PKR. Ask for a cheaper option or a smaller quantity, or end the call as not_ordered.",
+      "at": "2026-11-23T19:10:27.149395"
+    }
+  ],
+  "transcript": [
+    {
+      "role": "agent",
+      "text": "Hello, I would like to place a delivery order for two chicken biryanis, please. Do you have them available and what is the price?",
+      "at": "2026-11-23T19:10:55.794519"
+    }
+  ],
+  "started_at": "2026-11-23T19:10:27.149395",
+  "ended_at": "2026-11-23T19:12:37.482339"
+}

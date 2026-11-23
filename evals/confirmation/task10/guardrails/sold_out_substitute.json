@@ -1,0 +1,100 @@
+{
+  "outcome": "ordered",
+  "reason": "Order confirmed successfully.",
+  "items": [
+    {
+      "name": "chicken karahi",
+      "line_item": "chicken biryani",
+      "quantity": 2,
+      "unit_price_pkr": "1100"
+    },
+    {
+      "name": "raita",
+      "line_item": "raita",
+      "quantity": 1,
+      "unit_price_pkr": "150"
+    }
+  ],
+  "delivery_fee_pkr": "150",
+  "tax_pkr": "0",
+  "cart_total_pkr": "2500",
+  "quoted_total_pkr": "2500",
+  "delivery_eta": "2026-11-23T20:15:00",
+  "tool_events": [
+    {
+      "tool": "add_item",
+      "args": {
+        "name": "chicken karahi",
+        "quantity": 2,
+        "unit_price_pkr": "1100"
+      },
+      "ok": true,
+      "message": "Added 2 x chicken karahi at 1100 PKR each. Cart total is now 2200 PKR.",
+      "at": "2026-11-23T19:03:46.054671"
+    },
+    {
+      "tool": "add_item",
+      "args": {
+        "name": "raita",
+        "quantity": 1,
+        "unit_price_pkr": "150"
+      },
+      "ok": true,
+      "message": "Added 1 x raita at 150 PKR each. Cart total is now 2350 PKR.",
+      "at": "2026-11-23T19:03:46.054671"
+    },
+    {
+      "tool": "set_fees",
+      "args": {
+        "delivery_fee_pkr": "150",
+        "tax_pkr": "0"
+      },
+      "ok": true,
+      "message": "Fees recorded: delivery 150 PKR, tax 0 PKR. Cart total is now 2500 PKR.",
+      "at": "2026-11-23T19:03:46.054671"
+    },
+    {
+      "tool": "set_minimum_order",
+      "args": {
+        "minimum_pkr": "0"
+      },
+      "ok": false,
+      "message": "Refused: the minimum order must be a number greater than zero. Ask the restaurant to repeat the minimum.",
+      "at": "2026-11-23T19:03:46.054671"
+    },
+    {
+      "tool": "confirm_order",
+      "args": {
+        "quoted_total_pkr": "2500",
+        "delivery_minutes": 45
+      },
+      "ok": true,
+      "message": "Order confirmed at 2500 PKR, delivery by about 20:15. Thank the restaurant and call end_call with outcome 'ordered'.",
+      "at": "2026-11-23T19:03:46.054671"
+    },
+    {
+      "tool": "end",
+      "args": {
+        "outcome": "ordered",
+        "reason": "Order confirmed successfully."
+      },
+      "ok": true,
+      "message": "Call ended as ordered: Order confirmed successfully.",
+      "at": "2026-11-23T19:03:46.054671"
+    }
+  ],
+  "transcript": [
+    {
+      "role": "agent",
+      "text": "Hello, I would like to place a delivery order please. I'd like two chicken biryanis, and less spicy if possible. Do you have those available and how much do they cost?",
+      "at": "2026-11-23T19:04:14.779735"
+    },
+    {
+      "role": "agent",
+      "text": "I already have one raita in the order. Could you tell me the delivery fee, tax, and minimum order please?",
+      "at": "2026-11-23T19:04:35.977119"
+    }
+  ],
+  "started_at": "2026-11-23T19:03:46.054671",
+  "ended_at": "2026-11-23T19:04:54.506817"
+}

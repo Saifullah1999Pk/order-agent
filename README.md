@@ -40,7 +40,8 @@ Audio mode (the simulated restaurant speaks with Kokoro, Whisper transcribes the
     PYTHONIOENCODING=utf-8 uv run python run_suite.py --audio --only happy_path
 
 Options: `--attempts N` (default 3, pass@3: stops at the first pass), `--sleep S` (seconds between
-attempts, default 20; raise it if you see 429s). A 429/503 is recorded as `quota_error`, not `fail`.
+attempts, default 20; raise it if you see 429s). A harness error that is a 429/503 is recorded as `quota_error`. So is a cut-off call whose `bot.log` shows the bot's own LLM failing with 429/503, unless a budget, forbidden-item or never-keyword violation is also present (a confirmed order with a violation stays `fail`).
+`--rescore evals/results/<run-id>` re-classifies saved attempts and rewrites that run's `summary.md` without any new run.
 Deterministic report checks (outcome, budget, forbidden items) override the judge.
 
 Where things go (all under `evals/results/<timestamp>/`, gitignored): `summary.md`, and per scenario
