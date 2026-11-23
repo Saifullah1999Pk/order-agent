@@ -133,3 +133,25 @@ def test_end_twice_refused(brief):
     s = _session(brief)
     assert s.end("not_ordered", "sold out").ok
     assert not s.end("not_ordered", "again").ok
+
+
+def test_lowered_minimum_does_not_excuse_overfill(brief):
+    s = _two_biryani(brief)
+    s.set_minimum_order(Decimal("3000"))
+    assert s.add_item("raita", 3, Decimal("150")).ok
+    s.set_minimum_order(Decimal("1000"))
+    result = s.confirm_order(Decimal("2400"), 45)
+    assert not result.ok
+    assert "raita" in result.message and "remove_item" in result.message
+    s.remove_item("raita")
+    assert s.add_item("raita", 1, Decimal("150")).ok
+    assert s.confirm_order(Decimal("2100"), 45).ok
+
+
+def test_extra_quantity_capped_at_shortfall(brief):
+    s = _two_biryani(brief)
+    s.set_minimum_order(Decimal("2200"))
+    result = s.add_item("raita", 5, Decimal("150"))
+    assert not result.ok
+    assert "at most 3 extra" in result.message
+    assert s.add_item("raita", 3, Decimal("150")).ok

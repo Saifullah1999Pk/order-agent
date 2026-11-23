@@ -5,6 +5,7 @@ No Pipecat imports here: this must stay pure Python so it can be tested alone.
 
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from math import ceil
 from decimal import Decimal
 from typing import Literal
 
@@ -136,8 +137,15 @@ class OrderSession:
             return ToolResult(False, f"Refused: '{existing.name}' is already in the cart at {_fmt(existing.unit_price_pkr)} PKR each, not {_fmt(price)}. Clarify the price with the restaurant, or remove_item it first and add it again.")
 
         filled = self._filled(line.item)
-        if filled + quantity > line.quantity and not self._below_minimum():
-            return ToolResult(False, f"Refused: your brief wants {line.quantity} x {line.item} and {filled} are already in the cart, so adding {quantity} more goes over. Add at most {line.quantity - filled}.")
+        if filled + quantity > line.quantity:
+            if not self._below_minimum():
+                return ToolResult(False, f"Refused: your brief wants {line.quantity} x {line.item} and {filled} are already in the cart, so adding {quantity} more goes over. Add at most {line.quantity - filled}.")
+            room = max(0, line.quantity - filled)
+            extra = quantity - room
+            shortfall = self.minimum_order_pkr - self._items_total()
+            cap = ceil(shortfall / price)
+            if extra > cap:
+                return ToolResult(False, f"Refused: the food subtotal is only {_fmt(shortfall)} PKR short of the {_fmt(self.minimum_order_pkr)} PKR minimum, so at most {cap} extra x {name} (beyond your brief's {line.quantity} x {line.item}) are needed. Add at most {room + cap} now.")
 
         new_total = self.cart_total() + quantity * price
         if new_total > self.brief.budget_pkr:
@@ -214,6 +222,10 @@ class OrderSession:
         if missing:
             return ToolResult(False, f"Refused: the order is incomplete: {'; '.join(missing)}. Add the missing items (or their listed substitutes); if they can't be had, end the call as not_ordered.")
 
+        excess = self._unneeded_excess()
+        if excess:
+            return ToolResult(False, f"Refused: the cart holds more than your brief wants ({excess}) and the minimum order doesn't need the extra. Use remove_item to drop the extra, then confirm.")
+
         total = self.cart_total()
         if quoted != total:
             return ToolResult(False, f"Refused: the restaurant quoted {_fmt(quoted)} PKR but the cart total is {_fmt(total)} PKR (items {_fmt(self._items_total())}, delivery {_fmt(self.delivery_fee_pkr)}, tax {_fmt(self.tax_pkr)}). Ask what explains the difference, then correct the items or fees (set_fees) before confirming.")
@@ -231,6 +243,23 @@ class OrderSession:
         self.quoted_total_pkr = quoted
         self.delivery_eta = eta
         return ToolResult(True, f"Order confirmed at {_fmt(quoted)} PKR, delivery by about {eta:%H:%M}. Thank the restaurant and call end_call with outcome 'ordered'.")
+
+    def _unneeded_excess(self) -> str:
+        """Describe over-filled lines if the minimum doesn't need the extra, else ''."""
+        parts, excess_value = [], Decimal(0)
+        for line in self.brief.wanted:
+            over = self._filled(line.item) - line.quantity
+            if over <= 0:
+                continue
+            parts.append(f"{line.item}: wanted {line.quantity}, have {line.quantity + over}")
+            prices = sorted((i.unit_price_pkr for i in self.items if i.line_item == line.item for _ in range(i.quantity)), reverse=True)
+            excess_value += sum(prices[:over], Decimal(0))
+        if not parts:
+            return ""
+        minimum = self.minimum_order_pkr
+        if minimum is not None and self._items_total() - excess_value < minimum:
+            return ""
+        return "; ".join(parts)
 
     def _minimum_refusal(self) -> str:
         shortfall = self.minimum_order_pkr - self._items_total()
