@@ -16,9 +16,9 @@ from loguru import logger
 
 from order_agent.brief import load_brief
 from order_agent.call import (
-    NUDGE_DELAY_SECS,
     NUDGE_TEXT,
     CallState,
+    NudgeScheduler,
     NudgeTracker,
     llm_http_options,
     make_on_end,
@@ -109,7 +109,14 @@ async def run_bot(transport: BaseTransport, runner_args: RunnerArguments):
     tts = KokoroTTSService(settings=KokoroTTSService.Settings(voice="af_heart"))
 
     # Downstream, so the frames queued ahead (the goodbye) are flushed first.
-    on_end = make_on_end(call_state, lambda: llm.push_frame(EndWorkerFrame()))
+    nudge_scheduler: NudgeScheduler | None = None
+
+    async def push_end():
+        if nudge_scheduler:
+            nudge_scheduler.cancel()  # no nudge after end_call
+        await llm.push_frame(EndWorkerFrame())
+
+    on_end = make_on_end(call_state, push_end)
 
     # Handlers on the FunctionSchemas are registered automatically from the context's tools.
     context = LLMContext(tools=build_tools(call_state.session, on_end))
@@ -141,7 +148,6 @@ async def run_bot(transport: BaseTransport, runner_args: RunnerArguments):
 
     restaurant_spoke = False
     nudger = NudgeTracker()
-    nudge_tasks: set[asyncio.Task] = set()
     opening_task: asyncio.Task | None = None
 
     async def open_call_if_silent():
@@ -167,8 +173,7 @@ async def run_bot(transport: BaseTransport, runner_args: RunnerArguments):
         logger.info("Client disconnected")
         if opening_task:
             opening_task.cancel()
-        for task in nudge_tasks:
-            task.cancel()
+        nudge_scheduler.cancel()
         await call_state.on_disconnect()
         await runner.cancel()
 
@@ -177,6 +182,7 @@ async def run_bot(transport: BaseTransport, runner_args: RunnerArguments):
         nonlocal restaurant_spoke
         restaurant_spoke = True
         nudger.on_user_turn_started()
+        nudge_scheduler.cancel()
 
     @user_aggregator.event_handler("on_user_turn_message_added")
     async def on_user_turn(aggregator, message: UserTurnMessageAddedMessage):
@@ -190,14 +196,14 @@ async def run_bot(transport: BaseTransport, runner_args: RunnerArguments):
     @assistant_aggregator.event_handler("on_assistant_turn_started")
     async def on_assistant_turn_started(aggregator):
         nudger.on_llm_run_started()
+        nudge_scheduler.cancel()
 
-    async def nudge_after_pause():
-        # Pause so the nudge does not land in the same per-minute quota window.
-        await asyncio.sleep(NUDGE_DELAY_SECS)
-        if nudger.restaurant_spoke_since_run:
-            return  # they spoke meanwhile; their turn gets the reply
+    async def fire_nudge():
+        # Runs after a pause so the nudge does not land in the same per-minute quota window.
         context.add_message({"role": "developer", "content": NUDGE_TEXT})
         await worker.queue_frames([LLMRunFrame()])
+
+    nudge_scheduler = NudgeScheduler(fire_nudge)
 
     @assistant_aggregator.event_handler("on_assistant_turn_stopped")
     async def on_assistant_turn(aggregator, message: AssistantTurnStoppedMessage):
@@ -206,9 +212,10 @@ async def run_bot(transport: BaseTransport, runner_args: RunnerArguments):
             call_state.add_line("agent", message.content)
         if nudger.on_assistant_turn(message.content, interrupted=message.interrupted):
             logger.warning("Empty assistant turn, nudging the LLM")
-            nudge_tasks.add(asyncio.create_task(nudge_after_pause()))
+            nudge_scheduler.schedule()
 
     await runner.run()
+    nudge_scheduler.cancel()
     # Idle timeout or any other end without end_call: still write a report (no-op if one exists).
     await call_state.on_disconnect()
 

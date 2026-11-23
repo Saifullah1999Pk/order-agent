@@ -92,6 +92,47 @@ class NudgeTracker:
         return nudge
 
 
+class NudgeScheduler:
+    """At most one pending delayed nudge. `fire` runs after `delay` unless cancelled first.
+
+    cancel() both cancels the task and bumps a generation counter, which the task re-checks
+    after the sleep, so a stale nudge can never fire even if the cancel is missed.
+    """
+
+    def __init__(
+        self,
+        fire: Callable[[], Awaitable[None]],
+        delay: float = NUDGE_DELAY_SECS,
+        sleep: Callable[[float], Awaitable[None]] = asyncio.sleep,
+    ):
+        self._fire = fire
+        self._delay = delay
+        self._sleep = sleep
+        self._generation = 0
+        self._task: asyncio.Task | None = None
+
+    @property
+    def pending(self) -> bool:
+        return self._task is not None and not self._task.done()
+
+    def schedule(self) -> None:
+        self.cancel()  # replace, never stack
+        self._task = asyncio.create_task(self._run(self._generation))
+
+    def cancel(self) -> None:
+        self._generation += 1
+        if self._task is not None and not self._task.done():
+            self._task.cancel()
+        self._task = None
+
+    async def _run(self, generation: int) -> None:
+        await self._sleep(self._delay)
+        if generation != self._generation:
+            return
+        self._task = None  # firing: later cancel() calls must not cancel this running task
+        await self._fire()
+
+
 class CallState:
     def __init__(self, brief: OrderBrief, settings: Settings, now: datetime):
         self.settings = settings

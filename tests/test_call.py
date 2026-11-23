@@ -205,3 +205,109 @@ def test_llm_retry_options_configured():
     assert retry["attempts"] == 3
     assert retry["initial_delay"] == 2.0
     assert 429 in retry["http_status_codes"] and 503 in retry["http_status_codes"]
+
+
+import asyncio
+
+from order_agent.call import NudgeScheduler
+
+
+class _Gate:
+    """An injected sleep the test releases by hand."""
+
+    def __init__(self):
+        self.event = asyncio.Event()
+        self.sleeps = 0
+
+    async def sleep(self, secs):
+        self.sleeps += 1
+        await self.event.wait()
+
+
+async def _settle():
+    for _ in range(5):
+        await asyncio.sleep(0)
+
+
+def _scheduler(gate):
+    fired = []
+
+    async def fire():
+        fired.append(1)
+
+    return NudgeScheduler(fire, delay=3.0, sleep=gate.sleep), fired
+
+
+async def test_scheduler_fires_once_after_the_delay():
+    gate = _Gate()
+    sched, fired = _scheduler(gate)
+    sched.schedule()
+    await _settle()
+    assert fired == []
+    gate.event.set()
+    await _settle()
+    assert fired == [1]
+
+
+async def test_scheduler_cancel_on_restaurant_speech_or_llm_run_start():
+    gate = _Gate()
+    sched, fired = _scheduler(gate)
+    sched.schedule()
+    await _settle()
+    sched.cancel()  # what bot.py does on user turn started and on llm run started
+    gate.event.set()
+    await _settle()
+    assert fired == []
+
+
+async def test_scheduler_second_schedule_replaces_the_first():
+    gate = _Gate()
+    sched, fired = _scheduler(gate)
+    sched.schedule()
+    await _settle()
+    sched.schedule()
+    await _settle()
+    gate.event.set()
+    await _settle()
+    assert fired == [1]
+
+
+async def test_scheduler_cancel_at_end_of_call_prevents_fire():
+    gate = _Gate()
+    sched, fired = _scheduler(gate)
+    sched.schedule()
+    await _settle()
+    sched.cancel()  # end_call / end of run
+    gate.event.set()
+    await _settle()
+    assert fired == []
+
+
+async def test_scheduler_generation_guard_even_if_sleep_ignores_cancellation():
+    async def stubborn_sleep(secs):
+        try:
+            await asyncio.sleep(0.2)
+        except asyncio.CancelledError:
+            pass  # swallows the cancel, as a buggy sleep could
+
+    fired = []
+
+    async def fire():
+        fired.append(1)
+
+    sched = NudgeScheduler(fire, delay=3.0, sleep=stubborn_sleep)
+    sched.schedule()
+    await _settle()
+    sched.cancel()
+    await asyncio.sleep(0.4)
+    assert fired == []
+
+
+async def test_scheduler_firing_clears_pending_and_can_reschedule():
+    gate = _Gate()
+    sched, fired = _scheduler(gate)
+    sched.schedule()
+    gate.event.set()
+    await _settle()
+    assert fired == [1]
+    assert not sched.pending
