@@ -39,3 +39,14 @@ async def test_pick_model_primary_ok(monkeypatch):
         return True
 
     assert await pick_model(load_settings(), probe) == "gemini-3.5-flash-lite"
+
+
+def test_groq_key_optional(monkeypatch):
+    import order_agent.config as config
+
+    _clean(monkeypatch)
+    monkeypatch.setattr(config, "load_dotenv", lambda *a, **k: None)
+    monkeypatch.delenv("GROQ_API_KEY", raising=False)
+    assert load_settings().groq_api_key is None
+    monkeypatch.setenv("GROQ_API_KEY", "g")
+    assert load_settings().groq_api_key == "g"

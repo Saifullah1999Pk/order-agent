@@ -1,2 +1,3 @@
-factory: order_agent.eval_llm.gemini_native_llm
-model: gemini-2.5-flash
+factory: order_agent.eval_llm.groq_llm
+model: openai/gpt-oss-120b
+# Alternatives: order_agent.eval_llm.gemini_native_llm (gemini-2.5-flash), order_agent.eval_llm.gemini_llm

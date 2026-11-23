@@ -35,3 +35,36 @@ def test_gemini_native_llm_factory(monkeypatch):
     assert isinstance(llm, GoogleLLMService)
     assert llm._settings.model == "gemini-2.5-flash"
     assert gemini_native_llm({})._settings.model == "gemini-3.5-flash-lite"
+
+
+def test_groq_llm_factory(monkeypatch):
+    from order_agent.eval_llm import groq_llm
+
+    monkeypatch.setenv("GOOGLE_API_KEY", "test-key")
+    monkeypatch.setenv("GROQ_API_KEY", "groq-test")
+    llm = groq_llm({"model": "openai/gpt-oss-120b"})
+    assert isinstance(llm, BaseOpenAILLMService)
+    assert llm._settings.model == "openai/gpt-oss-120b"
+    assert "api.groq.com" in str(llm._client.base_url)
+
+
+def test_groq_llm_requires_key(monkeypatch):
+    import pytest
+
+    import order_agent.config as config
+    from order_agent.eval_llm import groq_llm
+
+    monkeypatch.setenv("GOOGLE_API_KEY", "test-key")
+    monkeypatch.delenv("GROQ_API_KEY", raising=False)
+    monkeypatch.setattr(config, "load_dotenv", lambda *a, **k: None)
+    with pytest.raises(RuntimeError, match="GROQ_API_KEY"):
+        groq_llm({"model": "openai/gpt-oss-120b"})
+
+
+def test_groq_llm_passes_reasoning_effort(monkeypatch):
+    from order_agent.eval_llm import groq_llm
+
+    monkeypatch.setenv("GOOGLE_API_KEY", "test-key")
+    monkeypatch.setenv("GROQ_API_KEY", "groq-test")
+    llm = groq_llm({"model": "qwen/qwen3.8-27b", "reasoning_effort": "none"})
+    assert llm._settings.reasoning_effort == "none"

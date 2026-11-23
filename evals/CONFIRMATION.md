@@ -50,3 +50,17 @@ Changes under test: nudge flag tracked per LLM run (`NudgeTracker`), 3 s pause b
 | 2 | error: persona call got 429 on gemini-2.5-flash after 2 persona turns (quota_error) | not scored | call_dropped | none | 0 / 0 |
 
 Findings: the bot side was clean this round (no 429s, no empty turns, no nudges needed). The bot still asks fee/tax/minimum repeatedly and never asks for the total (attempt 1), so the persona gave up; prompt tuning candidate. gemini-2.5-flash on this key is slow for the judge (10 s timeout) and rate limited for the persona, so the model split did not by itself produce a clean confirmation. Not confirmed live: nudge-in-anger and the retry path (no 429 hit the bot).
+
+## After Task 8c (Groq)
+Changes under test: persona and judge moved to Groq free tier (persona `openai/gpt-oss-120b`; judge and explainer `openai/gpt-oss-20b`, reasoning_effort low) via `order_agent.eval_llm.groq_llm`; bot stays on `gemini-3.5-flash-lite`; prompt asks fees/minimum once, no re-asking, asks total and time once items agreed, and only calls add_item after a stated price. Evidence: `evals/confirmation/after-8c/`. Port 7860 was free; bot restarted per attempt, stopped after each.
+
+Model selection (attempts 1-7, not counted as confirmation): gpt-oss-120b as judge timed out at Pipecat's fixed 10 s (attempts 2, 7); qwen/qwen3.8-27b as persona broke role ("can't order food from the customer", attempt 3); gpt-oss-20b as persona ended the call at once (attempt 5). gpt-oss-120b as persona sometimes writes the next customer lines inside its own reply (attempts 2, 4, 6, 8) or ends the call early (1, 6, 9).
+
+| # | Harness | Judge | Bot report | Quoted / cart / persona total | Clean? |
+|---|---|---|---|---|---|
+| 8 | PASS, ended by bot | P(yes)=0.99, conduct 1.00 | ordered | 2100 / 2100 / 2100 | yes |
+| 9 | FAIL: persona ended call before any total; bot had invented biryani price 950 | not met | call_dropped | none / 2200 / none | no |
+| 10 | PASS, ended by bot (after prompt rule on add_item price and persona wording) | P(yes)=1.00, conduct 1.00 | ordered | 2100 / 2100 / 2100 | yes |
+| sold_out_no_substitute | PASS, ended by persona end_call | P(yes)=0.95 | call_dropped (bot never called end_call; persona ended first) | n/a | judge pass, but report is not `not_ordered` |
+
+2 clean passes of happy_path (attempts 8 and 10). Caveat: the persona still sometimes concatenates later turns into one message; the totals in 8 and 10 were nevertheless stated by the persona in separate messages too.

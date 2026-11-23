@@ -1,0 +1,75 @@
+[
+  {
+    "role": "assistant",
+    "content": "Hello, I would like to place a delivery order, please."
+  },
+  {
+    "role": "user",
+    "content": "Sure, could you tell me which items and how many of each you\u2019d like?"
+  },
+  {
+    "role": "assistant",
+    "content": "I'd like two chicken biryani, and one raita if you have it. Also, could you make them less spicy if possible?"
+  },
+  {
+    "role": "user",
+    "content": "Absolutely, we can make them less spicy. May I have your delivery address, please?"
+  },
+  {
+    "role": "assistant",
+    "content": "It's House 12, Street 4, F-7/2, Islamabad, and my callback number is 0300-0000000. Also, could you let me know about the delivery fee, tax, and any minimum order requirement?"
+  },
+  {
+    "role": "user",
+    "content": "The delivery fee is Rs\u202f150, there\u2019s no tax and no minimum order required. Would you like to add anything else, or shall I confirm your order?"
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "name": "chicken biryani",
+      "unit_price_pkr": 950,
+      "quantity": 2
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "quantity": 1,
+      "unit_price_pkr": 150,
+      "name": "raita"
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "set_fees",
+    "arguments": {
+      "delivery_fee_pkr": 150,
+      "tax_pkr": 0
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "set_minimum_order",
+    "arguments": {
+      "minimum_pkr": 0
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Could you please tell me the minimum order again?"
+  },
+  {
+    "role": "user",
+    "content": "There\u2019s no minimum order required. Would you like to add anything else, or should I go ahead and confirm your order?"
+  },
+  {
+    "role": "assistant",
+    "content": "That is fine. Could you tell me what the total comes to, and how long delivery will take? We need it by 21:00."
+  }
+]

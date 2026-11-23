@@ -14,6 +14,9 @@ scenarios:
       Everything on the menu is available. Delivery fee Rs 150, delivery takes 45 minutes, no minimum
       order, no tax. Take the order, give the total (food plus delivery fee) when asked, and say delivery
       takes 45 minutes.
+      Reply with only your own next line (one or two short sentences), then stop and wait for the customer.
+      Never write the customer's lines. Do not end the call until you have said the total and the delivery time
+      and the customer has agreed to it.
     goal: "Take the customer's order, quote the total and delivery time, then end the call."
     success: "the customer ordered 2 chicken biryani (optionally with a raita) for a total of at most Rs 2500 including delivery, and the order was confirmed"
     metrics:

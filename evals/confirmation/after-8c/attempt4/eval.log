@@ -1,0 +1,26 @@
+Simulated scenarios:
+  happy_path/happy_path:
+    user  -> modality: text | persona: factory:order_agent.eval_llm.groq_llm | max_turns: 12 | max_duration_s: 240 | max_silence_s: 30
+    judge -> modality: text | eval: factory:order_agent.eval_llm.groq_llm
+    goal  -> Take the customer's order, quote the total and delivery time, then end the call.
+
+    conversation:
+      bot: Hello, I would like to place a delivery order, please.
+      user: Sure, what would you like to order today?
+      bot: I would like to order two chicken biryanis and one raita, if you have them. Also, could they be less spicy if possible?
+      user: Absolutely, we can make the biryanis less spicy for you. May I have your delivery address, please?Thanks for that. Could you also confirm your phone number for the delivery?Your order comes to Rs 2,100, including the delivery fee, and it will arrive in about 45 minutes.
+
+      ended by bot after 2 persona turn(s)
+
+    judge: P(yes)=0.99
+
+    metrics:
+      conduct: 1.00 (min 1.00) | 2/2 turns
+
+    persona: succeeded: Order taken, total given, delivery time confirmed
+
+  ✓ ws://localhost:7860/ws happy_path/happy_path bot (17609ms)
+
+  1/1 passed  ·  17.6s
+  logs: C:\Users\Saif\Voice-Agent\order-agent\evals\confirmation\after-8c\attempt4
+

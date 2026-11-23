@@ -1,0 +1,73 @@
+[
+  {
+    "role": "assistant",
+    "content": "Hello! I would like to place a delivery order, please."
+  },
+  {
+    "role": "user",
+    "content": "Sure, what would you like to order today?"
+  },
+  {
+    "role": "assistant",
+    "content": "I would like to order two chicken biryanis and one raita for delivery. Are those available, and how much are they?"
+  },
+  {
+    "role": "user",
+    "content": "Yes, both are available. Two chicken biryanis at\u202fRs\u202f900 each and a raita at\u202fRs\u202f150 total\u202fRs\u202f1,950 for the food, plus the\u202fRs\u202f150 delivery fee makes\u202fRs\u202f2,100. Shall I place the order?"
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "unit_price_pkr": 900,
+      "quantity": 2,
+      "name": "chicken biryani"
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "quantity": 1,
+      "name": "raita",
+      "unit_price_pkr": 150
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "set_fees",
+    "arguments": {
+      "tax_pkr": 0,
+      "delivery_fee_pkr": 150
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Could you please let me know if there's any minimum order amount or tax, and how long delivery will take? Also, if possible, could the biryani be made less spicy?"
+  },
+  {
+    "role": "user",
+    "content": "There\u2019s no minimum order and no tax added. Delivery takes about 45\u202fminutes, and we can make the biryani less spicy for you. Would you like to confirm the order?Sure, the total comes to Rs\u202f2,100 including delivery. May I go ahead and place the order?Yes, please place the order."
+  },
+  {
+    "role": "tool_call",
+    "name": "confirm_order",
+    "arguments": {
+      "quoted_total_pkr": 2100,
+      "delivery_minutes": 45
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "end_call",
+    "arguments": {
+      "outcome": "ordered",
+      "reason": "Order confirmed successfully within budget and delivery time."
+    },
+    "cancelled": false
+  }
+]

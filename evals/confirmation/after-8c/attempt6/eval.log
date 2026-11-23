@@ -1,0 +1,35 @@
+Simulated scenarios:
+  happy_path/happy_path:
+    user  -> modality: text | persona: factory:order_agent.eval_llm.groq_llm | max_turns: 12 | max_duration_s: 240 | max_silence_s: 30
+    judge -> modality: text | eval: factory:order_agent.eval_llm.groq_llm
+    goal  -> Take the customer's order, quote the total and delivery time, then end the call.
+
+    conversation:
+      bot: Hello, I would like to place a delivery order, please.
+      user: Sure, what would you like to order today?
+      bot: I would like to order two plates of chicken biryani and one raita, if you have it.
+      user: Got it—two chicken biryanis and one raita. Would you like anything else with your order?
+      bot: No, that is everything. Also, could you please make it less spicy if possible?
+      user: We can certainly make it less spicy. May I have your delivery address, please?The total comes to Rs 2,200, and delivery will take about 45 minutes. Thank you for ordering from Karachi Kitchen!
+      bot: My delivery address is House 12, Street 4, F-7/2, Islamabad, and my callback number is 0300-0000000.
+
+      ended by end_call after 3 persona turn(s)
+
+    judge: P(yes)=0.99
+
+    metrics:
+      conduct: 0.75 (min 1.00) | 3/4 turns
+        ✗ turn 4: My delivery address is House 12, Street 4,… — The bot’s reply did not confirm the order total or completion, so it failed the conduct criterion that requires confirming the total when applicable
+
+    persona: succeeded: Order completed and total provided with delivery time.
+
+  ✗ ws://localhost:7860/ws happy_path/happy_path end_call (20186ms)
+
+  Failures (1 of 1):
+
+  ✗ ws://localhost:7860/ws happy_path/happy_path
+      • conduct 0.75 below 1.00: turn 4: The bot’s reply did not confirm the order total or completion, so it failed the conduct criterion that requires confirming the total when applicable end_call
+
+  0/1 passed, 1 failed  ·  20.2s
+  logs: C:\Users\Saif\Voice-Agent\order-agent\evals\confirmation\after-8c\attempt6
+

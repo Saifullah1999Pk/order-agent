@@ -1,0 +1,26 @@
+Simulated scenarios:
+  happy_path/happy_path:
+    user  -> modality: text | persona: factory:order_agent.eval_llm.groq_llm | max_turns: 12 | max_duration_s: 240 | max_silence_s: 30
+    judge -> modality: text | eval: factory:order_agent.eval_llm.groq_llm
+    goal  -> Take the customer's order, quote the total and delivery time, then end the call.
+
+    conversation:
+      bot: Hello, I would like to place a delivery order, please.
+      user: Sure, may I have the items you’d like to order, please?
+      bot: I'd like to order two chicken biryanis, and one raita if it's available. Also, if possible, could we get them less spicy?
+      user: Certainly, two chicken biryanis and one raita, less spicy. Would you like anything else with your order?
+      bot: That's all for the food. Could you please let me know the prices for the chicken biryani and raita, as well as the delivery fee, tax, and any minimum order requirement?
+      user: The chicken biryani is Rs 900 each and the raita is Rs 150. Our delivery fee is Rs 150, there’s no tax and no minimum order. That brings your order to Rs 2,100 total, and delivery will take about 45 minutes. Shall I go ahead and place the order?
+
+      ended by bot after 3 persona turn(s)
+
+    judge: P(yes)=1.00
+
+    metrics:
+      conduct: 1.00 (min 1.00) | 3/3 turns
+
+  ✓ ws://localhost:7860/ws happy_path/happy_path bot (20171ms)
+
+  1/1 passed  ·  20.2s
+  logs: C:\Users\Saif\Voice-Agent\order-agent\evals\confirmation\after-8c\attempt10
+

@@ -13,6 +13,7 @@ GEMINI_OPENAI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/opena
 
 class Settings(BaseModel):
     google_api_key: str
+    groq_api_key: str | None = None
     model: str = "gemini-3.5-flash-lite"
     fallback_model: str = "gemini-2.5-flash"
     reports_dir: Path = Path("reports")
@@ -24,6 +25,7 @@ def load_settings() -> Settings:
     load_dotenv()
     values = {
         "google_api_key": os.environ["GOOGLE_API_KEY"],
+        "groq_api_key": os.getenv("GROQ_API_KEY"),
         "model": os.getenv("ORDER_AGENT_MODEL"),
         "fallback_model": os.getenv("ORDER_AGENT_FALLBACK_MODEL"),
         "reports_dir": os.getenv("ORDER_REPORTS_DIR"),

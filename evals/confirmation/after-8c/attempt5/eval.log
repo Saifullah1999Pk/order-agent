@@ -1,0 +1,28 @@
+Simulated scenarios:
+  happy_path/happy_path:
+    user  -> modality: text | persona: factory:order_agent.eval_llm.groq_llm | max_turns: 12 | max_duration_s: 240 | max_silence_s: 30
+    judge -> modality: text | eval: factory:order_agent.eval_llm.groq_llm
+    goal  -> Take the customer's order, quote the total and delivery time, then end the call.
+
+    conversation:
+      bot: Hello, I would like to place a delivery order, please.
+
+      ended by end_call after 0 persona turn(s)
+
+    judge: The bot never obtained the specific items, quantity, optional raita, price confirmation, or gave a final order confirmation, so the required order was not achieved.
+
+    metrics:
+      conduct: 1.00 (min 1.00) | 1/1 turns
+
+    persona: succeeded: Call ended after order confirmation
+
+  ✗ ws://localhost:7860/ws happy_path/happy_path end_call (12280ms)
+
+  Failures (1 of 1):
+
+  ✗ ws://localhost:7860/ws happy_path/happy_path
+      • goal not met: The bot never obtained the specific items, quantity, optional raita, price confirmation, or gave a final order confirmation, so the required order was not achieved. end_call
+
+  0/1 passed, 1 failed  ·  12.3s
+  logs: C:\Users\Saif\Voice-Agent\order-agent\evals\confirmation\after-8c\attempt5
+

@@ -38,3 +38,25 @@ def test_prompt_states_order_right_after_greeting(brief):
     prompt = build_system_prompt(brief)
     assert "right after the greeting, say clearly what you would like" in prompt.lower()
     assert "then ask about availability and prices" in prompt.lower()
+
+
+def test_prompt_asks_fees_and_minimum_once_together(brief):
+    prompt = build_system_prompt(brief).lower()
+    assert "ask about the delivery fee, tax and minimum order once, together" in prompt
+    assert "do not ask the same question twice" in prompt
+
+
+def test_prompt_does_not_reask_known_no_tax_or_minimum(brief):
+    prompt = build_system_prompt(brief).lower()
+    assert "already said there is no tax or no minimum order, do not ask again" in prompt
+
+
+def test_prompt_asks_total_and_time_once_items_agreed(brief):
+    prompt = build_system_prompt(brief).lower()
+    assert "once the items are agreed, ask for the total and the delivery time, then confirm" in prompt
+
+
+def test_prompt_add_item_only_with_stated_price(brief):
+    prompt = build_system_prompt(brief).lower()
+    assert "only call add_item after the restaurant has said the price" in prompt
+    assert "never guess a price" in prompt
