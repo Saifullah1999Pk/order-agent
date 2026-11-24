@@ -364,3 +364,15 @@ Bot, persona `gemini-3.5-flash-lite`; judge Groq `gpt-oss-20b`; text mode. Summa
 |---|---|---|
 | minimum_reachable | **fail** (0/3 counted; 1 attempt placed the correct order, Rs 2400) | the other 2 were Gemini timeout/503; the one real attempt failed only on judge conduct 0.83 |
 | happy_path, sold_out_no_substitute | quota_error | Gemini daily quota exceeded; not rerun |
+
+## 13. All-local run on Ollama qwen3:8b (2026-11-24; bot, persona and judge all local)
+
+Evidence: `evals/confirmation/all-ollama/` (README.md has the per-attempt table). Text mode, RX 6600 8 GB, `OLLAMA_NUM_PARALLEL=3`, 4k context, q8 KV cache, thinking off (`reasoning_effort: none`). No cloud API, so no quota errors.
+
+| Scenario | Result | Notes |
+|---|---|---|
+| happy_path | **pass** (2 attempts, 1 pass) | both orders placed, but the bot invented unit prices (925/125, 1050/50); attempt 1 failed judge conduct 0.75 |
+| minimum_reachable | **fail** (0/3) | one order met the Rs 2200 minimum (judge disagreed), one looped on a total mismatch, one invented prices and fees and wrote a tool call as text |
+| staff_asks_details | **fail** (0/3) | the bot never called a tool or named an item; the judge said "goal met" twice when no order existed |
+
+Persona same-turn hang-ups: 0 of 8. Bot first token per turn: median 1.4 s (p90 3.3 s); call 20 to 45 s; judge 14 to 31 s. Judge and deterministic check disagreed in 5 of 8 attempts. Verdict: usable to run the harness with no limits, but qwen3:8b is clearly weaker than the Gemini bot (invented prices, tool-call mistakes) and is not a reliable judge.

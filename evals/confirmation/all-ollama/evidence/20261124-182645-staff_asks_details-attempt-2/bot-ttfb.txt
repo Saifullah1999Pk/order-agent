@@ -1,0 +1,8 @@
+2026-11-24 18:34:38.185 | DEBUG    | pipecat.processors.metrics.frame_processor_metrics:stop_ttfb_metrics:175 - OLLamaLLMService#0 TTFB: 0.471s
+2026-11-24 18:34:40.453 | DEBUG    | pipecat.processors.metrics.frame_processor_metrics:stop_ttfb_metrics:175 - OLLamaLLMService#0 TTFB: 0.676s
+2026-11-24 18:34:42.352 | DEBUG    | pipecat.processors.metrics.frame_processor_metrics:stop_ttfb_metrics:175 - OLLamaLLMService#0 TTFB: 0.549s
+2026-11-24 18:34:44.821 | DEBUG    | pipecat.processors.metrics.frame_processor_metrics:stop_ttfb_metrics:175 - OLLamaLLMService#0 TTFB: 0.678s
+2026-11-24 18:34:47.289 | DEBUG    | pipecat.processors.metrics.frame_processor_metrics:stop_ttfb_metrics:175 - OLLamaLLMService#0 TTFB: 0.684s
+2026-11-24 18:34:50.416 | DEBUG    | pipecat.processors.metrics.frame_processor_metrics:stop_ttfb_metrics:175 - OLLamaLLMService#0 TTFB: 0.827s
+2026-11-24 18:34:53.587 | DEBUG    | pipecat.processors.metrics.frame_processor_metrics:stop_ttfb_metrics:175 - OLLamaLLMService#0 TTFB: 0.848s
+2026-11-24 18:34:56.373 | DEBUG    | pipecat.processors.metrics.frame_processor_metrics:stop_ttfb_metrics:175 - OLLamaLLMService#0 TTFB: 0.774s

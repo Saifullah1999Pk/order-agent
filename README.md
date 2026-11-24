@@ -17,11 +17,29 @@ Create `.env` (gitignored) with two free-tier keys:
 The bot's LLM is Gemini by default. To run it on Groq's free tier instead (for example when Gemini's daily
 cap is used up), set in `.env` or the environment:
 
-    ORDER_AGENT_LLM_PROVIDER=groq              # "gemini" (default) or "groq"
+    ORDER_AGENT_LLM_PROVIDER=groq              # "gemini" (default), "groq" or "ollama"
     ORDER_AGENT_GROQ_MODEL=qwen/qwen3.8-27b    # default; needs GROQ_API_KEY. in 2 audio attempts gpt-oss-20b called a tool that does not exist
 
 The suite passes these to the bot it starts. Keep results from different bot models apart
 (see docs/results-v1.md section 9).
+
+### All-local (Ollama): bot, simulated restaurant and judge, no cloud keys
+
+Needs [Ollama](https://ollama.com) and `ollama pull qwen3:8b` (5.2 GB, fits an 8 GB GPU). Start the server with one
+cache slot per role (bot, persona, judge) and a 4k context per slot. A q8 KV cache is what keeps all three slots on an
+8 GB GPU (check `ollama ps`: it should say `100% GPU`):
+
+    OLLAMA_NUM_PARALLEL=3 OLLAMA_CONTEXT_LENGTH=4096 OLLAMA_KV_CACHE_TYPE=q8_0 OLLAMA_FLASH_ATTENTION=1 OLLAMA_KEEP_ALIVE=2h ollama serve
+
+Then run the suite with the bot, persona and judge on Ollama:
+
+    ORDER_AGENT_LLM_PROVIDER=ollama PYTHONIOENCODING=utf-8 uv run python run_suite.py --only happy_path --simulator evals/simulator-ollama.yaml --judge evals/judge-ollama.yaml
+
+`ORDER_AGENT_OLLAMA_MODEL` (default `qwen3:8b`) and `ORDER_AGENT_OLLAMA_URL` (default `http://localhost:11434/v1`) change
+the bot's model and server. qwen3's hidden thinking is switched off with `reasoning_effort: none` in the request (Ollama's
+OpenAI-compatible endpoint ignores `think: false`); the bot, persona and judge all send it. `--simulator` / `--judge`
+replace the persona and judge configs for that run only; the committed defaults (Gemini persona, Groq judge) are unchanged.
+Results and an honest quality comparison: `evals/confirmation/all-ollama/README.md`.
 
 Anything that imports Pipecat must be run with `PYTHONIOENCODING=utf-8` on Windows (the dev
 runner crashes on non-UTF-8 stdout). Prefix every command below with it.

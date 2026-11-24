@@ -1,0 +1,80 @@
+   0.000  [ --]  run: simulation 'staff_asks_details/staff_asks_details' -> ws://localhost:7861/ws
+   0.000  [ --]  user  -> modality: text | persona: ollama/qwen3:8b | max_turns: 12 | max_duration_s: 240 | max_silence_s: 30
+   0.000  [ --]  judge -> modality: text | eval: factory:order_agent.eval_llm.ollama_classifier
+   0.000  [ --]  goal  -> Take the customer's order, ask for their details. The customer places the order and hangs up by themselves, so you never need to end the call. Do not call end_call until the customer has said goodbye. Quoting a total, asking whether to place the order, or hearing the customer say yes is NOT a reason to end the call: answer with one short line and wait. Never call end_call in the same turn as your own message.
+   0.000  [ --]  connected
+   2.016  [ --]  handshake: ok (bot-ready)
+   2.016  [ --]  persona: listening (up to 12 turn(s), 240s, 30s of silence)
+   2.016  [ --]  event: metrics  'ttfb, processing'
+   5.031  [ --]  event: llm_started
+   5.406  [ --]  event: metrics  'ttfb'
+   5.406  [ --]  event: metrics  'ttfat'
+   5.797  [ --]  event: metrics  'tokens'
+   5.797  [ --]  event: metrics  'processing'
+   5.797  [ --]  event: llm_response  "Hello, I'd like to place a delivery order."
+  10.109  [ --]  send: "Sure, I'll need your name, a callback phone number, and the delivery address. Let's start with your name." (persona, text)
+  10.109  [ --]  event: persona_turn  "Sure, I'll need your name, a callback phone number, and the delivery address. Let's start with your name."
+  10.109  [ --]  event: bot_interrupted
+  10.109  [ --]  event: llm_started
+  10.797  [ --]  event: metrics  'ttfb'
+  10.797  [ --]  event: metrics  'ttfat'
+  11.063  [ --]  event: metrics  'tokens'
+  11.063  [ --]  event: metrics  'processing'
+  11.063  [ --]  event: llm_response  'My name is Ali Raza.'
+  12.172  [ --]  send: 'Thank you, Ali Raza. Now, could you please provide a callback phone number?' (persona, text)
+  12.172  [ --]  event: persona_turn  'Thank you, Ali Raza. Now, could you please provide a callback phone number?'
+  12.172  [ --]  event: bot_interrupted
+  12.188  [ --]  event: llm_started
+  12.734  [ --]  event: metrics  'ttfb'
+  12.734  [ --]  event: metrics  'ttfat'
+  13.391  [ --]  event: metrics  'tokens'
+  13.391  [ --]  event: metrics  'processing'
+  13.391  [ --]  event: llm_response  'My callback number is 0300-0000000.'
+  14.594  [ --]  send: 'Thank you, Ali Raza. Now, could you please provide a callback phone number?' (persona, text)
+  14.594  [ --]  event: persona_turn  'Thank you, Ali Raza. Now, could you please provide a callback phone number?'
+  14.594  [ --]  event: bot_interrupted
+  14.609  [ --]  event: llm_started
+  15.297  [ --]  event: metrics  'ttfb'
+  15.297  [ --]  event: metrics  'ttfat'
+  15.969  [ --]  event: metrics  'tokens'
+  15.969  [ --]  event: metrics  'processing'
+  15.969  [ --]  event: llm_response  'My callback number is 0300-0000000.'
+  17.125  [ --]  send: 'Thank you, Ali Raza. Now, could you please provide the delivery address?' (persona, text)
+  17.125  [ --]  event: persona_turn  'Thank you, Ali Raza. Now, could you please provide the delivery address?'
+  17.125  [ --]  event: bot_interrupted
+  17.141  [ --]  event: llm_started
+  17.844  [ --]  event: metrics  'ttfb'
+  17.844  [ --]  event: metrics  'ttfat'
+  18.625  [ --]  event: metrics  'tokens'
+  18.625  [ --]  event: metrics  'processing'
+  18.625  [ --]  event: llm_response  'The delivery address is House 12, Street 4, F-7/2, Islamabad.'
+  20.781  [ --]  send: "The total for your order is Rs 1050, which includes a delivery fee of Rs 150. Delivery will take 45 minutes. Is there anything else you'd like to add to your order?" (persona, text)
+  20.781  [ --]  event: persona_turn  "The total for your order is Rs 1050, which includes a delivery fee of Rs 150. Delivery will take 45 minutes. Is there anything else you'd like to add to your order?"
+  20.781  [ --]  event: bot_interrupted
+  20.797  [ --]  event: llm_started
+  21.797  [ --]  event: metrics  'ttfb'
+  21.797  [ --]  event: metrics  'ttfat'
+  22.281  [ --]  event: metrics  'tokens'
+  22.281  [ --]  event: metrics  'processing'
+  22.281  [ --]  event: llm_response  "No, that's all. I'll confirm the order now."
+  24.516  [ --]  send: 'Thank you, Ali Raza. Your order is confirmed and will be delivered to House 12, Street 4, F-7/2, Islamabad in 45 minutes. Have a great day!' (persona, text)
+  24.516  [ --]  event: persona_turn  'Thank you, Ali Raza. Your order is confirmed and will be delivered to House 12, Street 4, F-7/2, Islamabad in 45 minutes. Have a great day!'
+  24.516  [ --]  event: bot_interrupted
+  24.531  [ --]  event: llm_started
+  25.453  [ --]  event: metrics  'ttfb'
+  25.453  [ --]  event: metrics  'ttfat'
+  25.750  [ --]  event: metrics  'tokens'
+  25.750  [ --]  event: metrics  'processing'
+  25.750  [ --]  event: llm_response  'Thank you, have a great day!'
+  27.609  [ --]  event: end_call  'The customer has confirmed the order and said goodbye.'
+  27.609  [ --]  persona: ended by end_call after 6 turn(s)
+  50.703  [ --]  judge: turn 1 conduct yes: P(meets)=1.00, P(fails)=0.00, P(not_applicable)=0.00
+  50.703  [ --]  judge: turn 2 conduct yes: P(meets)=1.00, P(fails)=0.00, P(not_applicable)=0.00
+  50.703  [ --]  judge: turn 3 conduct yes: P(meets)=1.00, P(fails)=0.00, P(not_applicable)=0.00
+  50.703  [ --]  judge: turn 4 conduct yes: P(meets)=1.00, P(fails)=0.00, P(not_applicable)=0.00
+  50.703  [ --]  judge: turn 5 conduct yes: P(meets)=1.00, P(fails)=0.00, P(not_applicable)=0.00
+  50.703  [ --]  judge: turn 6 conduct yes: P(meets)=1.00, P(fails)=0.00, P(not_applicable)=0.00
+  50.703  [ --]  judge: turn 7 conduct yes: P(meets)=1.00, P(fails)=0.00, P(not_applicable)=0.00
+  50.703  [ --]  judge: conduct = 1.00: all 7 turn(s)
+  50.703  [ --]  judge: goal achieved: P(yes)=0.95
+  50.703  [ --]  done: PASS (0 failure(s))

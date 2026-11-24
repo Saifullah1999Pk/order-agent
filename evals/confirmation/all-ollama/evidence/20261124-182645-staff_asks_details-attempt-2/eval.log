@@ -1,0 +1,90 @@
+   0.000  [ --]  run: simulation 'staff_asks_details/staff_asks_details' -> ws://localhost:7861/ws
+   0.000  [ --]  user  -> modality: text | persona: ollama/qwen3:8b | max_turns: 12 | max_duration_s: 240 | max_silence_s: 30
+   0.000  [ --]  judge -> modality: text | eval: factory:order_agent.eval_llm.ollama_classifier
+   0.000  [ --]  goal  -> Take the customer's order, ask for their details. The customer places the order and hangs up by themselves, so you never need to end the call. Do not call end_call until the customer has said goodbye. Quoting a total, asking whether to place the order, or hearing the customer say yes is NOT a reason to end the call: answer with one short line and wait. Never call end_call in the same turn as your own message.
+   0.000  [ --]  connected
+   1.985  [ --]  handshake: ok (bot-ready)
+   1.985  [ --]  persona: listening (up to 12 turn(s), 240s, 30s of silence)
+   1.985  [ --]  event: metrics  'ttfb, processing'
+   5.016  [ --]  event: llm_started
+   5.469  [ --]  event: metrics  'ttfb'
+   5.469  [ --]  event: metrics  'ttfat'
+   5.860  [ --]  event: metrics  'tokens'
+   5.860  [ --]  event: metrics  'processing'
+   5.860  [ --]  event: llm_response  "Hello, I'd like to place a delivery order."
+   7.047  [ --]  send: "Sure, I'll need your name, a callback phone number, and the delivery address. Let's start with your name." (persona, text)
+   7.047  [ --]  event: persona_turn  "Sure, I'll need your name, a callback phone number, and the delivery address. Let's start with your name."
+   7.063  [ --]  event: bot_interrupted
+   7.063  [ --]  event: llm_started
+   7.735  [ --]  event: metrics  'ttfb'
+   7.735  [ --]  event: metrics  'ttfat'
+   7.985  [ --]  event: metrics  'tokens'
+   7.985  [ --]  event: metrics  'processing'
+   7.985  [ --]  event: llm_response  'My name is Ali Raza.'
+   9.078  [ --]  send: 'Thank you, Ali Raza. Now, could you please provide a callback phone number?' (persona, text)
+   9.078  [ --]  event: persona_turn  'Thank you, Ali Raza. Now, could you please provide a callback phone number?'
+   9.078  [ --]  event: bot_interrupted
+   9.094  [ --]  event: llm_started
+   9.641  [ --]  event: metrics  'ttfb'
+   9.641  [ --]  event: metrics  'ttfat'
+  10.281  [ --]  event: metrics  'tokens'
+  10.281  [ --]  event: metrics  'processing'
+  10.281  [ --]  event: llm_response  'My callback number is 0300-0000000.'
+  11.422  [ --]  send: 'Thank you, Ali Raza. Now, could you please provide a callback phone number?' (persona, text)
+  11.422  [ --]  event: persona_turn  'Thank you, Ali Raza. Now, could you please provide a callback phone number?'
+  11.422  [ --]  event: bot_interrupted
+  11.422  [ --]  event: llm_started
+  12.110  [ --]  event: metrics  'ttfb'
+  12.110  [ --]  event: metrics  'ttfat'
+  12.766  [ --]  event: metrics  'tokens'
+  12.766  [ --]  event: metrics  'processing'
+  12.766  [ --]  event: llm_response  'My callback number is 0300-0000000.'
+  13.875  [ --]  send: 'Thank you, Ali Raza. Now, could you please provide the delivery address?' (persona, text)
+  13.875  [ --]  event: persona_turn  'Thank you, Ali Raza. Now, could you please provide the delivery address?'
+  13.875  [ --]  event: bot_interrupted
+  13.891  [ --]  event: llm_started
+  14.578  [ --]  event: metrics  'ttfb'
+  14.578  [ --]  event: metrics  'ttfat'
+  15.360  [ --]  event: metrics  'tokens'
+  15.360  [ --]  event: metrics  'processing'
+  15.360  [ --]  event: llm_response  'The delivery address is House 12, Street 4, F-7/2, Islamabad.'
+  16.860  [ --]  send: 'The total for your order is Rs 1050, and delivery will take 45 minutes. Is that okay with you?' (persona, text)
+  16.860  [ --]  event: persona_turn  'The total for your order is Rs 1050, and delivery will take 45 minutes. Is that okay with you?'
+  16.860  [ --]  event: bot_interrupted
+  16.875  [ --]  event: llm_started
+  17.703  [ --]  event: metrics  'ttfb'
+  17.703  [ --]  event: metrics  'ttfat'
+  18.328  [ --]  event: metrics  'tokens'
+  18.328  [ --]  event: metrics  'processing'
+  18.328  [ --]  event: llm_response  "Yes, that's okay with me. Let me confirm the total and delivery time."
+  20.016  [ --]  send: 'The total for your order is Rs 1050, and delivery will take 45 minutes. Is that okay with you?' (persona, text)
+  20.016  [ --]  event: persona_turn  'The total for your order is Rs 1050, and delivery will take 45 minutes. Is that okay with you?'
+  20.016  [ --]  event: bot_interrupted
+  20.031  [ --]  event: llm_started
+  20.875  [ --]  event: metrics  'ttfb'
+  20.875  [ --]  event: metrics  'ttfat'
+  21.500  [ --]  event: metrics  'tokens'
+  21.500  [ --]  event: metrics  'processing'
+  21.500  [ --]  event: llm_response  "Yes, that's okay with me. Let me confirm the total and delivery time."
+  22.875  [ --]  send: "I'll place your order, Ali Raza. Thank you, and have a great day!" (persona, text)
+  22.875  [ --]  event: persona_turn  "I'll place your order, Ali Raza. Thank you, and have a great day!"
+  22.875  [ --]  event: bot_interrupted
+  22.891  [ --]  event: llm_started
+  23.656  [ --]  event: metrics  'ttfb'
+  23.656  [ --]  event: metrics  'ttfat'
+  24.297  [ --]  event: metrics  'tokens'
+  24.297  [ --]  event: metrics  'processing'
+  24.297  [ --]  event: llm_response  "You're welcome! I look forward to receiving my order. Have a great day!"
+  26.016  [ --]  event: end_call  'Customer confirmed the order and ended the call.'
+  26.016  [ --]  persona: ended by end_call after 7 turn(s)
+ 166.469  [ --]  judge: turn 1 conduct yes: P(meets)=1.00, P(fails)=0.00, P(not_applicable)=0.00
+ 166.469  [ --]  judge: turn 2 conduct yes: P(meets)=1.00, P(fails)=0.00, P(not_applicable)=0.00
+ 166.469  [ --]  judge: turn 3 conduct yes: P(meets)=1.00, P(fails)=0.00, P(not_applicable)=0.00
+ 166.469  [ --]  judge: turn 4 conduct yes: P(meets)=1.00, P(fails)=0.00, P(not_applicable)=0.00
+ 166.469  [ --]  judge: turn 5 conduct yes: P(meets)=1.00, P(fails)=0.00, P(not_applicable)=0.00
+ 166.469  [ --]  judge: turn 6 conduct yes: P(meets)=1.00, P(fails)=0.00, P(not_applicable)=0.00
+ 166.469  [ --]  judge: turn 7 conduct yes: P(meets)=1.00, P(fails)=0.00, P(not_applicable)=0.00
+ 166.469  [ --]  judge: turn 8 conduct yes: P(meets)=1.00, P(fails)=0.00, P(not_applicable)=0.00
+ 166.469  [ --]  judge: conduct = 1.00: all 8 turn(s)
+ 166.469  [ --]  judge: goal not achieved: P(yes)=0.00
+ 166.469  [ --]  done: PASS (0 failure(s))
