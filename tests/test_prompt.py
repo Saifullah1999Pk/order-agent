@@ -77,4 +77,12 @@ def test_prompt_follows_named_minimum_shortfall(brief):
     from order_agent.prompt import build_system_prompt
 
     text = build_system_prompt(brief)
-    assert "add exactly the item and quantity it names" in text
+    assert "add exactly that" in text
+
+
+def test_prompt_minimum_guidance_is_honest_about_budget(brief):
+    text = build_system_prompt(brief)
+    assert "never invent" in text.lower()
+    assert "has already checked the budget" not in text
+    assert "if it only says to ask a price, ask" in text
+    assert "follow the next result" in text

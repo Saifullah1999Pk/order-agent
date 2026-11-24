@@ -112,3 +112,11 @@ Summaries: `mrfix-20261124-151509-summary.md` (first fix, before the not_ordered
 | 174004 | sold_out_no_substitute | 1 | quota_error | same |
 
 Result: minimum_reachable 0/3 by the runner's count (1 attempt reached the correct order, 2 were harness errors); regression runs not obtained because the Gemini free quota ran out. Unit tests cover the regression paths. Next step: rerun minimum_reachable, happy_path and sold_out_no_substitute after the Gemini quota resets.
+
+### Review follow-up (same day, unit tests only)
+- The shortfall hint is only given once all required lines are filled (`missing_lines()` empty). While required lines are missing it says the minimum still applies and to fill the brief first; it never says "end as not_ordered" then. This also fixes the swap case (remove a required item, add a substitute).
+- Candidates prefer optional lines in the cart, then the cheapest.
+- If delivery fee and tax are not recorded yet, the hint says the total is "before delivery fee and tax" and makes no budget claim. `set_fees` repeats the hint with the budget claim.
+- The pending-optional message adds: if its price doesn't fit in the remaining room, end as not_ordered.
+- The prompt no longer says a result "has already checked the budget": add exactly what a result names; if it only says to ask a price, ask, then follow the next result.
+- The judge figures quoted above (goal P=0.99, conduct 0.83, turn 2 verdict) are in `mrfix-20261124-173526-attempt3-judge.txt`.

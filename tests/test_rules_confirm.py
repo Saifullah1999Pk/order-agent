@@ -227,7 +227,7 @@ def test_hint_does_not_say_give_up_when_optional_item_not_yet_in_cart(brief):
     s = _session(brief)
     s.add_item("chicken biryani", 2, Decimal("900"))
     result = s.set_minimum_order(Decimal("2200"))
-    assert "not_ordered" not in result.message
+    assert "end the call as not_ordered" in result.message.split("If its price doesn't fit")[-1]  # only as a conditional fallback
     assert "raita" in result.message
     assert "400 PKR short" in result.message
     assert "ask" in result.message.lower()
@@ -235,3 +235,81 @@ def test_hint_does_not_say_give_up_when_optional_item_not_yet_in_cart(brief):
     s.add_item("raita", 3, Decimal("150"))
     assert s.set_fees(Decimal("150"), Decimal("0")).ok
     assert s.confirm_order(Decimal("2400"), 45).ok
+
+
+# -- review fixes: hint only when required lines are filled ------------------
+
+
+def test_hint_mid_order_does_not_push_required_line(brief):
+    s = _session(brief)
+    s.set_minimum_order(Decimal("2200"))
+    result = s.add_item("chicken biryani", 1, Decimal("900"))
+    assert result.ok
+    assert "2200 PKR minimum still applies" in result.message
+    assert "more chicken biryani" not in result.message
+    assert "not_ordered" not in result.message
+
+
+def test_hint_after_remove_swap_does_not_say_not_ordered(brief):
+    s = _session(brief)
+    s.set_fees(Decimal("150"), Decimal("0"))
+    s.set_minimum_order(Decimal("2200"))
+    s.add_item("chicken biryani", 2, Decimal("900"))
+    result = s.remove_item("chicken biryani")
+    assert result.ok
+    assert "not_ordered" not in result.message
+    assert "still applies" in result.message
+
+
+def test_hint_prefers_optional_over_cheaper_required(make_brief):
+    from order_agent.brief import WantedLine
+
+    wanted = [
+        WantedLine(item="chicken biryani", quantity=1, substitutes=[]),
+        WantedLine(item="soda", quantity=1, optional=True),
+    ]
+    s = _session(make_brief(wanted=wanted, budget_pkr=Decimal("5000")))
+    s.set_fees(Decimal("0"), Decimal("0"))
+    s.add_item("chicken biryani", 1, Decimal("100"))
+    s.add_item("soda", 1, Decimal("200"))
+    result = s.set_minimum_order(Decimal("350"))  # short 50: biryani x1 costs 100, soda x1 costs 200
+    assert "add 1 more soda (200 PKR)" in result.message
+
+
+def test_hint_before_fees_set_does_not_claim_within_budget(brief):
+    s = _session(brief)
+    s.add_item("chicken biryani", 2, Decimal("900"))
+    s.add_item("raita", 1, Decimal("150"))
+    result = s.set_minimum_order(Decimal("2200"))
+    assert "add 2 more raita (300 PKR)" in result.message
+    assert "before delivery fee and tax" in result.message
+    assert "within your" not in result.message
+
+
+def test_set_fees_result_repeats_hint_with_budget_claim(brief):
+    s = _session(brief)
+    s.add_item("chicken biryani", 2, Decimal("900"))
+    s.add_item("raita", 1, Decimal("150"))
+    s.set_minimum_order(Decimal("2200"))
+    result = s.set_fees(Decimal("150"), Decimal("0"))
+    assert "add 2 more raita (300 PKR)" in result.message
+    assert "within your 2500 PKR budget" in result.message
+
+
+def test_remove_item_result_has_hint_when_lines_filled(brief):
+    s = _minimum_reachable(brief)
+    s.set_minimum_order(Decimal("2200"))
+    s.add_item("raita", 2, Decimal("150"))
+    result = s.remove_item("raita")
+    assert result.ok
+    assert "400 PKR short" in result.message  # food back to 1800
+    assert "raita" in result.message and "ask its price" in result.message
+
+
+def test_pending_optional_without_room_says_not_ordered_fallback(make_brief):
+    s = _session(make_brief(budget_pkr=Decimal("2000")))
+    s.add_item("chicken biryani", 2, Decimal("900"))
+    s.set_fees(Decimal("150"), Decimal("0"))
+    result = s.set_minimum_order(Decimal("2200"))
+    assert "50 PKR more" in result.message
+    assert "doesn't fit" in result.message and "not_ordered" in result.message

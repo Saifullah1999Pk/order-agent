@@ -52,6 +52,7 @@ class OrderSession:
         self.delivery_fee_pkr: Decimal = Decimal(0)
         self.tax_pkr: Decimal = Decimal(0)
         self.minimum_order_pkr: Decimal | None = None
+        self._fees_set = False
         self.state: Literal["open", "confirmed", "ended"] = "open"
         self.events: list[ToolEvent] = []
         self.delivery_eta: datetime | None = None
@@ -82,27 +83,37 @@ class OrderSession:
         food = self._items_total()
         shortfall = self.minimum_order_pkr - food
         head = f"The food is {_fmt(food)} PKR, {_fmt(shortfall)} PKR short of the {_fmt(self.minimum_order_pkr)} PKR minimum"
+        if self.missing_lines():
+            return f" The {_fmt(self.minimum_order_pkr)} PKR minimum still applies (food is {_fmt(food)} PKR): fill the required items from your brief first, then check it again."
+        optional = {line.item for line in self.brief.wanted if line.optional}
         best = None
         for item in self.items:
             n = ceil(shortfall / item.unit_price_pkr)
             cost = n * item.unit_price_pkr
-            if self.cart_total() + cost <= self.brief.budget_pkr and (best is None or cost < best[2]):
-                best = (item, n, cost)
+            if self.cart_total() + cost > self.brief.budget_pkr:
+                continue
+            key = (item.line_item not in optional, cost)
+            if best is None or key < best[0]:
+                best = (key, item, n, cost)
+        budget = self.brief.budget_pkr
         if best is None:
             in_cart = {i.line_item for i in self.items}
             pending = [l.item for l in self.brief.wanted if l.optional and l.item not in in_cart]
             if pending:
-                room = self.brief.budget_pkr - self.cart_total()
+                room = budget - self.cart_total()
                 return (
                     f" {head}. Nothing in the cart covers it within budget, but {' or '.join(pending)} (optional) is not in the cart yet: "
-                    f"ask its price and add enough of it, up to {_fmt(room)} PKR more within your {_fmt(self.brief.budget_pkr)} PKR budget."
+                    f"ask its price and add enough of it, up to {_fmt(room)} PKR more within your {_fmt(budget)} PKR budget. "
+                    "If its price doesn't fit in that room, end the call as not_ordered."
                 )
-            return f" {head}, and no addition fits within your {_fmt(self.brief.budget_pkr)} PKR budget: end the call as not_ordered."
-        item, n, cost = best
-        return (
-            f" {head}: add {n} more {item.name} ({_fmt(cost)} PKR) to reach it. The total would then be "
-            f"{_fmt(self.cart_total() + cost)} PKR, within your {_fmt(self.brief.budget_pkr)} PKR budget."
-        )
+            return f" {head}, and no addition fits within your {_fmt(budget)} PKR budget: end the call as not_ordered."
+        _, item, n, cost = best
+        total = self.cart_total() + cost
+        if self._fees_set:
+            tail = f"The total would then be {_fmt(total)} PKR, within your {_fmt(budget)} PKR budget."
+        else:
+            tail = f"The total would then be {_fmt(total)} PKR before delivery fee and tax; delivery fee and tax are not recorded yet, so ask about them."
+        return f" {head}: add {n} more {item.name} ({_fmt(cost)} PKR) to reach it. {tail}"
 
     def _never_hit(self, name: str) -> str | None:
         words = normalise(name)
@@ -222,6 +233,7 @@ class OrderSession:
         if new_total > self.brief.budget_pkr:
             return self._over_budget(f"a delivery fee of {_fmt(fee)} and tax of {_fmt(tax)}", new_total)
         self.delivery_fee_pkr, self.tax_pkr = fee, tax
+        self._fees_set = True
         return ToolResult(True, f"Fees recorded: delivery {_fmt(fee)} PKR, tax {_fmt(tax)} PKR. Cart total is now {_fmt(self.cart_total())} PKR." + self._minimum_hint())
 
     def set_minimum_order(self, minimum_pkr: Decimal) -> ToolResult:
