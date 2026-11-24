@@ -1,0 +1,111 @@
+[
+  {
+    "role": "assistant",
+    "content": "Hello, I would like to place a delivery order, please."
+  },
+  {
+    "role": "user",
+    "content": "Welcome to Karachi Kitchen! What would you like to order today?"
+  },
+  {
+    "role": "assistant",
+    "content": "I would like to order two chicken biryanis and one raita for delivery, please. Are those available, and what are their prices?"
+  },
+  {
+    "role": "user",
+    "content": "Yes, everything is available. Chicken biryani is nine hundred rupees each, and raita is one hundred fifty rupees."
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "quantity": 2,
+      "name": "chicken biryani",
+      "unit_price_pkr": 900
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "name": "raita",
+      "quantity": 1,
+      "unit_price_pkr": 150
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Could you please let me know the delivery fee, tax, and if there is a minimum order?"
+  },
+  {
+    "role": "user",
+    "content": "The delivery fee is one hundred fifty rupees, there is no tax, and our minimum order for food is twenty-two hundred rupees."
+  },
+  {
+    "role": "tool_call",
+    "name": "set_fees",
+    "arguments": {
+      "delivery_fee_pkr": 150,
+      "tax_pkr": 0
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "set_minimum_order",
+    "arguments": {
+      "minimum_pkr": 2200
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Ah, I see my order is slightly under your minimum order. Could I add one more raita to meet the minimum, please? And what is the price for the extra raita?"
+  },
+  {
+    "role": "user",
+    "content": "Sure, another raita is one hundred fifty rupees, which brings your food total to twenty-one hundred fifty rupees, still just under the twenty-two hundred minimum."
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "name": "raita",
+      "unit_price_pkr": 150,
+      "quantity": 1
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Could you please let me know what the delivery fee and tax are? Also, my address is House 12, Street 4, F-7/2, Islamabad, and my callback number is 0300-0000000. Less spicy if possible."
+  },
+  {
+    "role": "user",
+    "content": "The delivery fee is one hundred fifty rupees and there is no tax. Since you are still fifty rupees under the minimum, would you like to add a chicken pulao or something else?"
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "quantity": 1,
+      "name": "chicken pulao",
+      "unit_price_pkr": 950
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "remove_item",
+    "arguments": {
+      "name": "chicken pulao"
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Since the minimum order pushes it over my budget, I won't be able to place the order today. Thank you anyway, goodbye!"
+  }
+]

@@ -376,3 +376,7 @@ Evidence: `evals/confirmation/all-ollama/` (README.md has the per-attempt table)
 | staff_asks_details | **fail** (0/3) | the bot never called a tool or named an item; the judge said "goal met" twice when no order existed |
 
 Persona same-turn hang-ups: 0 of 8. Bot first token per turn: median 1.4 s (p90 3.3 s); call 20 to 45 s; judge 14 to 31 s. Judge and deterministic check disagreed in 5 of 8 attempts. Verdict: usable to run the harness with no limits, but qwen3:8b is clearly weaker than the Gemini bot (invented prices, tool-call mistakes) and is not a reliable judge.
+
+## 14. Local judge check: gemma4:12b (2026-11-24)
+
+Re-judging 25 saved conversations (`evals/confirmation/all-ollama/judge-gemma4.md`): gemma4:12b agreed with the deterministic check in 12 of 25 (9 false passes, 4 false fails; about 100 s per conversation), qwen3:8b in 14 of 25 (3 false passes, 8 false fails; 16 s), the original judges (Groq, Gemini, qwen3) in 13 of 25. Neither local model is a reliable judge; gemma4:12b also needs flash attention off on this GPU (it crashes the Vulkan runner on prompts over about 500 tokens otherwise) and a separate server with 8192 context.

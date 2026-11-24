@@ -1,0 +1,114 @@
+[
+  {
+    "role": "assistant",
+    "content": "Hello, I would like to place a delivery order, please."
+  },
+  {
+    "role": "user",
+    "content": "Hello! Welcome to Karachi Kitchen. What can I get for you today?"
+  },
+  {
+    "role": "assistant",
+    "content": "I'd like to order two chicken biryanis and one raita for delivery. Do you have these available, and what are their prices?"
+  },
+  {
+    "role": "user",
+    "content": "Yes, both are available. Chicken biryani is nine hundred rupees each, and raita is one hundred and fifty rupees."
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "quantity": 2,
+      "name": "chicken biryani",
+      "unit_price_pkr": 900
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "quantity": 1,
+      "name": "raita",
+      "unit_price_pkr": 150
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Could you please let me know the delivery fee, tax, and any minimum order requirement? Also, please make the food less spicy if possible."
+  },
+  {
+    "role": "user",
+    "content": "We can definitely make it less spicy. There's no minimum order, no tax, and the delivery fee is one hundred and fifty rupees."
+  },
+  {
+    "role": "tool_call",
+    "name": "set_fees",
+    "arguments": {
+      "delivery_fee_pkr": 150,
+      "tax_pkr": 0
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "set_minimum_order",
+    "arguments": {
+      "minimum_pkr": 0
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Could you please confirm if there is a minimum order, just to be sure?"
+  },
+  {
+    "role": "user",
+    "content": "No, there is no minimum order at all."
+  },
+  {
+    "role": "assistant",
+    "content": "Could you also let me know what the total and the delivery time will be, and by the way, my delivery address is House 12, Street 4, F-7/2, Islamabad, and my callback number is 0300-0000000."
+  },
+  {
+    "role": "user",
+    "content": "Got it, thank you for the address and number. Your total comes to two thousand and fifty rupees including delivery, and delivery takes forty-five minutes. Shall I confirm your order?"
+  },
+  {
+    "role": "tool_call",
+    "name": "confirm_order",
+    "arguments": {
+      "quoted_total_pkr": 2050,
+      "delivery_minutes": 45
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "The total comes to two thousand and fifty rupees, but my calculation shows twenty-one hundred rupees including the delivery fee. Could you please double-check that for me?"
+  },
+  {
+    "role": "user",
+    "content": "Two chicken biryani is eighteen hundred, plus one fifty for raita, plus one fifty for delivery, which makes twenty-one hundred rupees total. You are right!"
+  },
+  {
+    "role": "tool_call",
+    "name": "confirm_order",
+    "arguments": {
+      "delivery_minutes": 45,
+      "quoted_total_pkr": 2100
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "end_call",
+    "arguments": {
+      "reason": "Order successfully placed and confirmed.",
+      "outcome": "ordered"
+    },
+    "cancelled": false
+  }
+]

@@ -1,0 +1,2 @@
+goal: met: P(yes)=0.99
+metric conduct: 0.6666666666666666 passed=False

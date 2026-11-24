@@ -1,0 +1,40 @@
+[
+  {
+    "role": "assistant",
+    "content": "Hello, I would like to place a delivery order, please."
+  },
+  {
+    "role": "user",
+    "content": "Sure, what would you like to order today?"
+  },
+  {
+    "role": "assistant",
+    "content": "I would like to order two chicken biryanis for delivery. Do you have them available and what are the prices?"
+  },
+  {
+    "role": "user",
+    "content": "Yes, we have them; two chicken biryanis will be Rs\u202f1800. May I have your name, please?"
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "unit_price_pkr": 900,
+      "name": "chicken biryani",
+      "quantity": 2
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "My name is Ali Raza. Also, could you please make it less spicy if possible?"
+  },
+  {
+    "role": "user",
+    "content": "We\u2019ll prepare it less spicy. Could you give me a callback phone number, please?Sure, may I have your delivery address?My number is 0300\u20111234567.Thank you, Mr\u202fAli Raza. Could you please provide the delivery address?123 Shahrah-e-Faisal, Karachi.Just to confirm: the order is two chicken biryanis for Mr\u202fAli Raza, phone 0300\u20111234567, to be delivered at 123 Shahrah-e-Faisal, Karachi. The total comes to Rs\u202f1950, including the Rs\u202f150 delivery fee, and the food will arrive in about 45\u202fminutes. Shall I place the order?"
+  },
+  {
+    "role": "assistant",
+    "content": "Actually, my delivery address is House 12, Street 4, F-7/2, Islamabad, and my callback number is 0300-0000000. Also, what is the delivery fee, tax, and minimum order?"
+  }
+]

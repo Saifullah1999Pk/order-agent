@@ -1,0 +1,50 @@
+[
+  {
+    "role": "assistant",
+    "content": "Hello, good morning. I'd like to place a delivery order, please."
+  },
+  {
+    "role": "user",
+    "content": "Sure, what would you like to order today?"
+  },
+  {
+    "role": "assistant",
+    "content": "I'd like two chicken biryani, please. And if you have raita, I'd like one of that too. Is the biryani available, and could you tell me the prices?"
+  },
+  {
+    "role": "user",
+    "content": "Your order comes to Rs\u202f1950, but we have a minimum food order of Rs\u202f2200, so we\u2019ll need to add at least Rs\u202f250 more. Would you like anything else?"
+  },
+  {
+    "role": "assistant",
+    "content": "I'm sorry, I think we got a little ahead. Before anything else, could you just confirm the biryani is available and tell me the price of the chicken biryani and the raita?"
+  },
+  {
+    "role": "user",
+    "content": "Yes, the chicken biryani is available at Rs\u202f900 each, and the raita is Rs\u202f150."
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "name": "chicken biryani",
+      "quantity": 2,
+      "unit_price_pkr": 900
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "name": "raita",
+      "quantity": 1,
+      "unit_price_pkr": 150
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Great, that works. You mentioned a minimum order, so could you tell me the minimum food order, delivery fee, and tax all together, please?"
+  }
+]

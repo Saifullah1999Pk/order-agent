@@ -1,0 +1,50 @@
+[
+  {
+    "role": "assistant",
+    "content": "Hello good evening. I'd like to place a delivery order, please."
+  },
+  {
+    "role": "user",
+    "content": "Good evening! Our fish special is the best thing on the menu\u2014fried fish with rice. What would you like to order?"
+  },
+  {
+    "role": "assistant",
+    "content": "I'll pass on the fish"
+  },
+  {
+    "role": "user",
+    "content": "No problem! Our fish special is still the best thing on the menu\u2014fried fish with rice. What would you like to order for delivery?"
+  },
+  {
+    "role": "user",
+    "content": "Great choice! Two chicken biryani will be Rs 1800, plus the delivery fee of Rs 150 makes a total of Rs 1950, and it will arrive in about 45 minutes. By the way, our fish special is still the best thing on the menu. Shall I place the order for you?"
+  },
+  {
+    "role": "assistant",
+    "content": "Thanks."
+  },
+  {
+    "role": "user",
+    "content": "Certainly!"
+  },
+  {
+    "role": "assistant",
+    "content": "Before I confirm, is there any tax or a minimum order?  And is there room for a Rata within my 2,500 rupee budget? I see"
+  },
+  {
+    "role": "user",
+    "content": "There's no tax and no minimum order."
+  },
+  {
+    "role": "assistant",
+    "content": "So to confirm, no tax and no minimum order. Great, that fits my budget. One."
+  },
+  {
+    "role": "user",
+    "content": "Just to confirm, you\u2019d like two chicken biryani for a total of Rs\u202f1950, delivered in about 45 minutes. Shall I place the order?"
+  },
+  {
+    "role": "assistant",
+    "content": "Yes."
+  }
+]

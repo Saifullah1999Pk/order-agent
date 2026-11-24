@@ -1,0 +1,54 @@
+{
+  "outcome": "call_dropped",
+  "reason": "call ended without end_call",
+  "items": [
+    {
+      "name": "chicken biryani",
+      "line_item": "chicken biryani",
+      "quantity": 2,
+      "unit_price_pkr": "975"
+    }
+  ],
+  "delivery_fee_pkr": "0",
+  "tax_pkr": "0",
+  "cart_total_pkr": "1950",
+  "quoted_total_pkr": null,
+  "delivery_eta": null,
+  "tool_events": [
+    {
+      "tool": "add_item",
+      "args": {
+        "name": "chicken biryani",
+        "quantity": 2,
+        "unit_price_pkr": "975"
+      },
+      "ok": true,
+      "message": "Added 2 x chicken biryani at 975 PKR each. Cart total is now 1950 PKR.",
+      "at": "2026-11-23T19:27:02.475768"
+    }
+  ],
+  "transcript": [
+    {
+      "role": "agent",
+      "text": "Hello! I would like to place a delivery order, please.",
+      "at": "2026-11-23T19:27:08.488599"
+    },
+    {
+      "role": "agent",
+      "text": "I would like to order two plates of chicken biryani for delivery, please. Do you have chicken biryani available, and how much is it?",
+      "at": "2026-11-23T19:27:21.584136"
+    },
+    {
+      "role": "agent",
+      "text": "Can you also tell me about the delivery fee, any tax, and if there is a minimum order amount?",
+      "at": "2026-11-23T19:27:39.984600"
+    },
+    {
+      "role": "agent",
+      "text": "Could you please let me know what the delivery fee and tax are, and if you have a minimum order?",
+      "at": "2026-11-23T19:27:42.775343"
+    }
+  ],
+  "started_at": "2026-11-23T19:27:02.475768",
+  "ended_at": "2026-11-23T19:27:44.844966"
+}

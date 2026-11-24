@@ -1,0 +1,2 @@
+goal: not met: The bot failed to achieve the goal because it did not provide the required customer name, callback number, and delivery address before the conversation ended.
+metric conduct: 1.0 passed=True

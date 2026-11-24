@@ -1,0 +1,113 @@
+[
+  {
+    "role": "assistant",
+    "content": "Hello, I would like to place a delivery order, please."
+  },
+  {
+    "role": "user",
+    "content": "Welcome to Karachi Kitchen! What would you like to order today?"
+  },
+  {
+    "role": "assistant",
+    "content": "I would like to order two chicken biryanis and one raita for delivery, please. Are those available, and what are their prices?"
+  },
+  {
+    "role": "user",
+    "content": "Yes, both are available. Chicken biryani is nine hundred rupees each, and raita is one hundred and fifty rupees."
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "quantity": 2,
+      "name": "chicken biryani",
+      "unit_price_pkr": 900
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "quantity": 1,
+      "name": "raita",
+      "unit_price_pkr": 150
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Could you please let me know about the delivery fee, any tax, and if there is a minimum order?"
+  },
+  {
+    "role": "user",
+    "content": "Delivery fee is one hundred and fifty rupees, there is no tax, and there is no minimum order."
+  },
+  {
+    "role": "tool_call",
+    "name": "set_fees",
+    "arguments": {
+      "delivery_fee_pkr": 150,
+      "tax_pkr": 0
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "set_minimum_order",
+    "arguments": {
+      "minimum_pkr": 0
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Could you please let me know the minimum order amount again?"
+  },
+  {
+    "role": "user",
+    "content": "There is no minimum order at all."
+  },
+  {
+    "role": "assistant",
+    "content": "Great. Could you also make the food less spicy, if possible? And what is the delivery address and your phone number?"
+  },
+  {
+    "role": "user",
+    "content": "We can make it less spicy for you. May I please have your name for the order?"
+  },
+  {
+    "role": "assistant",
+    "content": "My name is Ali Raza. My delivery address is House 12, Street 4, F-7/2, Islamabad, and my phone number is 0300-0000000."
+  },
+  {
+    "role": "user",
+    "content": "Thank you, Ali. Your callback phone number is 0300-0000000, is that correct?"
+  },
+  {
+    "role": "assistant",
+    "content": "Yes, that's correct. Could you please tell me the grand total and how long the delivery will take? We need it by 9:00 PM."
+  },
+  {
+    "role": "user",
+    "content": "The grand total is two,100 rupees, and delivery takes 45 minutes."
+  },
+  {
+    "role": "tool_call",
+    "name": "confirm_order",
+    "arguments": {
+      "quoted_total_pkr": 2100,
+      "delivery_minutes": 45
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "end_call",
+    "arguments": {
+      "reason": "Order confirmed successfully within budget and delivery time.",
+      "outcome": "ordered"
+    },
+    "cancelled": false
+  }
+]

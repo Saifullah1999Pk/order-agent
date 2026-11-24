@@ -1,0 +1,111 @@
+{
+  "outcome": "call_dropped",
+  "reason": "call ended without end_call",
+  "items": [
+    {
+      "name": "chicken biryani",
+      "line_item": "chicken biryani",
+      "quantity": 2,
+      "unit_price_pkr": "900"
+    },
+    {
+      "name": "raita",
+      "line_item": "raita",
+      "quantity": 2,
+      "unit_price_pkr": "150"
+    }
+  ],
+  "delivery_fee_pkr": "150",
+  "tax_pkr": "0",
+  "cart_total_pkr": "2250",
+  "quoted_total_pkr": null,
+  "delivery_eta": null,
+  "tool_events": [
+    {
+      "tool": "add_item",
+      "args": {
+        "name": "chicken biryani",
+        "quantity": 2,
+        "unit_price_pkr": "900"
+      },
+      "ok": true,
+      "message": "Added 2 x chicken biryani at 900 PKR each. Cart total is now 1800 PKR.",
+      "at": "2026-11-24T14:33:38.085305"
+    },
+    {
+      "tool": "add_item",
+      "args": {
+        "name": "raita",
+        "quantity": 1,
+        "unit_price_pkr": "150"
+      },
+      "ok": true,
+      "message": "Added 1 x raita at 150 PKR each. Cart total is now 1950 PKR.",
+      "at": "2026-11-24T14:33:38.085305"
+    },
+    {
+      "tool": "set_fees",
+      "args": {
+        "delivery_fee_pkr": "150",
+        "tax_pkr": "0"
+      },
+      "ok": true,
+      "message": "Fees recorded: delivery 150 PKR, tax 0 PKR. Cart total is now 2100 PKR.",
+      "at": "2026-11-24T14:33:38.085305"
+    },
+    {
+      "tool": "set_minimum_order",
+      "args": {
+        "minimum_pkr": "2200"
+      },
+      "ok": true,
+      "message": "Minimum order recorded: 2200 PKR of food (before delivery fee and tax). Food subtotal is now 1950 PKR.",
+      "at": "2026-11-24T14:33:38.085305"
+    },
+    {
+      "tool": "add_item",
+      "args": {
+        "name": "raita",
+        "quantity": 1,
+        "unit_price_pkr": "150"
+      },
+      "ok": true,
+      "message": "Added 1 x raita at 150 PKR each. Cart total is now 2250 PKR.",
+      "at": "2026-11-24T14:33:38.085305"
+    },
+    {
+      "tool": "add_item",
+      "args": {
+        "name": "chicken pulao",
+        "quantity": 1,
+        "unit_price_pkr": "950"
+      },
+      "ok": false,
+      "message": "Refused: adding 1 x chicken pulao would bring the all-in total (items, delivery fee and tax) to 3200 PKR, over the budget of 2500 PKR. Otherwise you may ask for chicken karahi instead, or end the call as not_ordered.",
+      "at": "2026-11-24T14:33:38.085305"
+    },
+    {
+      "tool": "remove_item",
+      "args": {
+        "name": "chicken pulao"
+      },
+      "ok": false,
+      "message": "Refused: 'chicken pulao' is not in the cart. The cart holds: chicken biryani, raita.",
+      "at": "2026-11-24T14:33:38.085305"
+    }
+  ],
+  "transcript": [
+    {
+      "role": "agent",
+      "text": "Hello, I would like to place a delivery order, please.",
+      "at": "2026-11-24T14:33:44.027506"
+    },
+    {
+      "role": "agent",
+      "text": "I would like to order two chicken biryanis and one raita for delivery, please. Are those available, and what are their prices?",
+      "at": "2026-11-24T14:33:45.521164"
+    }
+  ],
+  "started_at": "2026-11-24T14:33:38.085305",
+  "ended_at": "2026-11-24T14:34:04.816477"
+}

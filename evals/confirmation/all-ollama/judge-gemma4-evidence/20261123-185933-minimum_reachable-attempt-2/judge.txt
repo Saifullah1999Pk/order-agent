@@ -1,0 +1,2 @@
+goal: not met: The bot added the chicken pulao instead of 3 raita, exceeding the budget and not meeting the required 3 raita to hit the minimum Rs 2200; thus the order did not meet the stated goal.
+metric conduct: 1.0 passed=True

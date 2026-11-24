@@ -1,0 +1,75 @@
+[
+  {
+    "role": "assistant",
+    "content": "Hello, I would like to place a delivery order, please."
+  },
+  {
+    "role": "user",
+    "content": "Welcome to Karachi Kitchen! What would you like to order today?"
+  },
+  {
+    "role": "assistant",
+    "content": "I would like to order two chicken biryanis and one raita for delivery, please. Are those available, and what are their prices?"
+  },
+  {
+    "role": "user",
+    "content": "Yes, both are available. Chicken biryani is nine hundred rupees each, and raita is one hundred and fifty rupees."
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "unit_price_pkr": 900,
+      "name": "chicken biryani",
+      "quantity": 2
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "quantity": 1,
+      "name": "raita",
+      "unit_price_pkr": 150
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Could you please let me know about the delivery fee, tax, and any minimum order requirement?"
+  },
+  {
+    "role": "user",
+    "content": "The delivery fee is one hundred and fifty rupees, there is no tax, and there is no minimum order."
+  },
+  {
+    "role": "tool_call",
+    "name": "set_fees",
+    "arguments": {
+      "tax_pkr": 0,
+      "delivery_fee_pkr": 150
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Could you also make the food less spicy, if possible? And what is the total and delivery time, please?"
+  },
+  {
+    "role": "user",
+    "content": "We can definitely make it less spicy for you. May I please have your name?"
+  },
+  {
+    "role": "assistant",
+    "content": "My name is Ali Raza. The delivery address is House 12, Street 4, F-7/2, Islamabad, and my callback number is 0300-0000000. Also, could you please let me know the total and how long the delivery will take?"
+  },
+  {
+    "role": "user",
+    "content": "Thank you, Ali Raza. Your phone number is 0300-0000000, right?"
+  },
+  {
+    "role": "assistant",
+    "content": "Yes, that is correct. What is the total amount and when will it be delivered?"
+  }
+]
