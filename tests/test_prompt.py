@@ -60,3 +60,14 @@ def test_prompt_add_item_only_with_stated_price(brief):
     prompt = build_system_prompt(brief).lower()
     assert "only call add_item after the restaurant has said the price" in prompt
     assert "never guess a price" in prompt
+
+
+def test_prompt_refusal_guidance_matches_rules(brief):
+    prompt = build_system_prompt(brief)
+    assert "smaller quantity" not in prompt
+    assert "never lower a quantity" in prompt
+    over = prompt.index("is over budget")
+    tail = prompt[over:]
+    assert tail.index("optional") < tail.index("substitute") < tail.index("not_ordered")
+    minimum = prompt.index("is under the minimum order")
+    assert "add optional items" in prompt[minimum : minimum + 300]

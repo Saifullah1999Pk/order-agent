@@ -5,10 +5,10 @@ argument is missing or cannot be converted, it returns a refusal without
 touching the session.
 """
 
-from loguru import logger
 from collections.abc import Awaitable, Callable
 from decimal import Decimal, InvalidOperation
 
+from loguru import logger
 from pipecat.adapters.llm.schemas.function_schema import FunctionSchema
 from pipecat.adapters.llm.schemas.tools_schema import ToolsSchema
 from pipecat.frames.frames import FunctionCallResultProperties
@@ -64,6 +64,10 @@ def build_tools(
             except _BadArgument as exc:
                 await params.result_callback(_refusal(exc))
                 return
+            except Exception as exc:  # noqa: BLE001 - e.g. arguments that are not a dict
+                logger.exception("tool argument conversion failed")
+                await params.result_callback({"ok": False, "message": f"Refused: could not read the arguments ({exc})."})
+                return
             try:
                 result = act(*args)
                 payload = {"ok": result.ok, "message": result.message}
@@ -75,11 +79,15 @@ def build_tools(
         return run
 
     async def end_call(params):
-        arguments = params.arguments or {}
         try:
+            arguments = params.arguments or {}
             args = (_text(arguments, "outcome"), _text(arguments, "reason"))
         except _BadArgument as exc:
             await params.result_callback(_refusal(exc))
+            return
+        except Exception as exc:  # noqa: BLE001 - e.g. arguments that are not a dict
+            logger.exception("end_call argument conversion failed")
+            await params.result_callback({"ok": False, "message": f"Refused: could not read the arguments ({exc})."})
             return
         try:
             result = session.end(*args)

@@ -112,3 +112,19 @@ async def test_end_call_survives_exception_in_on_end(h):
     h.tools = build_tools(h.session, bad_on_end)
     result = await h.call("end_call", outcome="not_ordered", reason="nothing")
     assert result["ok"] is True
+
+
+@pytest.mark.parametrize("bad", ["not a dict", None, 5, ["a"]])
+@pytest.mark.parametrize("tool", NAMES)
+async def test_non_dict_arguments_get_exactly_one_refusal(h, tool, bad):
+    schema = next(t for t in h.tools.standard_tools if t.name == tool)
+    results = []
+
+    async def result_callback(result, properties=None):
+        results.append(result)
+
+    await schema.handler(SimpleNamespace(arguments=bad, result_callback=result_callback))
+    assert len(results) == 1
+    assert results[0]["ok"] is False
+    assert h.session.items == []
+    assert h.ended == []

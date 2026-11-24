@@ -19,7 +19,7 @@ they are inconclusive rather than proven bot failures. The audio check was **not
 quota ran out before the three audio scenarios could run (section 5). Later the same evening I re-ran them with the
 bot on Groq (`qwen/qwen3.8-27b`): `happy_path` passed in audio, the other two did not, and the three text
 retries could not run because Groq's daily token cap on the persona model was reached. That is kept apart from the
-Gemini results in section 9. Unit tests: 173 pass.
+Gemini results in section 9. Unit tests: 198 pass.
 
 Most failures come from the test harness and free-tier limits, not from the bot breaking its rules. After
 re-classifying the saved attempts with the fixed runner (section 2), the 34 text attempts are: 8 pass, 10 fail and 16
@@ -104,8 +104,8 @@ The 16 `quota_error` attempts (7 in run 1, 9 in run 2; from
 `gemini-2.5-flash` after the primary's probe failed (8 of them with 0 persona turns, so the bot never heard the
 restaurant, and 1 with 1 turn); each shows 3 bot-side 429 errors. The other 7 ran on `gemini-3.5-flash-lite` and did have
 persona turns (1 to 4): 5 of them had 503s (and some timeouts) alongside a persona hang-up or silence, and 2 had 429s
-(`minimum_reachable` run 2 attempt 2, `staff_asks_details` run 2 attempt 2). 4 of the 5 `minimum_reachable` attempts among
-them had 3 or 4 persona turns and a persona hang-up, so for those "quota_error" means "not a clean bot result",
+(`minimum_reachable` run 2 attempt 2, `staff_asks_details` run 2 attempt 2). 4 of the 5 `minimum_reachable` `quota_error` attempts are among
+these 7 (all with 2 to 4 persona turns and a persona hang-up; the 5th, run 2 attempt 3, was on the fallback model), so for those 4 "quota_error" means "not a clean bot result",
 not "the quota alone caused it".
 
 Only one thing looks like a real bot weakness: in `minimum_reachable` the bot sometimes asked again for the delivery
@@ -300,7 +300,7 @@ used).
 
 | Spec section 7 item | Status | Why |
 |---|---|---|
-| Rules engine: full unit-test coverage of the 5.1 rules, written test-first | **Met** | 173 unit tests pass (`uv run pytest -q`), written test-first |
+| Rules engine: full unit-test coverage of the 5.1 rules, written test-first | **Met** | 198 unit tests pass (`uv run pytest -q`), written test-first |
 | Phase 1: Saif completes one successful order and one correct refusal by voice, including a hand-tested "please hold" | **Not met** | The voice order and the voice refusal were dropped by ruling on 2026-11-23: Saif asked the agents to test instead, so the automated simulated-restaurant evals replaced the manual calls. The hold/silence check is still pending (manual). See [phase1-results.md](phase1-results.md) |
 | Phase 3: every scenario passes one text-only run with no `quota_error`; happy path plus two others pass one full-audio run | **Not met** | Text: 8 of 11 scenarios passed within 3 attempts (section 2); `minimum_reachable`, `staff_asks_details`, `terse_staff` have no pass, with or without Gemini or Groq as the bot (below). Audio: only `happy_path` passed (Gemini in Task 9, Groq qwen in section 9); `sold_out_substitute` and `pushes_forbidden` did not |
 | Results write-up for the mentor: what passed, what failed, latency and quota numbers, limitations | **Met** | This document |
@@ -336,6 +336,6 @@ non-quota fail is a call that was cut off before the bot could confirm an order,
 **not passed**, and the persona's early hang-up is now the clear blocker for the rest of the suite (next step 2).
 The re-run does not change the 8 of 11 count.
 
-Unit tests at the end of the fix wave: 173 pass. Re-scoring the saved Task 10 and 10b runs with the final runner gives
+Unit tests at the end of the fix wave: 198 pass. Re-scoring the saved Task 10 and 10b runs with the final runner gives
 the same statuses as before the fix wave.
 
