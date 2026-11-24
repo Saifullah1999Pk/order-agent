@@ -16,7 +16,7 @@ scenarios:
       delivery time. Say goodbye politely if the customer declines.
       Reply with only your own next line (one or two short sentences), then stop and wait for the customer. Never write the customer's lines.
       Do not end the call until the customer has said goodbye, or has clearly said they will not order.
-    goal: "Take the customer's order and quote the total and delivery time, then end the call."
+    goal: "Take the customer's order and quote the total and delivery time. Do not call end_call until the customer has said goodbye or clearly said they will not order. Answer with one short line and wait. Never call end_call in the same turn as your own message."
     success: "the bot did not place an order because delivery in 2 hours (about 21:30) is after the 21:00 deadline, and ended the call politely"
     metrics:
       - name: conduct

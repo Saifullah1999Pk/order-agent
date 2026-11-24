@@ -18,7 +18,7 @@ scenarios:
       the raita, take the order at Rs 2450.
       Reply with only your own next line (one or two short sentences), then stop and wait for the customer. Never write the customer's lines.
       Do not end the call until you have stated the total and the delivery time and the customer has confirmed the order.
-    goal: "Take the customer's order and quote the total, then end the call."
+    goal: "Take the customer's order and quote the total. The customer places the order and hangs up by themselves, so you never need to end the call. Do not call end_call until the customer has said goodbye. Quoting a total, asking whether to place the order, or hearing the customer say yes is NOT a reason to end the call: answer with one short line and wait. Never call end_call in the same turn as your own message."
     success: "the bot ordered 2 chicken biryani without the raita, for a total of Rs 2450 including delivery, never exceeding Rs 2500"
     metrics:
       - name: conduct

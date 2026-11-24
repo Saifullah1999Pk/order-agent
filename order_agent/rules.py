@@ -52,6 +52,7 @@ class OrderSession:
         self.delivery_fee_pkr: Decimal = Decimal(0)
         self.tax_pkr: Decimal = Decimal(0)
         self.minimum_order_pkr: Decimal | None = None
+        self._fees_set = False
         self.state: Literal["open", "confirmed", "ended"] = "open"
         self.events: list[ToolEvent] = []
         self.delivery_eta: datetime | None = None
@@ -74,6 +75,45 @@ class OrderSession:
 
     def _below_minimum(self) -> bool:
         return self.minimum_order_pkr is not None and self._items_total() < self.minimum_order_pkr
+
+    def _minimum_hint(self) -> str:
+        """Tell the bot exactly what to add to reach the minimum ('' if there is no shortfall)."""
+        if not self._below_minimum():
+            return ""
+        food = self._items_total()
+        shortfall = self.minimum_order_pkr - food
+        head = f"The food is {_fmt(food)} PKR, {_fmt(shortfall)} PKR short of the {_fmt(self.minimum_order_pkr)} PKR minimum"
+        if self.missing_lines():
+            return f" The {_fmt(self.minimum_order_pkr)} PKR minimum still applies (food is {_fmt(food)} PKR): fill the required items from your brief first, then check it again."
+        optional = {line.item for line in self.brief.wanted if line.optional}
+        best = None
+        for item in self.items:
+            n = ceil(shortfall / item.unit_price_pkr)
+            cost = n * item.unit_price_pkr
+            if self.cart_total() + cost > self.brief.budget_pkr:
+                continue
+            key = (item.line_item not in optional, cost)
+            if best is None or key < best[0]:
+                best = (key, item, n, cost)
+        budget = self.brief.budget_pkr
+        if best is None:
+            in_cart = {i.line_item for i in self.items}
+            pending = [l.item for l in self.brief.wanted if l.optional and l.item not in in_cart]
+            if pending:
+                room = budget - self.cart_total()
+                return (
+                    f" {head}. Nothing in the cart covers it within budget, but {' or '.join(pending)} (optional) is not in the cart yet: "
+                    f"ask its price and add enough of it, up to {_fmt(room)} PKR more within your {_fmt(budget)} PKR budget. "
+                    "If its price doesn't fit in that room, end the call as not_ordered."
+                )
+            return f" {head}, and no addition fits within your {_fmt(budget)} PKR budget: end the call as not_ordered."
+        _, item, n, cost = best
+        total = self.cart_total() + cost
+        if self._fees_set:
+            tail = f"The total would then be {_fmt(total)} PKR, within your {_fmt(budget)} PKR budget."
+        else:
+            tail = f"The total would then be {_fmt(total)} PKR before delivery fee and tax; delivery fee and tax are not recorded yet, so ask about them."
+        return f" {head}: add {n} more {item.name} ({_fmt(cost)} PKR) to reach it. {tail}"
 
     def _never_hit(self, name: str) -> str | None:
         words = normalise(name)
@@ -163,7 +203,7 @@ class OrderSession:
             existing.quantity += quantity
         else:
             self.items.append(CartItem(name, line.item, quantity, price))
-        return ToolResult(True, f"Added {quantity} x {name} at {_fmt(price)} PKR each. Cart total is now {_fmt(self.cart_total())} PKR.")
+        return ToolResult(True, f"Added {quantity} x {name} at {_fmt(price)} PKR each. Cart total is now {_fmt(self.cart_total())} PKR." + self._minimum_hint())
 
     def remove_item(self, name: str) -> ToolResult:
         return self._record("remove_item", {"name": name}, self._remove_item(name))
@@ -175,7 +215,7 @@ class OrderSession:
         for item in self.items:
             if normalise(item.name) == target:
                 self.items.remove(item)
-                return ToolResult(True, f"Removed {item.name}. Cart total is now {_fmt(self.cart_total())} PKR.")
+                return ToolResult(True, f"Removed {item.name}. Cart total is now {_fmt(self.cart_total())} PKR." + self._minimum_hint())
         in_cart = ", ".join(i.name for i in self.items) or "nothing yet"
         return ToolResult(False, f"Refused: '{name}' is not in the cart. The cart holds: {in_cart}.")
 
@@ -193,7 +233,8 @@ class OrderSession:
         if new_total > self.brief.budget_pkr:
             return self._over_budget(f"a delivery fee of {_fmt(fee)} and tax of {_fmt(tax)}", new_total)
         self.delivery_fee_pkr, self.tax_pkr = fee, tax
-        return ToolResult(True, f"Fees recorded: delivery {_fmt(fee)} PKR, tax {_fmt(tax)} PKR. Cart total is now {_fmt(self.cart_total())} PKR.")
+        self._fees_set = True
+        return ToolResult(True, f"Fees recorded: delivery {_fmt(fee)} PKR, tax {_fmt(tax)} PKR. Cart total is now {_fmt(self.cart_total())} PKR." + self._minimum_hint())
 
     def set_minimum_order(self, minimum_pkr: Decimal) -> ToolResult:
         return self._record("set_minimum_order", {"minimum_pkr": minimum_pkr}, self._set_minimum_order(minimum_pkr))
@@ -204,7 +245,7 @@ class OrderSession:
         if not isinstance(minimum, Decimal) or not minimum.is_finite() or minimum <= 0:
             return ToolResult(False, "Refused: the minimum order must be a number greater than zero. Ask the restaurant to repeat the minimum.")
         self.minimum_order_pkr = minimum
-        return ToolResult(True, f"Minimum order recorded: {_fmt(minimum)} PKR of food (before delivery fee and tax). Food subtotal is now {_fmt(self._items_total())} PKR.")
+        return ToolResult(True, f"Minimum order recorded: {_fmt(minimum)} PKR of food (before delivery fee and tax). Food subtotal is now {_fmt(self._items_total())} PKR." + self._minimum_hint())
 
     def missing_lines(self) -> list[str]:
         out = []
@@ -280,7 +321,7 @@ class OrderSession:
         return (
             f"Refused: the food subtotal is {_fmt(self._items_total())} PKR, {_fmt(shortfall)} PKR short of the restaurant's "
             f"{_fmt(self.minimum_order_pkr)} PKR minimum (delivery fee and tax don't count). You may add {' or '.join(options)} "
-            "to reach it, staying within budget; otherwise end the call as not_ordered."
+            "to reach it, staying within budget; otherwise end the call as not_ordered." + self._minimum_hint()
         )
 
     def end(self, outcome: Literal["ordered", "not_ordered"], reason: str) -> ToolResult:

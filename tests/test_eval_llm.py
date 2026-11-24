@@ -68,3 +68,55 @@ def test_groq_llm_passes_reasoning_effort(monkeypatch):
     monkeypatch.setenv("GROQ_API_KEY", "groq-test")
     llm = groq_llm({"model": "qwen/qwen3.8-27b", "reasoning_effort": "none"})
     assert llm._settings.reasoning_effort == "none"
+
+
+def test_gemini_llm_plain_without_throttle_keys(monkeypatch):
+    from order_agent.eval_llm import ThrottledOpenAILLMService
+
+    monkeypatch.setenv("GOOGLE_API_KEY", "test-key")
+    assert not isinstance(gemini_llm({"model": "m"}), ThrottledOpenAILLMService)
+
+
+def test_gemini_llm_throttled_when_configured_and_limiter_shared(monkeypatch):
+    from order_agent.eval_llm import ThrottledOpenAILLMService
+
+    monkeypatch.setenv("GOOGLE_API_KEY", "test-key")
+    cfg = {"model": "m", "max_concurrency": 1, "min_interval_s": 4.5, "max_retries": 3}
+    a, b = gemini_llm(cfg), gemini_llm(cfg)
+    assert isinstance(a, ThrottledOpenAILLMService)
+    assert a._throttle is b._throttle
+
+
+async def test_throttled_service_wraps_run_inference(monkeypatch):
+    from pipecat.services.openai.llm import OpenAILLMService
+
+    from order_agent.eval_llm import ThrottledOpenAILLMService
+    from order_agent.throttle import Throttle
+
+    calls = []
+
+    async def fake(self, context, **kw):
+        calls.append(kw)
+        return "x"
+
+    monkeypatch.setattr(OpenAILLMService, "run_inference", fake)
+    svc = ThrottledOpenAILLMService(
+        throttle=Throttle(min_interval_s=0), api_key="k", base_url="http://x",
+        settings=OpenAILLMService.Settings(model="m"),
+    )
+    assert await svc.run_inference(None, max_tokens=5) == "x"
+    assert calls == [{"max_tokens": 5}]
+
+
+def test_gemini_classifier_factory_sets_timeout(monkeypatch):
+    from order_agent.eval_llm import gemini_classifier
+
+    monkeypatch.setenv("GOOGLE_API_KEY", "test-key")
+    c = gemini_classifier({"model": "m", "min_interval_s": 4.5, "timeout_s": 90})
+    assert c._timeout == 90
+
+
+def test_throttled_service_disables_sdk_internal_retries(monkeypatch):
+    monkeypatch.setenv("GOOGLE_API_KEY", "test-key")
+    llm = gemini_llm({"model": "m", "min_interval_s": 4.5})
+    assert llm._client.max_retries == 0

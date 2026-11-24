@@ -1,0 +1,5 @@
+# Judge output, run 20261124-173526 minimum_reachable attempt 3
+goal: met: P(yes)=0.99
+metric conduct: 0.8333333333333334 passed=False
+  89.094  [ --]  judge: turn 2 conduct no: It repeated the restaurant's prices instead of providing them itself, violating the requirement to never state a price or item the restaurant did not say.
+  89.094  [ --]  judge: goal achieved: P(yes)=0.99

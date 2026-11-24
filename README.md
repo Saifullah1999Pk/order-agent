@@ -12,7 +12,7 @@ checks it. Results: [docs/results-v1.md](docs/results-v1.md).
 Create `.env` (gitignored) with two free-tier keys:
 
     GOOGLE_API_KEY=...   # bot LLM (gemini-3.5-flash-lite, fallback gemini-2.5-flash)
-    GROQ_API_KEY=...     # simulated restaurant (gpt-oss-120b) and judge (gpt-oss-20b), suite only
+    GROQ_API_KEY=...     # judge (gpt-oss-20b), suite only. The simulated restaurant now defaults to Gemini (evals/simulator.yaml; Groq kept there as a comment)
 
 The bot's LLM is Gemini by default. To run it on Groq's free tier instead (for example when Gemini's daily
 cap is used up), set in `.env` or the environment:
