@@ -92,7 +92,11 @@ class OrderSession:
                 return item.name
         return None
 
-    def _over_budget(self, what: str, new_total: Decimal) -> ToolResult:
+    def _unused_substitutes(self, line, exclude: str = "") -> list[str]:
+        in_cart = {normalise(i.name) for i in self.items} | {normalise(exclude)}
+        return [s for s in line.substitutes if normalise(s) not in in_cart]
+
+    def _over_budget(self, what: str, new_total: Decimal, line=None, exclude: str = "") -> ToolResult:
         budget = self.brief.budget_pkr
         msg = (
             f"Refused: {what} would bring the all-in total (items, delivery fee "
@@ -100,12 +104,16 @@ class OrderSession:
         )
         drop = self._optional_to_drop(new_total - budget)
         if drop:
-            msg += (
-                f" Dropping the optional item '{drop}' (remove_item) would make room; "
-                "otherwise ask for a cheaper option or end the call as not_ordered."
-            )
+            msg += f" Dropping the optional item '{drop}' (remove_item) would make room."
+        # Quantities never go down: after optional items, the only way out is a listed substitute.
+        lines = [line] if line is not None else [
+            ln for ln in self.brief.wanted if any(i.line_item == ln.item for i in self.items)
+        ]
+        subs = [s for ln in lines for s in self._unused_substitutes(ln, exclude)]
+        if subs:
+            msg += f" Otherwise you may ask for {' or '.join(subs)} instead, or end the call as not_ordered."
         else:
-            msg += " Ask for a cheaper option or a smaller quantity, or end the call as not_ordered."
+            msg += " Otherwise ask the restaurant for a cheaper price or end the call as not_ordered."
         return ToolResult(False, msg)
 
     # -- tools -------------------------------------------------------------
@@ -149,7 +157,7 @@ class OrderSession:
 
         new_total = self.cart_total() + quantity * price
         if new_total > self.brief.budget_pkr:
-            return self._over_budget(f"adding {quantity} x {name}", new_total)
+            return self._over_budget(f"adding {quantity} x {name}", new_total, line, name)
 
         if existing:
             existing.quantity += quantity

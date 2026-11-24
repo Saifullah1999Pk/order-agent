@@ -113,3 +113,21 @@ def test_events_record_refusals(brief):
     assert len(s.events) == 2
     assert s.events[0].ok and s.events[1].ok is False
     assert s.events[1].tool == "add_item"
+
+
+def test_over_budget_names_listed_substitutes_not_a_smaller_quantity(brief):
+    s = session(brief)
+    r = s.add_item("chicken biryani", 2, Decimal("1300"))
+    assert not r.ok
+    assert "chicken karahi" in r.message and "chicken pulao" in r.message
+    assert "smaller quantity" not in r.message
+
+
+def test_over_budget_skips_substitutes_already_in_cart_and_the_item_itself(make_brief):
+    brief = make_brief(budget_pkr=Decimal("2000"))
+    s = session(brief)
+    assert s.add_item("chicken karahi", 1, Decimal("800")).ok
+    r = s.add_item("chicken biryani", 1, Decimal("1300"))  # 2100 > 2000
+    assert not r.ok
+    assert "chicken pulao" in r.message
+    assert "chicken karahi" not in r.message

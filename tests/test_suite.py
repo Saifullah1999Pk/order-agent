@@ -396,3 +396,55 @@ def test_rescore_attempt_downgrades_quota_starved_dropped_call(tmp_path):
     (d / "20261123-120000.json").write_text(make_report(outcome="call_dropped", total="0", quoted=None, items=[]).model_dump_json(), encoding="utf-8")
     r = rescore_attempt(d, "happy_path", 1, exp)
     assert r.status == "quota_error"
+
+
+def test_must_exclude_and_never_use_whole_word_matching(brief):
+    exp = happy(must_exclude=["ham"])
+    ok = make_report(items=[item("shami kabab", "2", "900")])
+    assert not [v for v in check_report(ok, exp, brief) if "forbidden" in v]
+    bad = make_report(items=[item("ham sandwich", "2", "900")])
+    assert any("forbidden" in v for v in check_report(bad, exp, brief))
+    plural = make_report(items=[item("beef burgers", "2", "900")])
+    assert any("never-keyword" in v for v in check_report(plural, happy(), brief))
+    fine = make_report(items=[item("fisherman platter", "2", "900")])
+    assert not [v for v in check_report(fine, happy(), brief) if "never-keyword" in v]
+
+
+def _quota_attempt_dir(tmp_path, report, judge_error=True):
+    import json
+
+    d = tmp_path / "attempt-1"
+    d.mkdir()
+    (d / "bot.log").write_text(LLM_429_ANSI + "\n", encoding="utf-8")
+    (d / "conversation.json").write_text(json.dumps([{"role": "assistant", "content": "hi"}]), encoding="utf-8")
+    err = "error: 429 RESOURCE_EXHAUSTED\n" if judge_error else ""
+    (d / "judge.txt").write_text(err + "goal: not met: no order\n", encoding="utf-8")
+    (d / "20261123-120000.json").write_text(report.model_dump_json(), encoding="utf-8")
+    return d
+
+
+def test_rescore_harness_429_with_budget_violation_is_fail(tmp_path):
+    from order_agent.suite import rescore_attempt
+
+    exp = load_expected("evals/expected.yaml")["happy_path"]
+    d = _quota_attempt_dir(tmp_path, make_report(total="2700", quoted=None))
+    assert rescore_attempt(d, "happy_path", 1, exp).status == "fail"
+
+
+def test_rescore_harness_429_with_only_drop_consequences_is_quota_error(tmp_path):
+    from order_agent.suite import rescore_attempt
+
+    exp = load_expected("evals/expected.yaml")["happy_path"]
+    d = _quota_attempt_dir(tmp_path, make_report(outcome="call_dropped", total="0", quoted=None, items=[]))
+    assert rescore_attempt(d, "happy_path", 1, exp).status == "quota_error"
+
+
+def test_harness_status_with_report_checks_violations_first():
+    from order_agent.suite import harness_status_with_report
+
+    exp = load_expected("evals/expected.yaml")["happy_path"]
+    assert harness_status_with_report("quota_error", make_report(total="2700", quoted=None), exp) == "fail"
+    dropped = make_report(outcome="call_dropped", total="0", quoted=None, items=[])
+    assert harness_status_with_report("quota_error", dropped, exp) == "quota_error"
+    assert harness_status_with_report("quota_error", None, exp) == "quota_error"
+    assert harness_status_with_report("error", dropped, exp) == "error"

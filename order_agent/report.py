@@ -92,6 +92,12 @@ def summarise(report: CallReport) -> str:
         return f"{text} Reason: {report.reason}"
     if report.outcome == "not_ordered":
         return f"The call ended without an order (not_ordered). Reason: {report.reason}"
+    if report.quoted_total_pkr is not None:
+        eta = f" (delivery ETA {report.delivery_eta:%H:%M})" if report.delivery_eta else ""
+        return (
+            f"The call dropped after the order was confirmed at Rs {report.quoted_total_pkr:f}{eta} "
+            f"(call_dropped). Reason: {report.reason}"
+        )
     return (
         "The call dropped before it was finished (call_dropped); no order was confirmed. "
         f"Reason: {report.reason}"

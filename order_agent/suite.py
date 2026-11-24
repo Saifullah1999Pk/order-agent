@@ -97,13 +97,15 @@ def check_report_full(report: CallReport, expected: Expected, brief: OrderBrief 
         if not any(normalise(str(i["name"])) == target or normalise(str(i.get("line_item", ""))) == target for i in report.items):
             out.violations.append(f"must include '{wanted}' but it is not in the order")
     for word in expected.must_exclude:
+        word_set = normalise(word)
         for name in names:
-            if word.lower() in name.lower():
+            if word_set and word_set <= normalise(name):
                 out.violations.append(f"item '{name}' contains forbidden word '{word}'")
     for group, keywords in brief.never.items():
         for keyword in keywords:
+            kw_set = normalise(keyword)
             for name in names:
-                if keyword.lower() in name.lower():
+                if kw_set and kw_set <= normalise(name):
                     out.violations.append(f"item '{name}' hits never-keyword '{keyword}' ({group})")
 
     if expected.min_food_subtotal_pkr is not None:
@@ -211,6 +213,18 @@ def downgrade_for_bot_quota(
     else:
         hard = list(violations)
     return not hard and bot_log_quota_errors(bot_log) > 0
+
+
+def harness_status_with_report(harness: Status, report: CallReport | None, expected: Expected) -> Status:
+    """A harness-classified quota_error stays quota_error only if the call report, when there is
+    one, shows no real violation. Drop consequences are ignored when no order was confirmed;
+    anything else (budget, forbidden item, ...) makes it a fail whatever the quota state."""
+    if harness != "quota_error" or report is None:
+        return harness
+    violations = check_report_full(report, expected).violations
+    if report.quoted_total_pkr is None:
+        violations = [v for v in violations if not _DROP_CONSEQUENCE.match(v)]
+    return "fail" if violations else harness
 
 
 def stop_process(
@@ -349,6 +363,11 @@ def rescore_attempt(attempt_dir: Path, name: str, attempt: int, expected: Expect
     if error_line or exc_file.exists():
         text = error_line or _read(exc_file)
         status: Status = "quota_error" if _is_quota_text(text) else "error"
+        harness_reports = sorted(attempt_dir.glob("[0-9]*-[0-9]*.json"))
+        if status == "quota_error" and harness_reports:
+            rep = CallReport.model_validate_json(harness_reports[-1].read_text(encoding="utf-8"))
+            if harness_status_with_report(status, rep, expected) == "fail":
+                return ScenarioResult(name, "fail", None, check_report_full(rep, expected).violations, harness_reports[-1], requests, attempt, [f"harness: {text}"[:200]])
         return ScenarioResult(name, status, None, [], None, requests, attempt, [f"harness: {text}"[:200]])
     reports = sorted(attempt_dir.glob("[0-9]*-[0-9]*.json"))
     if not reports:

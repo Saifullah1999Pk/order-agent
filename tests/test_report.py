@@ -64,3 +64,18 @@ def test_report_keeps_refused_tool_events(brief):
     r = build_report(s, "not_ordered", "x", [], NOW, END)
     assert any(e["tool"] == "add_item" and e["ok"] is False for e in r.tool_events)
     CallReport.model_validate_json(r.model_dump_json())
+
+
+def test_summary_call_dropped_before_any_order(brief):
+    s = OrderSession(brief, NOW)
+    r = build_report(s, "call_dropped", "line went dead", [], NOW, END)
+    assert "no order was confirmed" in summarise(r)
+
+
+def test_summary_call_dropped_after_order_confirmed(brief):
+    s = _confirmed(brief)
+    r = build_report(s, "call_dropped", "line went dead", TRANSCRIPT, NOW, END)
+    text = summarise(r)
+    assert "no order was confirmed" not in text
+    assert "dropped after the order was confirmed at Rs 1950" in text
+    assert "20:15" in text

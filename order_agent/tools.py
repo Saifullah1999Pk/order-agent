@@ -5,6 +5,7 @@ argument is missing or cannot be converted, it returns a refusal without
 touching the session.
 """
 
+from loguru import logger
 from collections.abc import Awaitable, Callable
 from decimal import Decimal, InvalidOperation
 
@@ -63,8 +64,13 @@ def build_tools(
             except _BadArgument as exc:
                 await params.result_callback(_refusal(exc))
                 return
-            result = act(*args)
-            await params.result_callback({"ok": result.ok, "message": result.message})
+            try:
+                result = act(*args)
+                payload = {"ok": result.ok, "message": result.message}
+            except Exception as exc:  # noqa: BLE001 - the LLM must always get an answer
+                logger.exception("tool handler failed")
+                payload = {"ok": False, "message": f"Refused: internal error ({exc}). Try again or end the call."}
+            await params.result_callback(payload)
 
         return run
 
@@ -75,13 +81,21 @@ def build_tools(
         except _BadArgument as exc:
             await params.result_callback(_refusal(exc))
             return
-        result = session.end(*args)
+        try:
+            result = session.end(*args)
+        except Exception as exc:  # noqa: BLE001
+            logger.exception("end_call failed")
+            await params.result_callback({"ok": False, "message": f"Refused: internal error ({exc})."})
+            return
         # A successful end must not trigger another inference (a second goodbye racing the
         # pipeline end). A refusal still lets the LLM respond so it can adapt.
         properties = FunctionCallResultProperties(run_llm=False) if result.ok else None
         await params.result_callback({"ok": result.ok, "message": result.message}, properties=properties)
         if result.ok:
-            await on_end(*args)
+            try:
+                await on_end(*args)
+            except Exception:  # noqa: BLE001 - the call is already ended; the result was sent
+                logger.exception("on_end failed")
 
     add_item = handler(
         lambda a: (_text(a, "name"), _whole(a, "quantity"), _money(a, "unit_price_pkr")),

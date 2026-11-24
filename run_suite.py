@@ -7,8 +7,8 @@ the result object carries the judge verdict, harness errors and per-metric judge
 spot quota errors hidden in a PASS/FAIL run) and the conversation, with no output parsing.
 All decisions live in order_agent/suite.py; this file is orchestration only.
 
---audio only records conversation audio (EvalSessionParams.record_path); a scenario runs in audio
-mode only if its YAML sets user/judge modality, and these scenarios are text mode.
+--audio runs the scenarios in audio mode (the simulated restaurant is spoken and the bot's speech is
+transcribed) and also records the conversation audio (EvalSessionParams.record_path).
 """
 
 import argparse
@@ -40,6 +40,7 @@ from order_agent.suite import (
     load_expected,
     render_summary,
     rescore_run,
+    harness_status_with_report,
     scenario_outcome,
     stop_process,
 )
@@ -192,6 +193,11 @@ def _run_attempt(
     harness = classify_result(result)
     if harness is not None:
         notes.append(f"harness: {result.error or 'quota string in judge/persona output'}"[:200])
+        if report_file is not None and harness == "quota_error":
+            rep = CallReport.model_validate_json(report_file.read_text(encoding="utf-8"))
+            if harness_status_with_report(harness, rep, expected) == "fail":
+                violations = check_report_full(rep, expected).violations
+                return ScenarioResult(name, "fail", None, violations, report_file, requests, attempt, notes)
         return ScenarioResult(name, harness, None, [], report_file, requests, attempt, notes)
     if report_file is None:
         status = "error"

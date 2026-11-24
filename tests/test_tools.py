@@ -93,3 +93,22 @@ async def test_successful_end_call_does_not_rerun_llm_but_refusal_does(h):
     assert refused_props is None or refused_props.run_llm is not False
     await h.call("end_call", outcome="not_ordered", reason="sold out")
     assert h.properties[-1].run_llm is False
+
+
+async def test_handler_survives_session_exception(h, monkeypatch):
+    def boom(*a, **k):
+        raise RuntimeError("kaboom")
+
+    monkeypatch.setattr(h.session, "add_item", boom)
+    h.tools = build_tools(h.session, h._on_end)
+    result = await h.call("add_item", name="chicken biryani", quantity=1, unit_price_pkr=900)
+    assert result["ok"] is False and "kaboom" in result["message"]
+
+
+async def test_end_call_survives_exception_in_on_end(h):
+    async def bad_on_end(outcome, reason):
+        raise RuntimeError("shutdown failed")
+
+    h.tools = build_tools(h.session, bad_on_end)
+    result = await h.call("end_call", outcome="not_ordered", reason="nothing")
+    assert result["ok"] is True
