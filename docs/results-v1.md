@@ -105,7 +105,7 @@ The 16 `quota_error` attempts (7 in run 1, 9 in run 2; from
 restaurant, and 1 with 1 turn); each shows 3 bot-side 429 errors. The other 7 ran on `gemini-3.5-flash-lite` and did have
 persona turns (1 to 4): 5 of them had 503s (and some timeouts) alongside a persona hang-up or silence, and 2 had 429s
 (`minimum_reachable` run 2 attempt 2, `staff_asks_details` run 2 attempt 2). 4 of the 5 `minimum_reachable` `quota_error` attempts are among
-these 7 (all with 3 or 4 persona turns and a persona hang-up; the 5th, run 2 attempt 3, was on the fallback model), so for those 4 "quota_error" means "not a clean bot result",
+these 7 (all with 2 to 4 persona turns and a persona hang-up; the 5th, run 2 attempt 3, was on the fallback model), so for those 4 "quota_error" means "not a clean bot result",
 not "the quota alone caused it".
 
 Only one thing looks like a real bot weakness: in `minimum_reachable` the bot sometimes asked again for the delivery
