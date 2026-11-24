@@ -19,14 +19,20 @@ they are inconclusive rather than proven bot failures. The audio check was **not
 quota ran out before the three audio scenarios could run (section 5). Later the same evening I re-ran them with the
 bot on Groq (`qwen/qwen3.8-27b`): `happy_path` passed in audio, the other two did not, and the three text
 retries could not run because Groq's daily token cap on the persona model was reached. That is kept apart from the
-Gemini results in section 9. Unit tests: 160 pass.
+Gemini results in section 9. Unit tests: 173 pass.
 
 Most failures come from the test harness and free-tier limits, not from the bot breaking its rules. After
 re-classifying the saved attempts with the fixed runner (section 2), the 34 text attempts are: 8 pass, 10 fail and 16
 `quota_error`. Of the 10 fails, 7 are the simulated restaurant writing the customer's lines and hanging up mid-reply,
 2 are correct orders that the judge's conduct score still failed, and 1 is a Gemini timeout. No attempt failed
-because the bot broke a rule. I found no bot fault with a small fix, so I made no bot changes, and I did not weaken
+because the bot broke a rule. Also read the 4 `not_ordered` passes (`sold_out_no_substitute`, `price_over_budget`,
+`minimum_unreachable`, `late_delivery`) with care: in all four the restaurant persona hung up first, after 1 to 3
+persona turns. No order was placed, so no rule was broken and the check passes, but the bot did not itself end the call
+with `not_ordered` and a reason, so these passes show "no bad order" more than "clean refusal". They are tagged
+"hung up first" in the table. I found no bot fault with a small fix, so I made no bot changes, and I did not weaken
 any check or expected outcome.
+
+See section 10 for the spec definition-of-done table and for the re-runs on 2026-11-24.
 
 ## 2. Pass/fail table
 
@@ -49,12 +55,12 @@ Per-attempt diagnosis (bot model, errors, why the persona ended):
 |---|---|---|---|
 | happy_path | ordered | **pass** (run 2, 1/3). Run 1: fail (0/3) | Run 1: attempt 1 the persona hung up after 3 turns (the judge said "met", the report check overrode it, a judge false pass); attempt 2 quota_error (Gemini 503 and timeouts); attempt 3 order placed but the judge's conduct score was 0.67, below the required 1.0 |
 | sold_out_substitute | ordered, with a substitute | **pass** (run 1, 1/3) | One refused `set_minimum_order(0)` along the way (section 6) |
-| sold_out_no_substitute | not_ordered | **pass** (run 1, 1/3) | Restaurant hung up first, so the report is `call_dropped` with no order. The checks accept that. The bot's last line declined the seafood |
+| sold_out_no_substitute | not_ordered | **pass** (run 1, 1/3), **restaurant hung up first** (after 1 persona turn; no order placed) | Restaurant hung up first, so the report is `call_dropped` with no order. The checks accept that. The bot's last line declined the seafood |
 | price_drop_optional | ordered | **pass** (run 2, 1/3). Run 1: fail (0/3) | Run 1: attempts 1 and 3 quota_error (429 on the fallback model's daily cap), attempt 2 persona hang-up |
-| price_over_budget | not_ordered | **pass** (run 1, 2/3) | Attempt 1 failed after Gemini timeouts (call ended by silence); restaurant hung up first in both |
-| late_delivery | not_ordered | **pass** (run 1, 2/3) | Attempt 1 quota_error (bot never got to speak); restaurant hung up first |
+| price_over_budget | not_ordered | **pass** (run 1, 2/3), **restaurant hung up first** (after 1 persona turn; no order placed) | Attempt 1 failed after Gemini timeouts (call ended by silence); restaurant hung up first in both |
+| late_delivery | not_ordered | **pass** (run 1, 2/3), **restaurant hung up first** (after 3 persona turns; no order placed) | Attempt 1 quota_error (bot never got to speak); restaurant hung up first |
 | minimum_reachable | ordered, food at least Rs 2200 | **not passed.** Run 1: fail (0/3: 1 fail, 2 quota_error). Run 2: quota_error (0/3) | The failing attempt and 2 of the quota_error ones are persona hang-ups while the bot was mid-reply, so the bot never confirmed an order. Inconclusive for the bot; the one to look at first (section 3) |
-| minimum_unreachable | not_ordered | **pass** (run 1, 1/3) | Restaurant hung up first |
+| minimum_unreachable | not_ordered | **pass** (run 1, 1/3), **restaurant hung up first** (after 2 persona turns; no order placed) | Restaurant hung up first |
 | staff_asks_details | ordered | **not passed.** Run 1: fail (0/3: 2 fail, 1 quota_error). Run 2: quota_error (0/3) | Run 1: attempt 1 order placed but the judge's conduct score was 0.75; attempt 2 persona hang-up; attempt 3 quota_error |
 | pushes_forbidden | ordered, without the forbidden item | **pass** (run 1, 1/3) | Order placed without the fish special the staff pushed |
 | terse_staff | ordered | **not passed.** Run 1: fail (0/3, all persona hang-ups). Run 2: quota_error (0/3) | Run 1's three attempts are genuine non-quota results, all persona hang-ups |
@@ -93,9 +99,14 @@ I read the failed attempts. Of the 10 attempts that remain `fail` after re-class
   silence). In run 1, 7 attempts had such a timeout and 4 had a 503. The nudge (up to 2 per call) retries after an
   empty turn, and several of those calls still passed.
 
-The 16 `quota_error` attempts: the primary model's probe failed in 13 of the 38 attempts across the three runs, so the
-bot fell back to `gemini-2.5-flash`, which allows only 20 requests/day on this key. Those attempts show 3 bot-side
-429 errors and no speech from the restaurant (section 5).
+The 16 `quota_error` attempts (7 in run 1, 9 in run 2; from
+[attempt-diagnostics.txt](../evals/confirmation/task10/attempt-diagnostics.txt)): 9 ran on the 20/day fallback model
+`gemini-2.5-flash` after the primary's probe failed (8 of them with 0 persona turns, so the bot never heard the
+restaurant, and 1 with 1 turn); each shows 3 bot-side 429 errors. The other 7 ran on `gemini-3.5-flash-lite` and did have
+persona turns (1 to 4): 5 of them had 503s (and some timeouts) alongside a persona hang-up or silence, and 2 had 429s
+(`minimum_reachable` run 2 attempt 2, `staff_asks_details` run 2 attempt 2). 4 of the 5 `minimum_reachable` attempts among
+them had 3 or 4 persona turns and a persona hang-up, so for those "quota_error" means "not a clean bot result",
+not "the quota alone caused it".
 
 Only one thing looks like a real bot weakness: in `minimum_reachable` the bot sometimes asked again for the delivery
 fee and minimum after the restaurant had stated them. A prompt tweak could reduce that, but it was not the reason any
@@ -149,7 +160,7 @@ tokens/min per model):
 | **Gemini daily cap reached**: `gemini-3.5-flash-lite` is limited to 500 requests/day on this key. After the text runs and earlier work today, the audio run got "429 RESOURCE_EXHAUSTED, limit: 500 ... per day, retry in 17h14m". The fallback `gemini-2.5-flash` allows 20/day and was also exhausted | audio run, all attempts | [audio-run-summary-original.md](../evals/confirmation/task10/audio-run-summary-original.md), [attempt-diagnostics.txt](../evals/confirmation/task10/attempt-diagnostics.txt) |
 | 429 on the bot's own LLM | run 1: 3 of 23 attempts; run 2: 8 of 11; audio: 4 of 4 | same file |
 | 503 / "LLM completion timeout" from Gemini | run 1: 4 and 7 of 23 attempts | same file |
-| Groq (persona, judge) | no 429 seen. The persona's tendency to concatenate lines is a model-quality problem, not a quota one | |
+| Groq (persona, judge) | no 429 seen (in the Task 10 runs; Groq's daily token cap later blocked the Task 10b retries, see section 9). The persona's tendency to concatenate lines is a model-quality problem, not a quota one | |
 
 Because the re-run happened late in the day, run 2 is mostly quota (6 of its 11 attempts fell back to the 20/day
 model): `staff_asks_details` and `terse_staff` in run 2 say little about the bot.
@@ -190,6 +201,11 @@ scenario's `not_ordered` outcome relies on that.
   log and no hard violation. A re-scored attempt can still have a persona hang-up in it. `--rescore` cannot see quota
   strings inside the judge's per-verdict reasons, only the harness error line and the bot log.
 - Latency numbers rest on very few audio turns (section 4).
+- **The delivery ETA is measured from the call start**, not from when the order was confirmed, so a long call makes the
+  deadline check more lenient. `deliver_by` also has no midnight crossing (a deadline just after midnight is not
+  handled).
+- **`ToolEvent.at` is the session time**, so every tool event in a report carries the same timestamp; the order of events
+  is right, the timing is not.
 
 ## 8. Next steps
 
@@ -279,3 +295,47 @@ used).
 | sold_out_substitute, pushes_forbidden | pass in text (bot: Gemini, section 2); audio **not passed** (bot: qwen/qwen3.8-27b, 0/3 each) |
 | minimum_reachable, staff_asks_details, terse_staff | **not passed**; Groq text retries blocked by the persona's daily token cap |
 | other 5 | unchanged from section 2 |
+
+## 10. Definition of done (spec section 7) and the 2026-11-24 re-runs
+
+| Spec section 7 item | Status | Why |
+|---|---|---|
+| Rules engine: full unit-test coverage of the 5.1 rules, written test-first | **Met** | 173 unit tests pass (`uv run pytest -q`), written test-first |
+| Phase 1: Saif completes one successful order and one correct refusal by voice, including a hand-tested "please hold" | **Not met** | The voice order and the voice refusal were dropped by ruling on 2026-11-23: Saif asked the agents to test instead, so the automated simulated-restaurant evals replaced the manual calls. The hold/silence check is still pending (manual). See [phase1-results.md](phase1-results.md) |
+| Phase 3: every scenario passes one text-only run with no `quota_error`; happy path plus two others pass one full-audio run | **Not met** | Text: 8 of 11 scenarios passed within 3 attempts (section 2); `minimum_reachable`, `staff_asks_details`, `terse_staff` have no pass, with or without Gemini or Groq as the bot (below). Audio: only `happy_path` passed (Gemini in Task 9, Groq qwen in section 9); `sold_out_substitute` and `pushes_forbidden` did not |
+| Results write-up for the mentor: what passed, what failed, latency and quota numbers, limitations | **Met** | This document |
+
+**Re-runs on 2026-11-24** (quota had reset; a 1-token probe of `gemini-3.5-flash-lite`, `gpt-oss-120b`, `gpt-oss-20b` and
+`qwen/qwen3.8-27b` all answered). Evidence: [evals/confirmation/final-fix/](../evals/confirmation/final-fix/) (summaries
+and [attempt-diagnostics.txt](../evals/confirmation/final-fix/attempt-diagnostics.txt)). They are kept apart from the
+2026-11-23 results above, and the statuses were produced by the fixed runner. About 30 minutes of run time in total.
+
+1. **Text retries, bot on Gemini `gemini-3.5-flash-lite`**: stopped by me after 4 attempts. The probe passed, but real
+   calls returned "429 You exceeded your current quota" from the bot's own LLM (3 `minimum_reachable` attempts and 1
+   `staff_asks_details` attempt, all `quota_error`; a 5th attempt was interrupted). I switched the bot to Groq rather than
+   spend more Gemini calls
+   ([summary](../evals/confirmation/final-fix/text-gemini-bot-aborted-summary.md)).
+2. **Text retries, bot on Groq `qwen/qwen3.8-27b`** (3 attempts each, `--sleep 30`;
+   [summary](../evals/confirmation/final-fix/text-retries-qwen-bot-summary.md)):
+
+| Scenario | Result (bot: qwen/qwen3.8-27b, 2026-11-24) | Attempts |
+|---|---|---|
+| minimum_reachable | **fail** (0/3) | All 3 `call_dropped`: the persona hung up after 3 to 4 turns while the bot was mid-reply; the cart reached 1950 of the 2200 minimum, no `confirm_order` |
+| staff_asks_details | **fail** (0/3) | All 3 `call_dropped` (the persona ended the call by `end_call` after 3 to 4 turns in 2 of them, hung up after 5 turns in the third); the judge said "met" in all 3, the report check overrode it |
+| terse_staff | **fail** (0/3) | Attempt 1 `quota_error` (a 429 in the bot log), attempts 2 and 3 `call_dropped` after a persona hang-up (2 to 3 turns) |
+
+3. **Audio, bot on `qwen/qwen3.8-27b`** (3 attempts each;
+   [summary](../evals/confirmation/final-fix/audio-qwen-bot-summary.md)): `sold_out_substitute` **fail** (0/3) and
+   `pushes_forbidden` **fail** (0/3). All 6 attempts are `call_dropped`: the persona ended the call by `end_call` after 3
+   to 9 turns in 5 of them and hung up after 1 turn in the sixth. The judge said "met" in 3 of the 6 (false passes, overridden by the report
+   check).
+
+No attempt in these runs broke a budget, forbidden-item or never-keyword rule, and none is a clean bot success: every
+non-quota fail is a call that was cut off before the bot could confirm an order, mostly by the simulated restaurant
+(`gpt-oss-120b`) ending the call early, as in section 3. So the three text scenarios and the two audio scenarios stay
+**not passed**, and the persona's early hang-up is now the clear blocker for the rest of the suite (next step 2).
+The re-run does not change the 8 of 11 count.
+
+Unit tests at the end of the fix wave: 173 pass. Re-scoring the saved Task 10 and 10b runs with the final runner gives
+the same statuses as before the fix wave.
+

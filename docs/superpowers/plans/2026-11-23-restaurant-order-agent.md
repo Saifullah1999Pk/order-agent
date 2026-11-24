@@ -17,7 +17,7 @@
 - Python 3.12 (`uv python pin 3.12`). Windows 11, CPU only.
 - Every command that runs a Pipecat bot or eval is prefixed with `PYTHONIOENCODING=utf-8` (the dev runner crashes on non-UTF-8 stdout).
 - Money is always `decimal.Decimal`, never `float`. Currency is PKR.
-- LLM: one free Gemini key, `GOOGLE_API_KEY`, read from `order-agent/.env` (gitignored). Primary model `gemini-3.5-flash-lite`, fallback `gemini-2.5-flash`. No other keys, no second projects.
+- LLM: one free Gemini key, `GOOGLE_API_KEY`, read from `order-agent/.env` (gitignored); it is required only on the Gemini paths (the default bot and `eval_llm.gemini_llm`) and optional when the bot runs on Groq (`GROQ_API_KEY`, Task 10b). Primary model `gemini-3.5-flash-lite`, fallback `gemini-2.5-flash`. No other keys, no second projects.
 - Gemini OpenAI-compatible base URL: `https://generativelanguage.googleapis.com/v1beta/openai/`
 - Synthetic data only (fake names, numbers, addresses, restaurants).
 - English only for v1.
@@ -76,14 +76,14 @@ order-agent/
 **Interfaces:**
 - Produces:
   - `config.Settings` (pydantic model): `google_api_key: str`, `model: str = "gemini-3.5-flash-lite"`, `fallback_model: str = "gemini-2.5-flash"`, `reports_dir: Path = Path("reports")`, `brief_path: Path = Path("briefs/example.yaml")`, `call_time: datetime | None = None`.
-  - `config.load_settings() -> Settings` reads `.env` and the env vars `GOOGLE_API_KEY`, `ORDER_AGENT_MODEL`, `ORDER_AGENT_FALLBACK_MODEL`, `ORDER_REPORTS_DIR`, `ORDER_BRIEF`, `ORDER_CALL_TIME` (ISO 8601).
+  - `config.load_settings() -> Settings` reads `.env` and the env vars `GOOGLE_API_KEY` (optional; required only on Gemini paths), `ORDER_AGENT_MODEL`, `ORDER_AGENT_FALLBACK_MODEL`, `ORDER_REPORTS_DIR`, `ORDER_BRIEF`, `ORDER_CALL_TIME` (ISO 8601).
   - `config.pick_model(settings, probe: Callable[[str], Awaitable[bool]]) -> Awaitable[str]` returns `settings.model` if the probe succeeds, else `settings.fallback_model`.
   - `config.GEMINI_OPENAI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"`
   - `eval_llm.gemini_llm(config: dict) -> OpenAILLMService`. A Pipecat evals factory: `base_url=GEMINI_OPENAI_BASE_URL`, `api_key` from `GOOGLE_API_KEY`, and `model=config.get("model", "gemini-3.5-flash-lite")`.
 
 - [ ] **Step 1: Set up the project.** The repo already exists (branch `feat/order-agent-v1`; design doc and plan committed on `main`; `.gitignore` present, also ignoring `.superpowers/`). Run `uv python pin 3.12`. Write `pyproject.toml` (project name `order-agent`; dependencies `pipecat-ai[google,openai,webrtc,runner,silero,whisper,kokoro,cli]==1.17.0`, `pyyaml`, `python-dotenv`; dev group `pytest`, `pytest-asyncio`; `[tool.pytest.ini_options] asyncio_mode = "auto"`; make it an **installable package** with a `[build-system]` (hatchling, `packages = ["order_agent"]`), so `order_agent.eval_llm.gemini_llm` imports from Pipecat's eval CLI regardless of the working directory). `.gitignore` covers `.env`, `.venv/`, `reports/`, `evals/results/`, `__pycache__/`. `.env` holds `GOOGLE_API_KEY=`; copy the value from `../pipecat/.env`. Run `uv sync`. Expected: it resolves and installs with no errors.
 - [ ] **Step 2: Write failing tests.**
-  - `test_load_settings_defaults`: with only `GOOGLE_API_KEY` set (monkeypatch), `model == "gemini-3.5-flash-lite"` and `fallback_model == "gemini-2.5-flash"`.
+  - `test_load_settings_defaults`: with only `GOOGLE_API_KEY` set (monkeypatch; the key is optional on the Groq path), `model == "gemini-3.5-flash-lite"` and `fallback_model == "gemini-2.5-flash"`.
   - `test_load_settings_call_time`: `ORDER_CALL_TIME=2026-11-23T19:30:00` → `call_time == datetime(2026, 11, 23, 19, 30)`.
   - `test_pick_model_uses_fallback_when_probe_fails`: a probe returning `False` for the primary model → `"gemini-2.5-flash"`.
   - `test_pick_model_primary_ok`: probe `True` → `"gemini-3.5-flash-lite"`.

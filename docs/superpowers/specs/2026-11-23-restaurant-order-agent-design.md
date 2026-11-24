@@ -90,7 +90,7 @@ delivery_address: "House 12, Street 4, F-7/2, Islamabad"
 wanted:
   - item: "chicken biryani"
     quantity: 2
-    substitutes: ["chicken karahi", "chicken pulao"]   # acceptable if sold out
+    substitutes: ["chicken karahi", "chicken pulao"]   # acceptable instead of the item
   - item: "raita"
     quantity: 1
     optional: true                    # nice to have; skip if unavailable
