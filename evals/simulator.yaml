@@ -1,3 +1,7 @@
-factory: order_agent.eval_llm.groq_llm
-model: openai/gpt-oss-120b
-# Alternatives: order_agent.eval_llm.gemini_native_llm (gemini-2.5-flash), order_agent.eval_llm.gemini_llm
+# Simulated restaurant (persona). Gemini native service: in the 2026-11-24 all-Gemini runs it never ended the call in
+# the same turn as its own message (see evals/confirmation/persona-hangups/ANALYSIS.md).
+factory: order_agent.eval_llm.gemini_native_llm
+model: gemini-3.5-flash-lite
+# Alternative (Groq free tier; hung up early in 19 of 36 ordered-scenario calls):
+# factory: order_agent.eval_llm.groq_llm
+# model: openai/gpt-oss-120b

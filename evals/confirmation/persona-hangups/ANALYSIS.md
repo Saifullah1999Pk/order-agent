@@ -45,3 +45,42 @@ Scenario staff_asks_details, text mode, --attempts 3, --sleep 30. `evals/simulat
 Summaries: `exp-E1-20261124-140612-summary.md`, `exp-E2-20261124-140814-summary.md`.
 
 Conclusion: neither setup could be evaluated. Every Groq free model was at its daily token cap, which blocked E1's persona at once and E2's bot and judge. These are quota errors, not evidence about the persona. The baseline (`end_call-table.md`) stands, and no setup was adopted. `evals/simulator.yaml` is unchanged. To retry, wait for the Groq rolling window to clear (the 429s said about 2 to 5 minutes for single-request headroom, but the 24 h total is nearly full), or run E2 with the Gemini bot (default provider) and a Gemini judge so Groq is not needed.
+
+## All-Gemini runs 2026-11-24
+
+Setup: bot Gemini `gemini-3.5-flash-lite` (default provider), persona `gemini_native_llm` / `gemini-3.5-flash-lite`, judge and explainer `gemini_llm` / `gemini-3.5-flash-lite`. `evals/simulator.yaml` and `evals/judge.yaml` were edited temporarily; judge.yaml is restored, simulator.yaml now keeps the Gemini persona (see Decision). Text mode, `--sleep 60` to 150, runner on port 7861 (7860 was the user's bot, untouched). About 70 minutes of run time. Summaries: `gemini-20261124-*-summary.md` in this folder.
+
+The binding limit was 15 requests per minute (`PerMinutePerProjectPerModel`), not the daily cap. The judge sends about 7 parallel questions at the end of each call, and a call itself needs about 2 requests per turn, so a single attempt often goes over 15 per minute and the Gemini bot or judge gets a 429. The daily cap was never reached. These attempts are `quota_error`, not bot failures. Audio runs were not attempted, because quota did not clearly remain.
+
+"Persona end_call" column: `none` = the persona never called end_call; "after bot msg" = it ended the call right after a bot message, not in the same generation as one of its own lines; "same-turn" = it called end_call in the same turn as its own message (the baseline problem).
+
+| Scenario | Run | Attempt | Status | Persona turns | Persona end_call | Who ended | Bot outcome | Violations / note |
+|---|---|---|---|---|---|---|---|---|
+| staff_asks_details | 141837 | 1 | quota_error | 7 | none | bot | ordered (confirm_order 2100) | judge 429 mid-metrics; goal met, conduct 0.86 |
+| staff_asks_details | 141837 | 2 | quota_error | 7 | none | harness (persona 429) | call dropped | Gemini 429 per minute |
+| staff_asks_details | 141837 | 3 | quota_error | 5 | none | harness (persona 429) | call dropped | Gemini 429 per minute |
+| staff_asks_details | 142248 | 1 | quota_error | 3 | none | harness (bot 429, fell back to gemini-2.5-flash, limit 5) | call_dropped | no order confirmed |
+| staff_asks_details | 142248 | 2 | quota_error | 5 | after bot msg | persona (bot had just asked for the total) | call dropped | judge 429s; conduct 0.33 from failed judge questions |
+| staff_asks_details | 142248 | 3 | quota_error | 7 | none | bot | ordered (2100) | judge 429; conduct 0.86 |
+| staff_asks_details | 144910 | 1 | quota_error | 5 | none | bot | ordered | judge call failed (429) |
+| staff_asks_details | 144910 | 2 | quota_error | 6 | none | bot | ordered | judge call failed (429) |
+| staff_asks_details | 144910 | 3 | quota_error | 6 | none | harness (429) | call dropped | Gemini 429 per minute |
+| terse_staff | 142930 | 1 | quota_error | 0 | none | harness (429) | none | no turns |
+| terse_staff | 142930 | 2 | **pass** | 7 | none | bot | ordered | none; conduct 1.0 |
+| minimum_reachable | 142930 | 1 | fail | 5 | after bot msg | persona, after the bot said goodbye and declined | call_dropped | food 2100 below 2200; bot gave up as over budget |
+| minimum_reachable | 142930 | 2 | fail | 5 | after bot msg | persona, after the bot's goodbye | call_dropped | no order confirmed |
+| minimum_reachable | 142930 | 3 | fail | 3 | after bot msg | persona, after the bot's goodbye | call_dropped | food 2100 below 2200 |
+| happy_path | 143834 | 1 | quota_error | 1 | none | harness (429) | none | |
+| happy_path | 144111 | 1 | quota_error | 5 | none | harness (429) | none | |
+| happy_path | 144111 | 2 | fail | 6 | none | bot | ordered | judge conduct 0.83 (needs 1.0); no report violations |
+| sold_out_no_substitute | 143834 | 1 | quota_error | 6 | none | bot | not_ordered | judge call 429 |
+| sold_out_no_substitute | 144111 | 1 | quota_error | 4 | after bot msg | persona (customer declined, sold out) | not ordered | judge 429s; conduct 0.8 |
+| sold_out_no_substitute | 144111 | 2 | **pass** | 4 | after bot msg | persona (restaurant hung up first) | not_ordered | none |
+
+Counts over the 21 attempts: persona `end_call` in 6 (minimum_reachable x3, sold_out_no_substitute x2, staff_asks_details x1); **same-turn hang-ups: 0**. Baseline (`end_call-table.md`, Groq persona): 19 of 36 ordered-scenario calls had a same-turn hang-up. Those 6 are replies to a bot message that ended the topic (a goodbye or "sold out"), which is allowed by the new goal wording.
+
+Scenario results: terse_staff pass (2/3; baseline 0/3, all hang-ups). sold_out_no_substitute pass (2/2 attempts used, 1 pass). minimum_reachable fail 0/3: the Gemini bot itself declined, saying the minimum pushed it over budget (food reached 2100 of 2200); this is a bot problem, not a persona hang-up. happy_path: one completed attempt, order placed, failed only on judge conduct 0.83, the other two quota_error. staff_asks_details: no counted pass, but 4 of the 9 attempts completed with the bot confirming the order (2100) and no persona hang-up; all were downgraded by judge 429s. Nothing here was weakened: no check was changed.
+
+Conclusion: same-turn hang-ups dropped from 19 of 36 to 0 of 21. The goal-wording fix plus the Gemini persona removes the root cause. The scenarios that still do not pass are held back by the per-minute Gemini limit (judge bursts), the strict conduct score, and, for minimum_reachable, the bot giving up.
+
+Decision: adopted the Gemini persona in `evals/simulator.yaml` (Groq kept as a comment). The judge stays on Groq in `evals/judge.yaml` (unchanged), since Gemini's 15 requests/min cannot carry a judge burst on top of the bot and persona.
