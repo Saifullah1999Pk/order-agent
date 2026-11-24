@@ -30,3 +30,18 @@ The summaries are in this folder.
 2. Try a different free persona model, if one follows the goal text better.
 3. Tune the bot: faster replies, no re-asking about fees, never propose extra items over budget.
 4. Out of scope for now: a runner rule that ignores an `end_call` made in the same turn as the persona's own message. This would change how Pipecat's harness works, so it needs a decision first.
+
+## Experiments 2026-11-24 afternoon (inconclusive: free quota exhausted)
+
+Scenario staff_asks_details, text mode, --attempts 3, --sleep 30. `evals/simulator.yaml` was edited temporarily for each run and restored (it is unchanged). Runner used port 7861 (7860 was in use by the user's bot, untouched).
+
+| Exp | Persona | Bot | Attempt | Status | Persona turns | Persona same-turn end_call | Who ended | Bot outcome | Violations |
+|---|---|---|---|---|---|---|---|---|---|
+| E1 | groq gpt-oss-120b, reasoning_effort high | Gemini 3.5 flash-lite | 1-3 | quota_error | 0 | n/a | harness | none (no call) | none: Groq 429, tokens per day 199426/200000 used on gpt-oss-120b |
+| E2 | gemini_native 3.5 flash-lite | Groq qwen3.8-27b | 1 | quota_error | not recorded | no (no persona end_call) | call dropped | call_dropped | bot 429 on qwen tokens per day (about 198.9k/200k used) |
+| E2 | same | same | 2 | quota_error | not recorded | no | call dropped | call_dropped | same 429 |
+| E2 | same | same | 3 | quota_error | n/a | n/a | n/a | n/a | judge (Groq gpt-oss-20b) also 429 |
+
+Summaries: `exp-E1-20261124-140612-summary.md`, `exp-E2-20261124-140814-summary.md`.
+
+Conclusion: neither setup could be evaluated. Every Groq free model was at its daily token cap, which blocked E1's persona at once and E2's bot and judge. These are quota errors, not evidence about the persona. The baseline (`end_call-table.md`) stands, and no setup was adopted. `evals/simulator.yaml` is unchanged. To retry, wait for the Groq rolling window to clear (the 429s said about 2 to 5 minutes for single-request headroom, but the 24 h total is nearly full), or run E2 with the Gemini bot (default provider) and a Gemini judge so Groq is not needed.
