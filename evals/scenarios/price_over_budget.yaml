@@ -17,7 +17,7 @@ scenarios:
       delivery. You cannot lower the price. Say goodbye politely if the customer declines.
       Reply with only your own next line (one or two short sentences), then stop and wait for the customer. Never write the customer's lines.
       Do not end the call until the customer has said goodbye, or has clearly said they will not order.
-    goal: "Take the customer's order and quote the total, then end the call."
+    goal: "Take the customer's order and quote the total. Do not call end_call until the customer has said goodbye or clearly said they will not order. Answer with one short line and wait. Never call end_call in the same turn as your own message."
     success: "the bot did not place an order because even without optional items two chicken biryani cost Rs 2750 with delivery, above the Rs 2500 budget, and ended the call politely"
     metrics:
       - name: conduct

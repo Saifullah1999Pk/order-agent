@@ -16,7 +16,7 @@ scenarios:
       the customer cannot meet it.
       Reply with only your own next line (one or two short sentences), then stop and wait for the customer. Never write the customer's lines.
       Do not end the call until the customer has said goodbye, or has clearly said they will not order.
-    goal: "Take the customer's order and find out the minimum order, then end the call."
+    goal: "Take the customer's order and find out the minimum order. Do not call end_call until the customer has said goodbye or clearly said they will not order. Answer with one short line and wait. Never call end_call in the same turn as your own message."
     success: "the bot did not place an order because the Rs 3000 minimum order cannot be reached within the Rs 2500 budget, and ended the call politely"
     metrics:
       - name: conduct
