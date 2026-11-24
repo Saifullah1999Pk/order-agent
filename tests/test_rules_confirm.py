@@ -211,9 +211,27 @@ def test_minimum_refusal_names_quantity(brief):
 
 
 def test_shortfall_hint_says_when_nothing_fits_budget(make_brief):
-    s = _session(make_brief(budget_pkr=Decimal("2000")))
+    from order_agent.brief import WantedLine
+
+    wanted = [WantedLine(item="chicken biryani", quantity=2, substitutes=[])]
+    s = _session(make_brief(budget_pkr=Decimal("2000"), wanted=wanted))
     s.add_item("chicken biryani", 2, Decimal("900"))
     s.set_fees(Decimal("150"), Decimal("0"))
     result = s.set_minimum_order(Decimal("2200"))
     assert "no addition fits" in result.message
     assert "not_ordered" in result.message
+
+
+def test_hint_does_not_say_give_up_when_optional_item_not_yet_in_cart(brief):
+    """Live run 151509 attempt 2: raita not added yet, the hint wrongly said to end as not_ordered."""
+    s = _session(brief)
+    s.add_item("chicken biryani", 2, Decimal("900"))
+    result = s.set_minimum_order(Decimal("2200"))
+    assert "not_ordered" not in result.message
+    assert "raita" in result.message
+    assert "400 PKR short" in result.message
+    assert "ask" in result.message.lower()
+    # and the cart can still reach the minimum
+    s.add_item("raita", 3, Decimal("150"))
+    assert s.set_fees(Decimal("150"), Decimal("0")).ok
+    assert s.confirm_order(Decimal("2400"), 45).ok

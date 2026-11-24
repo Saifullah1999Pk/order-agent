@@ -89,6 +89,14 @@ class OrderSession:
             if self.cart_total() + cost <= self.brief.budget_pkr and (best is None or cost < best[2]):
                 best = (item, n, cost)
         if best is None:
+            in_cart = {i.line_item for i in self.items}
+            pending = [l.item for l in self.brief.wanted if l.optional and l.item not in in_cart]
+            if pending:
+                room = self.brief.budget_pkr - self.cart_total()
+                return (
+                    f" {head}. Nothing in the cart covers it within budget, but {' or '.join(pending)} (optional) is not in the cart yet: "
+                    f"ask its price and add enough of it, up to {_fmt(room)} PKR more within your {_fmt(self.brief.budget_pkr)} PKR budget."
+                )
             return f" {head}, and no addition fits within your {_fmt(self.brief.budget_pkr)} PKR budget: end the call as not_ordered."
         item, n, cost = best
         return (
