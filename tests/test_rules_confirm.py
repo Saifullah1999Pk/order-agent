@@ -155,3 +155,65 @@ def test_extra_quantity_capped_at_shortfall(brief):
     assert not result.ok
     assert "at most 3 extra" in result.message
     assert s.add_item("raita", 3, Decimal("150")).ok
+
+
+# -- minimum_reachable: the engine must tell the bot exactly what to add ----
+
+
+def _minimum_reachable(brief) -> OrderSession:
+    """Order of the failed Gemini runs: 2 biryani + 1 raita, fees, then Rs 2200 minimum."""
+    s = _session(brief)
+    assert s.add_item("chicken biryani", 2, Decimal("900")).ok
+    assert s.add_item("raita", 1, Decimal("150")).ok
+    assert s.set_fees(Decimal("150"), Decimal("0")).ok
+    return s
+
+
+def test_set_minimum_states_exact_shortfall_and_quantity(brief):
+    s = _minimum_reachable(brief)
+    result = s.set_minimum_order(Decimal("2200"))
+    assert result.ok
+    assert "food is 1950 PKR" in result.message
+    assert "250 PKR short" in result.message
+    assert "add 2 more raita (300 PKR)" in result.message
+    assert "2400 PKR" in result.message and "within your 2500 PKR budget" in result.message
+
+
+def test_add_item_while_still_short_repeats_remaining_quantity(brief):
+    s = _minimum_reachable(brief)
+    s.set_minimum_order(Decimal("2200"))
+    result = s.add_item("raita", 1, Decimal("150"))  # the bot's mistake: only one
+    assert result.ok
+    assert "100 PKR short" in result.message
+    assert "add 1 more raita (150 PKR)" in result.message
+
+
+def test_engine_path_reaches_correct_cart(brief):
+    s = _minimum_reachable(brief)
+    s.set_minimum_order(Decimal("2200"))
+    assert s.add_item("raita", 2, Decimal("150")).ok  # exactly what the message said
+    assert s.cart_total() == Decimal("2400")
+    assert s.confirm_order(Decimal("2400"), 45).ok
+
+
+def test_met_minimum_message_has_no_shortfall_hint(brief):
+    s = _two_biryani(brief)
+    assert "short" not in s.set_minimum_order(Decimal("1800")).message
+
+
+def test_minimum_refusal_names_quantity(brief):
+    s = _minimum_reachable(brief)
+    s.set_minimum_order(Decimal("2200"))
+    s.add_item("raita", 1, Decimal("150"))
+    result = s.confirm_order(Decimal("2250"), 45)
+    assert not result.ok
+    assert "add 1 more raita (150 PKR)" in result.message
+
+
+def test_shortfall_hint_says_when_nothing_fits_budget(make_brief):
+    s = _session(make_brief(budget_pkr=Decimal("2000")))
+    s.add_item("chicken biryani", 2, Decimal("900"))
+    s.set_fees(Decimal("150"), Decimal("0"))
+    result = s.set_minimum_order(Decimal("2200"))
+    assert "no addition fits" in result.message
+    assert "not_ordered" in result.message

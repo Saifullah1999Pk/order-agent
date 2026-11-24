@@ -71,3 +71,10 @@ def test_prompt_refusal_guidance_matches_rules(brief):
     assert tail.index("optional") < tail.index("substitute") < tail.index("not_ordered")
     minimum = prompt.index("is under the minimum order")
     assert "add optional items" in prompt[minimum : minimum + 300]
+
+
+def test_prompt_follows_named_minimum_shortfall(brief):
+    from order_agent.prompt import build_system_prompt
+
+    text = build_system_prompt(brief)
+    assert "add exactly the item and quantity it names" in text
