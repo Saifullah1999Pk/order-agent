@@ -1,0 +1,13 @@
+# All-local judge: Pipecat's built-in Ollama service. Select with:
+#   run_suite.py --judge evals/judge-ollama.yaml
+# (run_suite uses the `eval:` block; `explainer:` is kept for Pipecat versions that read it.)
+eval:
+  service: ollama
+  model: qwen3:8b
+  extra:
+    reasoning_effort: none
+explainer:
+  service: ollama
+  model: qwen3:8b
+  extra:
+    reasoning_effort: none

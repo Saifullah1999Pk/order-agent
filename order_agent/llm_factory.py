@@ -3,6 +3,7 @@
 from pipecat.services.google.llm import GoogleLLMService
 from pipecat.services.groq.llm import GroqLLMService
 from pipecat.services.llm_service import LLMService
+from pipecat.services.ollama.llm import OLLamaLLMService
 
 from order_agent.call import llm_http_options
 from order_agent.config import Settings, require_google_key
@@ -32,6 +33,18 @@ def build_bot_llm(settings: Settings, system_prompt: str, gemini_model: str | No
         # The opening and nudge messages use the "developer" role; send them as "user" messages.
         llm.supports_developer_role = False
         return llm
+    if settings.llm_provider == "ollama":
+        # Local server, no key. qwen3 would otherwise stream a hidden <think> block that gets spoken
+        # and costs seconds per turn; `reasoning_effort: none` is what Ollama's /v1 endpoint honours
+        # (`think: false` is ignored there). The service already sends "developer" messages as "user".
+        return OLLamaLLMService(
+            base_url=settings.ollama_base_url,
+            settings=OLLamaLLMService.Settings(
+                model=settings.ollama_model,
+                system_instruction=system_prompt,
+                extra={"reasoning_effort": "none"},
+            ),
+        )
     return GoogleLLMService(
         api_key=require_google_key(settings),
         settings=GoogleLLMService.Settings(

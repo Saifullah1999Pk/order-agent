@@ -1,0 +1,7 @@
+# All-local persona: Pipecat's built-in Ollama service. Select with:
+#   run_suite.py --simulator evals/simulator-ollama.yaml
+# `reasoning_effort: none` switches qwen3's thinking off through Ollama's OpenAI-compatible API.
+service: ollama
+model: qwen3:8b
+extra:
+  reasoning_effort: none

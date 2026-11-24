@@ -85,6 +85,8 @@ async def run_bot(transport: BaseTransport, runner_args: RunnerArguments):
         brief = brief.model_copy(update={"call_time": settings.call_time})
     if settings.llm_provider == "groq":
         model = settings.groq_model  # no Gemini probe: Gemini is not used
+    elif settings.llm_provider == "ollama":
+        model = settings.ollama_model  # local server: no probe, no key
     else:
         model = await pick_model(settings, make_probe(settings))
     logger.info(f"Using {settings.llm_provider} model {model}")
