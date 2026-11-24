@@ -1,0 +1,44 @@
+# Every persona end_call found in local evals/results (40 attempts)
+
+run | scenario | attempt | mode | persona turns | end_call same turn as a send | harness 'hung up' | bot confirm_order calls | persona end_call reason | last persona message
+---|---|---|---|---|---|---|---|---|---
+20261123-185933 | happy_path | attempt-1 | text | 3 | own-turn |  | 0 | 'Order placed and confirmed with total and delivery time.' | "Yes, that's correct. Could you please provide your delivery address?" (persona, text)
+20261123-185933 | late_delivery | attempt-2 | text | 3 | same-turn | hungup | 0 | 'Customer ended the call without placing a final order.' | 'Yes, we have raita for Rs\u202f150. Would you like to add it to your order?' (persona, te
+20261123-185933 | minimum_reachable | attempt-1 | text | 3 | same-turn | hungup | 0 | 'Order confirmed and total provided; call completed successfully.' | 'Two chicken biryanis are Rs\u202f1800 and the raita is Rs\u202f150, so your food total is
+20261123-185933 | minimum_reachable | attempt-2 | text | 3 | same-turn | hungup | 0 | 'Order completed and confirmed with total and delivery time.' | 'How about adding a chicken karahi for Rs\u202f1400 or a chicken pulao for Rs\u202f800 to 
+20261123-185933 | minimum_reachable | attempt-3 | text | 3 | same-turn | hungup | 0 | 'Order confirmed and total provided' | 'Yes, we have raita for Rs\u202f150. Adding it would bring your total to Rs\u202f1950, sti
+20261123-185933 | minimum_unreachable | attempt-1 | text | 2 | own-turn |  | 0 | 'Customer cannot meet the minimum order requirement and declined to ad | 'Both are available—two chicken biryanis will be Rs\u202f1,800 and the raita Rs\u202f150, 
+20261123-185933 | price_drop_optional | attempt-2 | text | 3 | same-turn | hungup | 1 | 'Order confirmed and total provided; ending call after successful tran | 'That will be Rs\u202f2450, with delivery in about 45\u202fminutes. Shall I confirm the or
+20261123-185933 | price_over_budget | attempt-2 | text | 1 | own-turn |  | 0 | 'Order taken and total quoted' | 'Sure, we have chicken biryani and raita today—how many biryanis would you like?' (persona
+20261123-185933 | sold_out_no_substitute | attempt-1 | text | 1 | own-turn |  | 0 | 'Customer cannot order any chicken dishes and declines seafood; no sui | 'I’m sorry, our chicken biryani, karahi and pulao are sold out today; we do have prawn bir
+20261123-185933 | staff_asks_details | attempt-2 | text | 3 | same-turn | hungup | 0 | 'Order placed and confirmed with customer.' | 'We’ll prepare it less spicy. Could you give me a callback phone number, please?Sure, may 
+20261123-185933 | staff_asks_details | attempt-3 | text | 3 | same-turn | hungup | 0 | 'User has not provided order details yet.' | 'What would you like to have from our menu?' (persona, text)
+20261123-185933 | terse_staff | attempt-1 | text | 2 | same-turn | hungup | 0 | 'Order completed and customer confirmed.' | 'yesRs 1950, 45 minutes.what?Okay.' (persona, text)
+20261123-185933 | terse_staff | attempt-2 | text | 2 | same-turn | hungup | 0 | 'Order taken and total given, call completed.' | 'what?what?... (no output, waiting)......what?' (persona, text)
+20261123-185933 | terse_staff | attempt-3 | text | 4 | same-turn | hungup | 0 | 'Order taken and total confirmed, call ended successfully.' | 'what?yes' (persona, text)
+20261123-192810 | minimum_reachable | attempt-1 | text | 4 | same-turn | hungup | 0 | 'Order placed and total given, customer can confirm.' | 'Great, that brings your food total to Rs\u202f2600; with the Rs\u202f150 delivery fee, th
+20261123-192810 | minimum_reachable | attempt-2 | text | 3 | same-turn | hungup | 0 | 'Order placed: 3 chicken biryanis and 1 raita, total Rs\u202f3000, del | 'The delivery fee is Rs\u202f150, we don’t charge any tax, and the minimum food order is R
+20261123-192810 | price_drop_optional | attempt-1 | text | 3 | same-turn | hungup | 1 | 'Order taken and total confirmed, delivery time given.' | 'There’s no tax and no minimum order, and we can make the biryanis milder for you. Your to
+20261123-205926 | happy_path | attempt-1 | audio | 3 | own-turn |  | 0 | 'Order confirmed with total Rs 2100, delivery in 45 minutes, no tax or | '● Would you like to confirm the order for two chicken biryanis and one raita, total Rs\u2
+20261123-205926 | happy_path | attempt-2 | audio | 3 | own-turn |  | 0 | 'Provided total and delivery time, order confirmed, and said goodbye.' | 'Would you like to go ahead and confirm your order?' (persona, audio)
+20261123-205926 | pushes_forbidden | attempt-1 | audio | 4 | own-turn |  | 0 | 'Order placed and confirmed' | 'Shall I place the order?' (persona, audio)
+20261123-205926 | pushes_forbidden | attempt-2 | audio | 4 | own-turn | hungup | 0 | 'Order completed and customer confirmed' | 'Could you also provide a contact phone number for the delivery?' (persona, audio)
+20261123-205926 | pushes_forbidden | attempt-3 | audio | 5 | own-turn |  | 0 | 'Order placed successfully and confirmed with customer.' | 'Could you please give me your phone number so we can complete the order?' (persona, audio
+20261123-205926 | sold_out_substitute | attempt-1 | audio | 3 | own-turn |  | 0 | 'Order confirmed, total and delivery details provided, and special req | 'Your order total is Rs\u202f2500, which includes the Rs\u202f150 delivery fee; there is n
+20261123-205926 | sold_out_substitute | attempt-2 | audio | 2 | own-turn |  | 0 | 'Order placed and total given; call ended after providing details.' | 'Would you like to substitute the biryani with karahi?' (persona, audio)
+20261123-205926 | sold_out_substitute | attempt-3 | audio | 2 | own-turn |  | 0 | 'Order taken, total quoted and delivery time confirmed.' | "I'm sorry, the chicken biryani is sold out today; would you like to replace the two birya
+20261124-124818 | minimum_reachable | attempt-1 | text | 3 | same-turn | hungup | 0 | 'Customer confirmed order and total.' | 'Yes, the chicken biryani is available at Rs\u202f900 each, and the raita is Rs\u202f150.'
+20261124-124818 | minimum_reachable | attempt-2 | text | 3 | same-turn | hungup | 0 | 'Order confirmed and total provided; delivery details given.' | "Each chicken biryani is Rs\u202f900 and the raita is Rs\u202f150. To reach the Rs\u202f22
+20261124-124818 | minimum_reachable | attempt-3 | text | 4 | same-turn | hungup | 0 | 'Order confirmed and total provided.' | 'Great, that brings your food to Rs\u202f2,850, plus Rs\u202f150 delivery, total Rs\u202f3
+20261124-124818 | staff_asks_details | attempt-1 | text | 4 | own-turn |  | 0 | 'Order placed and confirmed with customer.' | 'Thank you, Ali Raza. I have your number as 0300‑000‑0000 and the address as House 12, Str
+20261124-124818 | staff_asks_details | attempt-2 | text | 5 | same-turn | hungup | 0 | 'Order confirmed and total provided; call completed successfully.' | 'Your all‑in total is Rs\u202f2,100 and delivery will take about 45 minutes. Shall I place
+20261124-124818 | staff_asks_details | attempt-3 | text | 3 | own-turn |  | 0 | 'Order placed successfully with total Rs 1950 and delivery in 45 minut | 'Thank you, Ali Raza. I have your address as House\u202f12, Street\u202f4, F‑7/2, Islamaba
+20261124-124818 | terse_staff | attempt-1 | text | 3 | same-turn | hungup | 1 | 'Customer confirmed order and total was provided.' | '2100 rupees, 45 minutes.' (persona, text)
+20261124-124818 | terse_staff | attempt-2 | text | 3 | same-turn | hungup | 0 | 'Customer confirmed order and delivery details.' | 'Rs 1950, 45 minutes.' (persona, text)
+20261124-124818 | terse_staff | attempt-3 | text | 2 | same-turn | hungup | 0 | 'Customer confirmed order and delivery time.' | 'what?2100 rupees, 45 minutes' (persona, text)
+20261124-125906 | pushes_forbidden | attempt-1 | audio | 6 | own-turn |  | 0 | 'Order placed and confirmed.' | 'Shall I place the order?' (persona, audio)
+20261124-125906 | pushes_forbidden | attempt-2 | audio | 1 | own-turn | hungup | 0 | 'Order taken: fish special, total Rs 1350, delivery in 45 minutes.' | 'By the way, our fish special is the best thing on the menu.' (persona, audio)
+20261124-125906 | pushes_forbidden | attempt-3 | audio | 9 | own-turn |  | 0 | 'Customer confirmed order and total is clear.' | 'Our fish special is the best thing on the menu.' (persona, audio)
+20261124-125906 | sold_out_substitute | attempt-1 | audio | 3 | own-turn |  | 0 | 'Order placed: 2 chicken karahi, 1 raita, total Rs 2500, delivery in 4 | 'Shall I place the order for delivery?' (persona, audio)
+20261124-125906 | sold_out_substitute | attempt-2 | audio | 3 | own-turn |  | 0 | 'Order placed and confirmed with delivery details.' | 'Shall I place the order?' (persona, audio)
+20261124-125906 | sold_out_substitute | attempt-3 | audio | 4 | own-turn |  | 0 | 'Provided total and delivery time, order confirmed.' | 'Could you please give me your delivery address and phone number so I can confirm the orde
