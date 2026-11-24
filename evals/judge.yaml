@@ -6,4 +6,22 @@ explainer:
   factory: order_agent.eval_llm.groq_llm
   model: openai/gpt-oss-20b
   reasoning_effort: low
-# Alternative: order_agent.eval_llm.gemini_llm with model gemini-2.5-flash
+# Gemini judge with throttle (free tier is 15 requests/min; the judge fires ~7
+# questions at once). Replace the blocks above with:
+#
+# eval:
+#   factory: order_agent.eval_llm.gemini_classifier  # LLMClassifier with timeout_s
+#   model: gemini-3.5-flash-lite
+#   max_concurrency: 1   # one judge call at a time
+#   min_interval_s: 4.5  # >= 4.5s between calls (~13/min)
+#   max_retries: 3       # retry 429 / RESOURCE_EXHAUSTED
+#   retry_base_s: 5      # backoff 5s, 10s, 20s
+#   timeout_s: 120       # Pipecat's default 10s would expire while queued
+# explainer:
+#   factory: order_agent.eval_llm.gemini_llm  # must be a service, not a classifier
+#   model: gemini-3.5-flash-lite
+#   max_concurrency: 1
+#   min_interval_s: 4.5
+#   max_retries: 3
+#   retry_base_s: 5
+# (same model + settings => eval and explainer share one limiter)
