@@ -25,3 +25,12 @@ explainer:
 #   max_retries: 3
 #   retry_base_s: 5
 # (same model + settings => eval and explainer share one limiter)
+#
+# Quota notes (read before using Gemini for the judge):
+# - The throttle only paces the JUDGE. The bot and the simulated persona/restaurant
+#   share the same Gemini free quota (15 requests/min per model). When bot, persona
+#   and judge all use gemini-3.5-flash-lite, a 4.5s judge gap alone uses ~13/min,
+#   so use a larger judge min_interval_s (8-10s) or put the judge on another model.
+# - Pipecat's explainer has a hard-coded 60s timeout that includes time queued in
+#   the shared limiter. Under load an explanation may time out and come back with
+#   no reason. That is acceptable: the pass/fail verdict still stands.

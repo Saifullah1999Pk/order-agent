@@ -36,13 +36,21 @@ class Throttle:
         self._retry_base_s = retry_base_s
         self._clock = clock
         self._sleep = sleep
+        # asyncio primitives bind to one loop; run_suite uses a new loop per attempt,
+        # so they are rebuilt per loop. _next_start is kept so the gap spans loops.
+        self._loop: asyncio.AbstractEventLoop | None = None
         self._sem: asyncio.Semaphore | None = None
         self._pace_lock: asyncio.Lock | None = None
         self._next_start = float("-inf")
 
-    async def _pace(self) -> None:
-        if self._pace_lock is None:
+    def _bind_loop(self) -> None:
+        loop = asyncio.get_running_loop()
+        if loop is not self._loop:
+            self._loop = loop
+            self._sem = asyncio.Semaphore(self._max_concurrency)
             self._pace_lock = asyncio.Lock()
+
+    async def _pace(self) -> None:
         async with self._pace_lock:
             wait = self._next_start - self._clock()
             if wait > 0:
@@ -50,11 +58,11 @@ class Throttle:
             self._next_start = self._clock() + self._min_interval_s
 
     async def run(self, call: Callable[[], Awaitable[T]]) -> T:
-        if self._sem is None:
-            self._sem = asyncio.Semaphore(self._max_concurrency)
+        self._bind_loop()
+        sem = self._sem
         attempt = 0
         while True:
-            async with self._sem:
+            async with sem:
                 await self._pace()
                 try:
                     return await call()

@@ -18,6 +18,8 @@ class ThrottledOpenAILLMService(OpenAILLMService):
     def __init__(self, *, throttle: Throttle, **kwargs):
         super().__init__(**kwargs)
         self._throttle = throttle
+        # The SDK retries 429s itself (default 2); ours are paced, so they are the only ones.
+        self._client = self._client.with_options(max_retries=0)
 
     async def run_inference(self, *args, **kwargs):
         parent = super().run_inference

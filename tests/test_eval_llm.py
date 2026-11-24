@@ -114,3 +114,9 @@ def test_gemini_classifier_factory_sets_timeout(monkeypatch):
     monkeypatch.setenv("GOOGLE_API_KEY", "test-key")
     c = gemini_classifier({"model": "m", "min_interval_s": 4.5, "timeout_s": 90})
     assert c._timeout == 90
+
+
+def test_throttled_service_disables_sdk_internal_retries(monkeypatch):
+    monkeypatch.setenv("GOOGLE_API_KEY", "test-key")
+    llm = gemini_llm({"model": "m", "min_interval_s": 4.5})
+    assert llm._client.max_retries == 0
