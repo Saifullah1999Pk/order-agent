@@ -1,0 +1,28 @@
+## 20261124-124003 (Gemini bot, aborted)
+scenario/attempt | bot model | bot LLM errors (429/503/timeout) | nudges | persona end | persona turns | report outcome
+minimum_reachable/attempt-1 | gemini-3.5-flash-lite | 429:4 503:0 timeout:0 | 3 | ended by silence after 1 turn(s) | 1 | call_dropped
+minimum_reachable/attempt-2 | gemini-2.5-flash (primary probe failed) | 429:6 503:0 timeout:0 | 5 | ended by silence after 2 turn(s) | 2 | call_dropped
+minimum_reachable/attempt-3 | gemini-2.5-flash (primary probe failed) | 429:3 503:0 timeout:0 | 2 | ended by silence after 0 turn(s) | 0 | call_dropped
+staff_asks_details/attempt-1 | gemini-2.5-flash (primary probe failed) | 429:3 503:0 timeout:0 | 2 | ended by silence after 0 turn(s) | 0 | call_dropped
+staff_asks_details/attempt-2 | gemini-2.5-flash (primary probe failed) | 429:1 503:0 timeout:0 | 1 | ? | ? | ?
+
+## 20261124-124818 (Groq qwen bot, text)
+scenario/attempt | bot model | bot LLM errors (429/503/timeout) | nudges | persona end | persona turns | report outcome
+minimum_reachable/attempt-1 | ? | 429:0 503:0 timeout:0 | 0 | hung up; waiting for the bot's closing turn | 3 | call_dropped
+minimum_reachable/attempt-2 | ? | 429:0 503:0 timeout:0 | 1 | hung up; waiting for the bot's closing turn | 3 | call_dropped
+minimum_reachable/attempt-3 | ? | 429:0 503:0 timeout:0 | 1 | hung up; waiting for the bot's closing turn | 4 | call_dropped
+staff_asks_details/attempt-1 | ? | 429:0 503:0 timeout:0 | 0 | ended by end_call after 4 turn(s) | 4 | call_dropped
+staff_asks_details/attempt-2 | ? | 429:0 503:0 timeout:0 | 1 | hung up; waiting for the bot's closing turn | 5 | call_dropped
+staff_asks_details/attempt-3 | ? | 429:0 503:0 timeout:0 | 0 | ended by end_call after 3 turn(s) | 3 | call_dropped
+terse_staff/attempt-1 | ? | 429:2 503:0 timeout:0 | 3 | hung up; waiting for the bot's closing turn | 3 | call_dropped
+terse_staff/attempt-2 | ? | 429:0 503:0 timeout:0 | 0 | hung up; waiting for the bot's closing turn | 3 | call_dropped
+terse_staff/attempt-3 | ? | 429:0 503:0 timeout:0 | 0 | hung up; waiting for the bot's closing turn | 2 | call_dropped
+
+## 20261124-125906 (Groq qwen bot, audio)
+scenario/attempt | bot model | bot LLM errors (429/503/timeout) | nudges | persona end | persona turns | report outcome
+pushes_forbidden/attempt-1 | ? | 429:0 503:0 timeout:0 | 1 | ended by end_call after 6 turn(s) | 6 | call_dropped
+pushes_forbidden/attempt-2 | ? | 429:0 503:0 timeout:0 | 0 | hung up; waiting for the bot's closing turn | 1 | call_dropped
+pushes_forbidden/attempt-3 | ? | 429:0 503:0 timeout:0 | 0 | ended by end_call after 9 turn(s) | 9 | call_dropped
+sold_out_substitute/attempt-1 | ? | 429:0 503:0 timeout:0 | 0 | ended by end_call after 3 turn(s) | 3 | call_dropped
+sold_out_substitute/attempt-2 | ? | 429:0 503:0 timeout:0 | 0 | ended by end_call after 3 turn(s) | 3 | call_dropped
+sold_out_substitute/attempt-3 | ? | 429:0 503:0 timeout:0 | 0 | ended by end_call after 4 turn(s) | 4 | call_dropped
