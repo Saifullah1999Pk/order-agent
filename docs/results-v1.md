@@ -355,3 +355,12 @@ Summaries and per-attempt table: [evals/confirmation/persona-hangups/](../evals/
 | staff_asks_details | quota_error (0/9 counted) | 4 attempts reached a confirmed order with no persona hang-up; judge calls hit the 15 requests/min limit |
 
 Persona same-turn hang-ups: 0 of 21 attempts (Groq baseline: 19 of 36). The limit was Gemini's 15 requests/min, not the daily cap.
+
+## 12. minimum_reachable bot fix (2026-11-24, engine now names the shortfall)
+
+Bot, persona `gemini-3.5-flash-lite`; judge Groq `gpt-oss-20b`; text mode. Summaries: `evals/confirmation/persona-hangups/mrfix-20261124-*-summary.md`, details in ANALYSIS.md ("minimum_reachable bot fix").
+
+| Scenario | Result | Notes |
+|---|---|---|
+| minimum_reachable | **fail** (0/3 counted; 1 attempt placed the correct order, Rs 2400) | the other 2 were Gemini timeout/503; the one real attempt failed only on judge conduct 0.83 |
+| happy_path, sold_out_no_substitute | quota_error | Gemini daily quota exceeded; not rerun |

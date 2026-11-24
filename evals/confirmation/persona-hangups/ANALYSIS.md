@@ -84,3 +84,31 @@ Scenario results: terse_staff pass (2/3; baseline 0/3, all hang-ups). sold_out_n
 Conclusion: same-turn hang-ups dropped from 19 of 36 to 0 of 21. The goal-wording fix plus the Gemini persona removes the root cause. The scenarios that still do not pass are held back by the per-minute Gemini limit (judge bursts), the strict conduct score, and, for minimum_reachable, the bot giving up.
 
 Decision: adopted the Gemini persona in `evals/simulator.yaml` (Groq kept as a comment). The judge stays on Groq in `evals/judge.yaml` (unchanged), since Gemini's 15 requests/min cannot carry a judge burst on top of the bot and persona.
+
+## minimum_reachable bot fix (2026-11-24)
+
+### Evidence (runs 20261124-142930, all-Gemini)
+Tool events of attempts 1 and 3: `add_item biryani x2`, `add_item raita x1`, `set_fees 150/0`, `set_minimum_order 2200` (engine reply: "Minimum order recorded ... Food subtotal is now 1950 PKR." and nothing else), then `add_item raita x1` (food 2100, still 100 short). In attempt 1 the bot then invented `chicken pulao` at Rs 950 (the staff never said a pulao price; the menu says 800), the engine refused it as over budget, and the bot ended with "the minimum pushes it over my budget". In attempt 3 the call dropped before `confirm_order`. No under-minimum refusal ever fired: the bot never reached `confirm_order`. The engine could reach the right cart all along (`add_item raita x2` was allowed by the cap, ceil(250/150) = 2).
+
+### Root cause
+Mostly engine guidance, then LLM reasoning. `set_minimum_order` and `add_item` did not tell the bot the shortfall or the quantity needed, so the 3.5-flash-lite bot guessed "one more raita" (it needed two), mixed up food subtotal with the all-in total ("over budget"), and then guessed a price. The simulated staff's own arithmetic was also off (said 2150, "50 under"), which reinforced the wrong count. The refusal text at `confirm_order` had no quantity either. Prompt wording was followed but could not help: it said "as the refusal suggests", and the tool suggested no number.
+
+### Fix (commits eb1675d, 5e8001a; no rule weakened)
+`order_agent/rules.py`: new `_minimum_hint()`, appended to the results of `set_minimum_order`, `add_item`, `remove_item`, `set_fees` and the `confirm_order` minimum refusal. Example: "The food is 1950 PKR, 250 PKR short of the 2200 PKR minimum: add 2 more raita (300 PKR) to reach it. The total would then be 2400 PKR, within your 2500 PKR budget." If the optional item is not yet in the cart it says to ask its price and gives the budget room (a first version said "end as not_ordered" here, which the live run 151509 attempt 2 followed; fixed with a failing test first). `order_agent/prompt.py`: add exactly the item and quantity a result names, never invent an item or price.
+Tests (tests/test_rules_confirm.py, tests/test_prompt.py), RED first for the engine tests: shortfall and quantity in `set_minimum_order` (RED), repeated hint after a short add (RED), refusal names quantity (RED), nothing-fits message (RED), optional-not-in-cart hint (RED), deterministic engine path to the correct cart (2 biryani + 3 raita, total 2400, confirm ok; passed already, which shows the engine was never the blocker), prompt test (added with the prompt change). `uv run pytest -q`: 221 passed.
+
+### Live results (bot Gemini 3.5 flash-lite, persona Gemini 3.5 flash-lite, judge Groq gpt-oss-20b; runner on 7861)
+Summaries: `mrfix-20261124-151509-summary.md` (first fix, before the not_ordered wording was corrected), `mrfix-20261124-173526-summary.md`, `mrfix-20261124-174004-summary.md`.
+
+| Run | Scenario | Attempt | Status | What happened |
+|---|---|---|---|---|
+| 151509 | minimum_reachable | 1 | quota_error | bot asked for 2 more raita (correct) but its LLM hit 429 |
+| 151509 | minimum_reachable | 2 | fail | hint said "not_ordered" before raita was added; bot ended the call (bug, fixed in 5e8001a) |
+| 151509 | minimum_reachable | 3 | quota_error | bot added 2 raita (correct); Groq judge hit its daily token cap |
+| 173526 | minimum_reachable | 1 | quota_error | LLM completion timeout |
+| 173526 | minimum_reachable | 2 | quota_error | Gemini 503 |
+| 173526 | minimum_reachable | 3 | fail (judge) | **bot behaved correctly: 2 biryani + 3 raita, staff quoted 2400, confirm_order ok, ETA 20:15, ordered.** Goal judged met (P=0.99); failed only on conduct 0.83 (turn 2 flagged "repeated the restaurant's prices", a judge false negative; same shape as the earlier happy_path 0.83). Not weakened. |
+| 174004 | happy_path | 1 | quota_error | Gemini 429, daily quota exceeded |
+| 174004 | sold_out_no_substitute | 1 | quota_error | same |
+
+Result: minimum_reachable 0/3 by the runner's count (1 attempt reached the correct order, 2 were harness errors); regression runs not obtained because the Gemini free quota ran out. Unit tests cover the regression paths. Next step: rerun minimum_reachable, happy_path and sold_out_no_substitute after the Gemini quota resets.
