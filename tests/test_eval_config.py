@@ -24,10 +24,10 @@ def test_defaults_untouched_without_overrides():
 
 def test_ollama_override_replaces_persona_and_judge():
     s = apply_eval_configs(load(), ROOT / "evals" / "simulator-ollama.yaml", ROOT / "evals" / "judge-ollama.yaml")
-    for cfg in (s.simulator, s.judge):
-        assert cfg["service"] == "ollama"
-        assert cfg["model"] == "qwen3:8b"
-        assert cfg["extra"] == {"reasoning_effort": "none"}
+    assert s.simulator["service"] == "ollama"
+    assert s.simulator["model"] == "qwen3:8b"
+    assert s.simulator["extra"] == {"reasoning_effort": "none"}
+    assert s.judge["model"] == "qwen3:8b"
     persona = llm_service_from_config(s.simulator, where="simulator")
     assert isinstance(persona, OLLamaLLMService)
     assert persona._settings.model == "qwen3:8b"
@@ -48,3 +48,22 @@ def test_run_suite_has_selection_flags():
     assert (args.simulator, args.judge) == ("a.yaml", "b.yaml")
     args = run_suite.build_parser().parse_args([])
     assert (args.simulator, args.judge) == (None, None)
+
+
+def test_ollama_classifier_has_long_timeout_and_thinking_off():
+    from pipecat.classifiers.llm.classifier import LLMClassifier
+
+    from order_agent.eval_llm import ollama_classifier
+
+    c = ollama_classifier({"model": "qwen3:8b", "timeout_s": 300})
+    assert isinstance(c, LLMClassifier)
+    assert c._timeout == 300
+    assert isinstance(c._llm, OLLamaLLMService)
+    assert c._llm._settings.model == "qwen3:8b"
+    assert c._llm._settings.extra == {"reasoning_effort": "none"}
+    assert ollama_classifier({})._timeout == 300  # default must outlast the queue of parallel questions
+
+
+def test_judge_ollama_yaml_uses_that_factory():
+    s = apply_eval_configs(load(), None, ROOT / "evals" / "judge-ollama.yaml")
+    assert s.judge["factory"] == "order_agent.eval_llm.ollama_classifier"
