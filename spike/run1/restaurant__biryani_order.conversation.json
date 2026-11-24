@@ -1,0 +1,18 @@
+[
+  {
+    "role": "assistant",
+    "content": "Hi, I'd like to order two chicken biryani for delivery, please."
+  },
+  {
+    "role": "user",
+    "content": "Alright, so that's two chicken biryani. Can I get you anything else with that?"
+  },
+  {
+    "role": "assistant",
+    "content": "That is all, thank you. What is the total and how long will it take?"
+  },
+  {
+    "role": "user",
+    "content": "Okay, so that'll be nineteen hundred and fifty rupees, and delivery will take about forty-five minutes. Thanks for calling Karachi Kitchen, goodbye!"
+  }
+]

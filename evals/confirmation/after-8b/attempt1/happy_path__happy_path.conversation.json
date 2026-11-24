@@ -1,0 +1,83 @@
+[
+  {
+    "role": "assistant",
+    "content": "Hello, I would like to place a delivery order, please."
+  },
+  {
+    "role": "user",
+    "content": "Welcome to Karachi Kitchen, what can I get started for you?"
+  },
+  {
+    "role": "assistant",
+    "content": "I'd like to order two chicken biryanis, and if it fits, one raita. Do you have those available, and what are the prices?"
+  },
+  {
+    "role": "user",
+    "content": "Yes, we have both. Chicken biryani is nine hundred rupees each and raita is one hundred and fifty rupees."
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "name": "chicken biryani",
+      "unit_price_pkr": 900,
+      "quantity": 2
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "unit_price_pkr": 150,
+      "name": "raita",
+      "quantity": 1
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Could you please tell me if there is any delivery fee or tax, and is there a minimum order?"
+  },
+  {
+    "role": "user",
+    "content": "There is no minimum order and no tax, but the delivery fee is one hundred and fifty rupees."
+  },
+  {
+    "role": "tool_call",
+    "name": "set_fees",
+    "arguments": {
+      "delivery_fee_pkr": 150,
+      "tax_pkr": 0
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "set_minimum_order",
+    "arguments": {
+      "minimum_pkr": 0
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Could you please tell me what the minimum order amount is, just to be sure?"
+  },
+  {
+    "role": "user",
+    "content": "There is no minimum order at all."
+  },
+  {
+    "role": "assistant",
+    "content": "That's great. Could you also make them less spicy, if possible?"
+  },
+  {
+    "role": "user",
+    "content": "Sure, I can make the biryani less spicy. Is that two chicken biryanis and one raita?"
+  },
+  {
+    "role": "assistant",
+    "content": "Yes, exactly that. Also, what is your delivery time, and what is the total amount?"
+  }
+]

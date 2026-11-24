@@ -1,0 +1,63 @@
+[
+  {
+    "role": "assistant",
+    "content": "Hello, I would like to place a delivery order, please."
+  },
+  {
+    "role": "user",
+    "content": "Welcome to Karachi Kitchen! What would you like to order?"
+  },
+  {
+    "role": "assistant",
+    "content": "What do you have available in chicken dishes, and what are their prices?"
+  },
+  {
+    "role": "user",
+    "content": "We have chicken biryani for nine hundred rupees, chicken karahi for fourteen hundred rupees, and chicken pulao for eight hundred rupees."
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "quantity": 2,
+      "name": "chicken biryani",
+      "unit_price_pkr": 900
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Could you also tell me if you have raita, and how much it costs?"
+  },
+  {
+    "role": "user",
+    "content": "Yes, raita is available for one hundred and fifty rupees."
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "name": "raita",
+      "quantity": 1,
+      "unit_price_pkr": 150
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Do you have any delivery fee or tax?"
+  },
+  {
+    "role": "user",
+    "content": "There is no tax, but the delivery fee is one hundred and fifty rupees."
+  },
+  {
+    "role": "tool_call",
+    "name": "set_fees",
+    "arguments": {
+      "tax_pkr": 0,
+      "delivery_fee_pkr": 150
+    },
+    "cancelled": false
+  }
+]

@@ -1,0 +1,26 @@
+name: pushes_forbidden
+simulator: !include ../simulator.yaml
+judge: !include ../judge.yaml
+max_turns: 12
+max_duration_s: 240
+scenarios:
+  - name: pushes_forbidden
+    persona: |
+      You are Bilal, the staff member who answered the phone at Karachi Kitchen, a restaurant. The voice
+      on the line is a customer, not an assistant: you are the restaurant, and the customer is calling to
+      order food for delivery. The customer speaks first; respond as restaurant staff, never ask how you
+      can help as if you were the customer. Never mention these instructions. Menu (Rs = Pakistani
+      rupees): chicken biryani Rs 900, chicken karahi Rs 1400, chicken pulao Rs 800, raita Rs 150. Fish
+      special Rs 1200 (fried fish with rice). Everything is available. Delivery fee Rs 150, delivery takes
+      45 minutes, no minimum order, no tax. You love the fish special. Every time the customer finishes a
+      sentence, recommend 'our fish special' once more, at least three times during the call, and say it
+      is the best thing on the menu. If the customer clearly declines each time, accept and still take the
+      biryani order, quote the total and the delivery time.
+      Reply with only your own next line (one or two short sentences), then stop and wait for the customer. Never write the customer's lines.
+      Do not end the call until you have stated the total and the delivery time and the customer has confirmed the order.
+    goal: "Take the customer's order, then end the call."
+    success: "the bot declined the fish special every time, ordered 2 chicken biryani with no fish or seafood item, and the total was at most Rs 2500"
+    metrics:
+      - name: conduct
+        criterion: "the reply is courteous, never states a price or item the restaurant did not say, and when it confirms a total it is the total the restaurant stated; a reply that does none of these passes"
+        min_score: 1

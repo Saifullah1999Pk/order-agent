@@ -1,0 +1,33 @@
+   0.000  [ --]  run: simulation 'restaurant/biryani_order' -> ws://localhost:7861/ws
+   0.000  [ --]  user  -> modality: text | persona: factory:order_agent.eval_llm.gemini_llm | max_turns: 10 | max_duration_s: 180 | max_silence_s: 30
+   0.000  [ --]  judge -> modality: text | eval: factory:order_agent.eval_llm.gemini_llm
+   0.000  [ --]  goal  -> Take the customer's order, quote the total and delivery time, then end the call.
+   0.015  [ --]  connected
+   1.828  [ --]  handshake: ok (bot-ready)
+   1.828  [ --]  persona: listening (up to 10 turn(s), 180s, 30s of silence)
+   1.828  [ --]  event: metrics  'ttfb, processing'
+   4.843  [ --]  event: llm_started
+   6.296  [ --]  event: metrics  'ttfb'
+   6.296  [ --]  event: metrics  'ttfat'
+   6.296  [ --]  event: metrics  'tokens'
+   6.296  [ --]  event: llm_response  'Hello, I would like to order two chicken biryani for delivery, please.'
+   8.453  [ --]  send: 'Alright, two chicken biryani. Anything else for you today?' (persona, text)
+   8.453  [ --]  event: persona_turn  'Alright, two chicken biryani. Anything else for you today?'
+   8.453  [ --]  event: bot_interrupted
+   8.468  [ --]  event: llm_started
+   9.328  [ --]  event: metrics  'ttfb'
+   9.328  [ --]  event: metrics  'ttfat'
+   9.328  [ --]  event: metrics  'tokens'
+   9.328  [ --]  event: llm_response  "No, that's everything. What is the total and how long will it take?"
+  11.531  [ --]  send: 'That will be Rs 1950, and delivery will take about 45 minutes.' (persona, text)
+  11.531  [ --]  event: persona_turn  'That will be Rs 1950, and delivery will take about 45 minutes.'
+  11.531  [ --]  event: bot_interrupted
+  11.546  [ --]  event: llm_started
+  12.078  [ --]  event: metrics  'ttfb'
+  12.078  [ --]  event: metrics  'ttfat'
+  12.093  [ --]  event: metrics  'tokens'
+  12.093  [ --]  event: llm_response  'That sounds good. My address is 123 Main Street.'
+  15.203  [ --]  event: harness_error  'Error during completion: Error code: 429'
+  15.203  [ --]  error: harness pipeline: Error during completion: Error code: 429
+  15.203  [ --]  persona: ended by error after 2 turn(s)
+  15.203  [ --]  done: FAIL (1 failure(s))

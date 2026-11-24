@@ -1,0 +1,90 @@
+   0.000  [ --]  run: simulation 'happy_path/happy_path' -> ws://localhost:7860/ws
+   0.000  [ --]  user  -> modality: text | persona: factory:order_agent.eval_llm.gemini_native_llm | max_turns: 12 | max_duration_s: 240 | max_silence_s: 30
+   0.000  [ --]  judge -> modality: text | eval: factory:order_agent.eval_llm.gemini_llm
+   0.000  [ --]  goal  -> Take the customer's order, quote the total and delivery time, then end the call.
+   0.016  [ --]  connected
+   2.656  [ --]  handshake: ok (bot-ready)
+   2.656  [ --]  persona: listening (up to 12 turn(s), 240s, 30s of silence)
+   2.656  [ --]  event: metrics  'ttfb, processing'
+   5.672  [ --]  event: llm_started
+   6.781  [ --]  event: metrics  'ttfb'
+   6.781  [ --]  event: metrics  'ttfat'
+   6.781  [ --]  event: metrics  'tokens'
+   6.781  [ --]  event: llm_response  'Hello, I would like to place a delivery order, please.'
+   8.219  [ --]  send: 'Welcome to Karachi Kitchen! What would you like to order?' (persona, text)
+   8.219  [ --]  event: persona_turn  'Welcome to Karachi Kitchen! What would you like to order?'
+   8.219  [ --]  event: bot_interrupted
+   8.235  [ --]  event: llm_started
+   8.906  [ --]  event: metrics  'ttfb'
+   8.906  [ --]  event: metrics  'ttfat'
+   8.938  [ --]  event: metrics  'tokens'
+   8.938  [ --]  event: llm_response  'What do you have available in chicken dishes, and what are their prices?'
+   9.672  [ --]  send: 'We have chicken biryani for nine hundred rupees, chicken karahi for fourteen hundred rupees, and chicken pulao for eight hundred rupees.' (persona, text)
+   9.672  [ --]  event: persona_turn  'We have chicken biryani for nine hundred rupees, chicken karahi for fourteen hundred rupees, and chicken pulao for eight hundred rupees.'
+   9.672  [ --]  event: bot_interrupted
+   9.672  [ --]  event: llm_started
+  10.610  [ --]  event: metrics  'ttfb'
+  10.610  [ --]  event: metrics  'ttfat'
+  10.610  [ --]  event: metrics  'tokens'
+  10.610  [ --]  event: llm_response
+  10.610  [ --]  event: function_call  'add_item'
+  10.610  [ --]  event: function_call_stopped  'add_item'
+  10.625  [ --]  event: llm_started
+  11.156  [ --]  event: metrics  'ttfb'
+  11.156  [ --]  event: metrics  'ttfat'
+  11.203  [ --]  event: metrics  'tokens'
+  11.219  [ --]  event: llm_response  'Could you also tell me if you have raita, and how much it costs?'
+  11.219  [ --]  event: metrics
+  11.219  [ --]  event: metrics  'characters'
+  11.781  [ --]  send: 'Yes, raita is available for one hundred and fifty rupees.' (persona, text)
+  11.781  [ --]  event: persona_turn  'Yes, raita is available for one hundred and fifty rupees.'
+  11.781  [ --]  event: bot_interrupted
+  11.781  [ --]  event: metrics  'ttfb'
+  11.781  [ --]  event: metrics  'processing'
+  11.813  [ --]  event: llm_started
+  12.375  [ --]  event: metrics  'ttfb'
+  12.375  [ --]  event: metrics  'ttfat'
+  12.375  [ --]  event: metrics  'tokens'
+  12.375  [ --]  event: llm_response
+  12.375  [ --]  event: function_call  'add_item'
+  12.375  [ --]  event: function_call_stopped  'add_item'
+  12.391  [ --]  event: llm_started
+  13.047  [ --]  event: metrics  'ttfb'
+  13.047  [ --]  event: metrics  'ttfat'
+  13.063  [ --]  event: metrics  'tokens'
+  13.063  [ --]  event: llm_response  'Do you have any delivery fee or tax?'
+  13.063  [ --]  event: metrics
+  13.063  [ --]  event: metrics  'characters'
+  13.938  [ --]  event: metrics  'ttfb'
+  13.938  [ --]  event: metrics  'ttfa'
+  13.938  [ --]  event: metrics  'processing'
+  13.938  [ --]  event: bot_started_speaking
+  14.031  [ --]  send: 'There is no tax, but the delivery fee is one hundred and fifty rupees.' (persona, text)
+  14.031  [ --]  event: persona_turn  'There is no tax, but the delivery fee is one hundred and fifty rupees.'
+  14.031  [ --]  event: bot_interrupted
+  14.031  [ --]  event: bot_stopped_speaking
+  14.078  [ --]  event: llm_started
+  14.625  [ --]  event: metrics  'ttfb'
+  14.625  [ --]  event: metrics  'ttfat'
+  14.625  [ --]  event: metrics  'tokens'
+  14.625  [ --]  event: llm_response
+  14.625  [ --]  event: function_call  'set_fees'
+  14.625  [ --]  event: function_call_stopped  'set_fees'
+  14.641  [ --]  event: llm_started
+  16.891  [ --]  event: metrics  'ttfb'
+  16.891  [ --]  event: metrics  'tokens'
+  16.891  [ --]  event: llm_response
+  46.906  [ --]  persona: ended by silence after 4 turn(s)
+  46.906  [ --]  judge: the bot's tool calls: add_item({"quantity": 2, "name": "chicken biryani", "unit_price_pkr": 900}); add_item({"name": "raita", "quantity": 1, "unit_price_pkr": 150}); set_fees({"tax_pkr": 0, "delivery_fee_pkr": 150})
+  49.500  [ --]  judge: turn 1 politeness yes: P(meets)=0.95, P(fails)=0.03, P(not_applicable)=0.02
+  49.500  [ --]  judge: turn 2 politeness yes: P(meets)=0.95, P(fails)=0.05, P(not_applicable)=0.00
+  49.500  [ --]  judge: turn 3 politeness yes: P(meets)=0.95, P(fails)=0.04, P(not_applicable)=0.01
+  49.500  [ --]  judge: turn 4 politeness yes: P(meets)=0.95, P(fails)=0.05, P(not_applicable)=0.00
+  49.500  [ --]  judge: politeness = 1.00: all 4 turn(s)
+  49.500  [ --]  judge: turn 1 no_invention yes: P(meets)=0.98, P(fails)=0.01, P(not_applicable)=0.01
+  49.500  [ --]  judge: turn 2 no_invention yes: P(meets)=0.90, P(fails)=0.05, P(not_applicable)=0.05
+  49.500  [ --]  judge: turn 3 no_invention yes: P(meets)=0.98, P(fails)=0.01, P(not_applicable)=0.01
+  49.500  [ --]  judge: turn 4 no_invention yes: P(meets)=0.99, P(fails)=0.01, P(not_applicable)=0.00
+  49.500  [ --]  judge: no_invention = 1.00: all 4 turn(s)
+  49.500  [ --]  judge: goal achieved: P(yes)=1.00
+  49.500  [ --]  done: PASS (0 failure(s))

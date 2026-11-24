@@ -1,0 +1,19 @@
+   0.000  [ --]  run: simulation 'happy_path/happy_path' -> ws://localhost:7860/ws
+   0.000  [ --]  user  -> modality: text | persona: factory:order_agent.eval_llm.groq_llm | max_turns: 12 | max_duration_s: 240 | max_silence_s: 30
+   0.000  [ --]  judge -> modality: text | eval: factory:order_agent.eval_llm.groq_llm
+   0.000  [ --]  goal  -> Take the customer's order, quote the total and delivery time, then end the call.
+   0.000  [ --]  connected
+   3.078  [ --]  handshake: ok (bot-ready)
+   3.078  [ --]  persona: listening (up to 12 turn(s), 240s, 30s of silence)
+   3.078  [ --]  event: metrics  'ttfb, processing'
+   6.093  [ --]  event: llm_started
+   7.890  [ --]  event: metrics  'ttfb'
+   7.890  [ --]  event: metrics  'ttfat'
+   7.890  [ --]  event: metrics  'tokens'
+   7.890  [ --]  event: llm_response  'Hello, I would like to place a delivery order, please.'
+   8.906  [ --]  event: end_call  'Call ended after order confirmation'
+   8.906  [ --]  persona: ended by end_call after 0 turn(s)
+  11.203  [ --]  judge: turn 1 conduct yes: P(meets)=0.95, P(fails)=0.03, P(not_applicable)=0.02
+  11.203  [ --]  judge: conduct = 1.00: all 1 turn(s)
+  11.203  [ --]  judge: goal not achieved: The bot never obtained the specific items, quantity, optional raita, price confirmation, or gave a final order confirmation, so the required order was not achieved.
+  11.218  [ --]  done: PASS (0 failure(s))

@@ -1,0 +1,14 @@
+[
+  {
+    "role": "assistant",
+    "content": "Hello, I would like to place a delivery order, please."
+  },
+  {
+    "role": "user",
+    "content": "Sure, go ahead and tell me what you'd like to order."
+  },
+  {
+    "role": "assistant",
+    "content": "I'd like to order two chicken biryanis and one raita, if you have them, please. Also, could you please make them less spicy if possible?"
+  }
+]

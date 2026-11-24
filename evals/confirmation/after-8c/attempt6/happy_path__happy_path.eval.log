@@ -1,0 +1,80 @@
+   0.000  [ --]  run: simulation 'happy_path/happy_path' -> ws://localhost:7860/ws
+   0.000  [ --]  user  -> modality: text | persona: factory:order_agent.eval_llm.groq_llm | max_turns: 12 | max_duration_s: 240 | max_silence_s: 30
+   0.000  [ --]  judge -> modality: text | eval: factory:order_agent.eval_llm.groq_llm
+   0.000  [ --]  goal  -> Take the customer's order, quote the total and delivery time, then end the call.
+   0.015  [ --]  connected
+   3.328  [ --]  handshake: ok (bot-ready)
+   3.328  [ --]  persona: listening (up to 12 turn(s), 240s, 30s of silence)
+   3.328  [ --]  event: metrics  'ttfb, processing'
+   6.343  [ --]  event: llm_started
+   7.187  [ --]  event: metrics  'ttfb'
+   7.187  [ --]  event: metrics  'ttfat'
+   7.250  [ --]  event: metrics  'tokens'
+   7.250  [ --]  event: llm_response  'Hello, I would like to place a delivery order, please.'
+   8.421  [ --]  send: 'Sure, what would you like to order today?' (persona, text)
+   8.421  [ --]  event: persona_turn  'Sure, what would you like to order today?'
+   8.421  [ --]  event: bot_interrupted
+   8.421  [ --]  event: llm_started
+   8.953  [ --]  event: metrics  'ttfb'
+   8.953  [ --]  event: metrics  'ttfat'
+   9.000  [ --]  event: metrics  'tokens'
+   9.000  [ --]  event: llm_response  'I would like to order two plates of chicken biryani and one raita, if you have it.'
+   9.750  [ --]  send: 'Got it—two chicken biryanis and one raita. Would you like anything else with your order?' (persona, text)
+   9.750  [ --]  event: persona_turn  'Got it—two chicken biryanis and one raita. Would you like anything else with your order?'
+   9.750  [ --]  event: bot_interrupted
+   9.765  [ --]  event: llm_started
+  10.718  [ --]  event: metrics  'ttfb'
+  10.718  [ --]  event: metrics  'ttfat'
+  10.718  [ --]  event: metrics  'tokens'
+  10.718  [ --]  event: llm_response
+  10.718  [ --]  event: function_call  'add_item'
+  10.718  [ --]  event: function_call_stopped  'add_item'
+  10.734  [ --]  event: llm_started
+  11.796  [ --]  event: metrics  'ttfb'
+  11.796  [ --]  event: metrics  'ttfat'
+  11.812  [ --]  event: metrics  'tokens'
+  11.812  [ --]  event: llm_response
+  11.812  [ --]  event: function_call  'add_item'
+  11.812  [ --]  event: function_call_stopped  'add_item'
+  11.812  [ --]  event: llm_started
+  13.187  [ --]  event: metrics  'ttfb'
+  13.187  [ --]  event: metrics  'ttfat'
+  13.187  [ --]  event: metrics
+  13.187  [ --]  event: metrics  'characters'
+  13.187  [ --]  event: metrics  'tokens'
+  13.187  [ --]  event: llm_response  'No, that is everything. Also, could you please make it less spicy if possible?'
+  13.703  [ --]  event: metrics  'ttfb'
+  13.703  [ --]  event: metrics  'ttfa'
+  13.703  [ --]  event: metrics  'processing'
+  13.703  [ --]  event: metrics  'characters'
+  13.703  [ --]  event: bot_started_speaking
+  14.234  [ --]  send: 'We can certainly make it less spicy. May I have your delivery address, please?The total comes to Rs\u202f2,200, and delivery will take about 45 minutes. Thank you for ordering from Karachi Kitchen!' (persona, text)
+  14.234  [ --]  event: persona_turn  'We can certainly make it less spicy. May I have your delivery address, please?The total comes to Rs\u202f2,200, and delivery will take about 45 minutes. Thank you for ordering from Karachi Kitchen!'
+  14.234  [ --]  event: end_call  'Order completed and total provided with delivery time.'
+  14.250  [ --]  persona: hung up; waiting for the bot's closing turn
+  14.250  [ --]  event: bot_interrupted
+  14.250  [ --]  event: metrics  'processing'
+  14.250  [ --]  event: bot_stopped_speaking
+  14.328  [ --]  event: llm_started
+  15.343  [ --]  event: metrics  'ttfb'
+  15.343  [ --]  event: metrics  'ttfat'
+  15.343  [ --]  event: metrics  'tokens'
+  15.343  [ --]  event: llm_response
+  15.343  [ --]  event: function_call  'set_fees'
+  15.343  [ --]  event: function_call_stopped  'set_fees'
+  15.343  [ --]  event: llm_started
+  16.281  [ --]  event: metrics  'ttfb'
+  16.281  [ --]  event: metrics  'ttfat'
+  16.359  [ --]  event: metrics  'tokens'
+  16.359  [ --]  event: llm_response  'My delivery address is House 12, Street 4, F-7/2, Islamabad, and my callback number is 0300-0000000.'
+  16.359  [ --]  persona: ended by end_call after 3 turn(s)
+  16.359  [ --]  judge: the bot's tool calls: add_item({"unit_price_pkr": 950, "quantity": 2, "name": "chicken biryani"}); add_item({"name": "raita", "quantity": 1, "unit_price_pkr": 150}); set_fees({"delivery_fee_pkr": 0, "tax_pkr": 0})
+  16.359  [ --]  event: metrics
+  16.359  [ --]  event: metrics  'characters'
+  19.000  [ --]  judge: turn 1 conduct yes: P(meets)=0.95, P(fails)=0.03, P(not_applicable)=0.02
+  19.000  [ --]  judge: turn 2 conduct yes: P(meets)=0.93, P(fails)=0.04, P(not_applicable)=0.03
+  19.000  [ --]  judge: turn 3 conduct yes: P(meets)=0.96, P(fails)=0.02, P(not_applicable)=0.02
+  19.000  [ --]  judge: turn 4 conduct no: The bot’s reply did not confirm the order total or completion, so it failed the conduct criterion that requires confirming the total when applicable
+  19.000  [ --]  judge: conduct = 0.75 (below 1.00): turn 4: The bot’s reply did not confirm the order total or completion, so it failed the conduct criterion that requires confirming the total when applicable
+  19.000  [ --]  judge: goal achieved: P(yes)=0.99
+  19.015  [ --]  done: PASS (0 failure(s))

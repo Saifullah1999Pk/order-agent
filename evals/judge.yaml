@@ -1,0 +1,9 @@
+eval:
+  factory: order_agent.eval_llm.groq_llm
+  model: openai/gpt-oss-20b
+  reasoning_effort: low
+explainer:
+  factory: order_agent.eval_llm.groq_llm
+  model: openai/gpt-oss-20b
+  reasoning_effort: low
+# Alternative: order_agent.eval_llm.gemini_llm with model gemini-2.5-flash

@@ -17,7 +17,7 @@
 - Python 3.12 (`uv python pin 3.12`). Windows 11, CPU only.
 - Every command that runs a Pipecat bot or eval is prefixed with `PYTHONIOENCODING=utf-8` (the dev runner crashes on non-UTF-8 stdout).
 - Money is always `decimal.Decimal`, never `float`. Currency is PKR.
-- LLM: one free Gemini key, `GOOGLE_API_KEY`, read from `order-agent/.env` (gitignored). Primary model `gemini-3.5-flash-lite`, fallback `gemini-2.5-flash`. No other keys, no second projects.
+- LLM: one free Gemini key, `GOOGLE_API_KEY`, read from `order-agent/.env` (gitignored); it is required only on the Gemini paths (the default bot and `eval_llm.gemini_llm`) and optional when the bot runs on Groq (`GROQ_API_KEY`, Task 10b). Primary model `gemini-3.5-flash-lite`, fallback `gemini-2.5-flash`. No other keys, no second projects.
 - Gemini OpenAI-compatible base URL: `https://generativelanguage.googleapis.com/v1beta/openai/`
 - Synthetic data only (fake names, numbers, addresses, restaurants).
 - English only for v1.
@@ -76,14 +76,14 @@ order-agent/
 **Interfaces:**
 - Produces:
   - `config.Settings` (pydantic model): `google_api_key: str`, `model: str = "gemini-3.5-flash-lite"`, `fallback_model: str = "gemini-2.5-flash"`, `reports_dir: Path = Path("reports")`, `brief_path: Path = Path("briefs/example.yaml")`, `call_time: datetime | None = None`.
-  - `config.load_settings() -> Settings` reads `.env` and the env vars `GOOGLE_API_KEY`, `ORDER_AGENT_MODEL`, `ORDER_AGENT_FALLBACK_MODEL`, `ORDER_REPORTS_DIR`, `ORDER_BRIEF`, `ORDER_CALL_TIME` (ISO 8601).
+  - `config.load_settings() -> Settings` reads `.env` and the env vars `GOOGLE_API_KEY` (optional; required only on Gemini paths), `ORDER_AGENT_MODEL`, `ORDER_AGENT_FALLBACK_MODEL`, `ORDER_REPORTS_DIR`, `ORDER_BRIEF`, `ORDER_CALL_TIME` (ISO 8601).
   - `config.pick_model(settings, probe: Callable[[str], Awaitable[bool]]) -> Awaitable[str]` returns `settings.model` if the probe succeeds, else `settings.fallback_model`.
   - `config.GEMINI_OPENAI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"`
   - `eval_llm.gemini_llm(config: dict) -> OpenAILLMService`. A Pipecat evals factory: `base_url=GEMINI_OPENAI_BASE_URL`, `api_key` from `GOOGLE_API_KEY`, and `model=config.get("model", "gemini-3.5-flash-lite")`.
 
-- [ ] **Step 1: Initialise the repo.** `git init` in `order-agent/`, then `uv python pin 3.12`. Write `pyproject.toml` (project name `order-agent`; dependencies `pipecat-ai[google,openai,webrtc,runner,silero,whisper,kokoro,cli]==1.17.0`, `pyyaml`, `python-dotenv`; dev group `pytest`, `pytest-asyncio`; `[tool.pytest.ini_options] asyncio_mode = "auto"`). `.gitignore` covers `.env`, `.venv/`, `reports/`, `evals/results/`, `__pycache__/`. `.env` holds `GOOGLE_API_KEY=`; copy the value from `../pipecat/.env`. Run `uv sync`. Expected: it resolves and installs with no errors.
+- [ ] **Step 1: Set up the project.** The repo already exists (branch `feat/order-agent-v1`; design doc and plan committed on `main`; `.gitignore` present, also ignoring `.superpowers/`). Run `uv python pin 3.12`. Write `pyproject.toml` (project name `order-agent`; dependencies `pipecat-ai[google,openai,webrtc,runner,silero,whisper,kokoro,cli]==1.17.0`, `pyyaml`, `python-dotenv`; dev group `pytest`, `pytest-asyncio`; `[tool.pytest.ini_options] asyncio_mode = "auto"`; make it an **installable package** with a `[build-system]` (hatchling, `packages = ["order_agent"]`), so `order_agent.eval_llm.gemini_llm` imports from Pipecat's eval CLI regardless of the working directory). `.gitignore` covers `.env`, `.venv/`, `reports/`, `evals/results/`, `__pycache__/`. `.env` holds `GOOGLE_API_KEY=`; copy the value from `../pipecat/.env`. Run `uv sync`. Expected: it resolves and installs with no errors.
 - [ ] **Step 2: Write failing tests.**
-  - `test_load_settings_defaults`: with only `GOOGLE_API_KEY` set (monkeypatch), `model == "gemini-3.5-flash-lite"` and `fallback_model == "gemini-2.5-flash"`.
+  - `test_load_settings_defaults`: with only `GOOGLE_API_KEY` set (monkeypatch; the key is optional on the Groq path), `model == "gemini-3.5-flash-lite"` and `fallback_model == "gemini-2.5-flash"`.
   - `test_load_settings_call_time`: `ORDER_CALL_TIME=2026-11-23T19:30:00` → `call_time == datetime(2026, 11, 23, 19, 30)`.
   - `test_pick_model_uses_fallback_when_probe_fails`: a probe returning `False` for the primary model → `"gemini-2.5-flash"`.
   - `test_pick_model_primary_ok`: probe `True` → `"gemini-3.5-flash-lite"`.
@@ -92,7 +92,7 @@ order-agent/
 - [ ] **Step 4: Implement `config.py` and `eval_llm.py`** to the Interfaces above.
 - [ ] **Step 5: Run.** Same command. Expected: 5 passed.
 - [ ] **Step 6: Live check (one real request).** Run `uv run python -c "..."`, which builds `gemini_llm({})` and calls `run_inference` on a one-message `LLMContext` ("Reply with just: ok"). Expected: prints text containing `ok`. If it fails with 404, try `model` without the `models/` prefix or with it, and record which one works in the README.
-- [ ] **Step 7: Commit** the design doc, the plan and everything above. Message: `chore: scaffold order-agent and Gemini eval LLM factory`.
+- [ ] **Step 7: Commit** everything above. Message: `chore: scaffold order-agent and Gemini eval LLM factory`.
 
 ---
 
@@ -196,7 +196,8 @@ Test fixture `brief` in `conftest.py` is the spec §5.1 brief exactly, with `nev
   - Note: `set_minimum_order` isn't in the spec's §5.2 tool list. The plan adds it because the spec's minimum-order rule needs the code to know the minimum.
 - Rules (spec §5.1, "When an order is complete"):
   - A line's filled quantity is the sum over cart items mapped to it, whether original or substitute.
-  - With `minimum_order_pkr` set and the cart below it, `add_item` may exceed a line's quantity, or add an optional line, as long as the total stays within budget.
+  - The minimum order is compared against the **food subtotal** (items only, excluding the delivery fee and tax), as real restaurants do.
+  - With `minimum_order_pkr` set and the food subtotal below it, `add_item` may exceed a line's quantity, or add an optional line, as long as the total stays within budget.
   - The ETA is `(brief.call_time or now) + delivery_minutes`.
 
 - [ ] **Step 1: Write failing tests** (with `brief` from the fixture).
@@ -205,8 +206,8 @@ Test fixture `brief` in `conftest.py` is the spec §5.1 brief exactly, with `nev
   - `test_optional_line_may_be_missing`: 2 biryani at 900 plus `set_fees(150, 0)` → `confirm_order(Decimal("1950"), 45)` is ok; `state == "confirmed"`; `delivery_eta == datetime(2026, 11, 23, 20, 15)`.
   - `test_confirm_rejects_mismatched_total`: cart 1950, quoted `1800` → not ok; the message contains `"1950"`.
   - `test_confirm_rejects_late_delivery`: as the happy path but `delivery_minutes=120` → not ok; the message contains `"21:00"`.
-  - `test_minimum_order_blocks_confirm`: `set_minimum_order(Decimal("2400"))`, cart 1950 → confirm is not ok; the message contains `"2400"` and `"raita"`.
-  - `test_minimum_allows_extra_quantity`: with minimum 2400 and the cart at 1950, `add_item("raita", 3, Decimal("150"))` is ok (total 2400). Then confirming with 2400 is ok.
+  - `test_minimum_order_blocks_confirm`: `set_minimum_order(Decimal("2200"))`, food subtotal 1800 (cart total 1950) → confirm is not ok; the message contains `"2200"` and `"raita"`.
+  - `test_minimum_allows_extra_quantity`: with minimum 2200 and a food subtotal of 1800, `add_item("raita", 3, Decimal("150"))` is ok (subtotal 2250, total 2400). Then confirming with 2400 is ok.
   - `test_minimum_unreachable_within_budget`: minimum 3000 → no allowed add reaches it. `add_item("chicken biryani", 1, Decimal("900"))` is refused for budget, and the message suggests ending without ordering.
   - `test_no_changes_after_confirm`: after a confirm, `add_item` is not ok; the message contains `"already confirmed"`.
   - `test_end_ordered_requires_confirm`: `end("ordered", "x")` on an open session is not ok. `end("not_ordered", "sold out")` is ok, and `state == "ended"`.
@@ -342,10 +343,10 @@ Only after a **Go** at the Task 2 gate.
 | `happy_path` | everything available, biryani 900, raita 150, delivery 150, 45 min | ordered, ≤ 2500 |
 | `sold_out_substitute` | biryani sold out, karahi 1100 available | ordered with karahi |
 | `sold_out_no_substitute` | biryani, karahi and pulao all sold out; offers prawn biryani | not_ordered |
-| `price_drop_optional` | biryani 1150, raita 250, delivery 150 (2550 with raita, 2450 without) | ordered without raita |
+| `price_drop_optional` | biryani 1150, raita 250, delivery 150 (2700 with raita, 2450 without) | ordered without raita |
 | `price_over_budget` | biryani 1300, delivery 150 | not_ordered |
 | `late_delivery` | everything available, but 2 hours | not_ordered |
-| `minimum_reachable` | minimum order Rs 2400; biryani 900, raita 150, delivery 150 | ordered, total ≥ 2400 and ≤ 2500 |
+| `minimum_reachable` | minimum order Rs 2200 on food; biryani 900, raita 150, delivery 150 | ordered, food subtotal ≥ 2200, total ≤ 2500 |
 | `minimum_unreachable` | minimum order Rs 3000 | not_ordered |
 | `staff_asks_details` | asks for name, number and address before confirming | ordered; details match the brief |
 | `pushes_forbidden` | keeps recommending "our fish special" | ordered, with no fish item |
@@ -419,3 +420,81 @@ Only after a **Go** at the Task 2 gate.
 
   Then update `README.md` with how to run everything.
 - [ ] **Step 5: Commit.** Message: `docs: v1 results`. Ask Saif before any push.
+### Task 8b: Bot fixes from the confirmation runs (added by controller after Task 8)
+
+Evidence: `evals/CONFIRMATION.md` and `evals/confirmation/attempt{1..4}/` (eval logs, conversation JSON, bot logs, reports).
+
+**Defects to fix**
+1. **Silent after an empty LLM reply** (attempt 3): the LLM produced an empty reply (no text, no tool call); the bot said nothing, and the call died by silence. Find the cause in `attempt3/bot_run3.log` (e.g. thinking-only output, safety block, or a finished tool round with nothing to say). Fix so the call never stalls: when an assistant turn ends empty, with no function call, and the restaurant hasn't spoken since, queue one developer nudge ("You said nothing. Continue the call: answer the restaurant or state your order.") and re-run the LLM. At most 2 consecutive nudges, then stop nudging. Put the decision in a pure function in `order_agent/call.py` (e.g. `should_nudge(...)`), unit-tested; wire it in `bot.py`.
+2. **Confirmed a total the restaurant never said** (attempt 4): staff said 1950; the agent called `confirm_order(2100, …)`, using its cart sum. Code cannot hear the restaurant, so fix the prompt in `order_agent/prompt.py`: `quoted_total_pkr` must be exactly the number the restaurant said. If it differs from the agent's own sum, the agent says so politely and asks them to check before confirming; it never "corrects" the quote itself. Add assertions to `tests/test_prompt.py` for this sentence.
+3. **Weak opening** (attempt 2): the agent never clearly stated its order, so staff hung up. Prompt: right after the greeting, say clearly what you'd like (items and quantities, delivery), then ask about availability and prices. Add a prompt test.
+4. **Judge quota bursts** (attempts 1–2): judged per-turn metrics fire one judge request per turn per metric and burst past the free 15 requests/min. In all 11 `evals/scenarios/*.yaml`, replace the separate `politeness` and `no_invention` judged metrics with ONE judged metric `conduct`: criterion "the reply is courteous, never states a price or item the restaurant did not say, and when it confirms a total it is the total the restaurant stated; a reply that does none of these passes", `min_score: 1`. Keep `terse_staff`'s `no_repeat_loop`. Re-validate that all 11 parse.
+
+**Verification**
+- Unit tests for (1)–(3); full suite green.
+- One live `happy_path` text-mode run against `bot.py`, as in Task 8 (same commands; max 2 attempts, 60 s apart; stop processes after). Record the result in `evals/CONFIRMATION.md` under a new "After Task 8b" section: judge verdict, harness errors, report outcome, quoted vs cart total, any nudges in the bot log.
+- Commit: `fix: no silent stalls, quote fidelity, clearer opening; one judged metric`.
+### Task 8c: Groq for the simulated restaurant and judge; stop the agent's repeated questions (added by controller)
+
+Saif chose a free Groq API key (`GROQ_API_KEY` in `order-agent/.env`) so the simulated restaurant and the judge stop competing with the bot for Gemini's free limit. The bot stays on Gemini (`gemini-3.5-flash-lite`). Free services only.
+
+**Part A — Groq factories (TDD, no network in unit tests)**
+- `config.Settings` gains `groq_api_key: str | None = None` (env `GROQ_API_KEY`).
+- `order_agent/eval_llm.py`: `groq_llm(config: dict) -> <Pipecat Groq LLM service>` (a `BaseOpenAILLMService` subclass, as Pipecat evals require for persona and judge). Key from `load_settings().groq_api_key`, with a clear error if missing. Model from `config["model"]`.
+- Pick the model live: list Groq's models with the key, and choose a free-tier chat model that supports tool calling (the persona must call `end_call`). Record the model chosen and Groq's stated free limits (from their docs or response headers) in the report.
+- `evals/simulator.yaml` and `evals/judge.yaml` (eval and explainer) switch to `order_agent.eval_llm.groq_llm`. Keep the Gemini factories in place as documented alternatives.
+- Live check: one persona-style request with a tool call to `end_call`, confirming Groq returns a well-formed tool call through Pipecat's service.
+
+**Part B — the agent's repeated questions** (evidence: `evals/confirmation/` from the "After Task 8b fix round 1" run, attempt 1)
+- The agent repeated fee, tax and minimum-order questions and never asked for the total, so staff gave up. Fix in `order_agent/prompt.py`:
+  - ask about fees and minimum once, together;
+  - if staff already said there's no tax or minimum, don't ask again;
+  - once the items are agreed, ask for the total and the delivery time, then confirm.
+- Add prompt tests asserting these sentences.
+
+**Verification**
+- Unit tests green; all 11 scenarios parse.
+- Live: run `happy_path` until 2 clean passes (max 4 attempts, ≥30 s apart), and record them in `evals/CONFIRMATION.md` under "After Task 8c (Groq)". A clean pass means:
+  - the judge passed;
+  - no harness error;
+  - the bot report outcome is `ordered`;
+  - `quoted_total_pkr == cart_total_pkr`;
+  - the quoted total equals what the persona said.
+- If time and quota allow, also run `sold_out_no_substitute` once, and record it.
+- Commit: `feat: Groq for simulated restaurant and judge; no repeated questions`.
+### Task 10b: Bot LLM provider switch (Groq), then finish Task 10's runs today (added by controller)
+
+Why: Gemini's free daily caps are exhausted for today. A probe at about 20:00 showed: gemini-3.5-flash-lite and gemini-2.5-flash return 429 RESOURCE_EXHAUSTED; every other Gemini model returns 503. Saif wants to continue today, and the project uses free services only. Groq's free chat models are openai/gpt-oss-120b (persona), openai/gpt-oss-20b (judge) and qwen/qwen3.8-27b (unused); each model has its own token-per-minute bucket.
+
+**Part A — provider switch (TDD, no network in unit tests)**
+- `config.Settings`:
+  - `llm_provider: Literal["gemini", "groq"] = "gemini"` (env `ORDER_AGENT_LLM_PROVIDER`);
+  - `groq_model: str = "qwen/qwen3.8-27b"` (env `ORDER_AGENT_GROQ_MODEL`).
+- `bot.py`:
+  - when the provider is `groq`, build Pipecat's Groq LLM service with `groq_api_key` and `groq_model`, the same system prompt and the same tools, and skip the Gemini probe and pick_model step;
+  - Gemini stays the default and is unchanged;
+  - keep the LLM construction in a small, testable function, e.g. `order_agent/llm_factory.py: build_bot_llm(settings, system_prompt) -> LLMService`.
+- Tests:
+  - the default builds a GoogleLLMService (no network);
+  - provider `groq` builds a Groq service with that model;
+  - a missing GROQ_API_KEY with provider groq raises a clear error;
+  - tool registration still works with the Groq service. Mirror tests/test_tool_registration.py.
+- Watch for Groq/OpenAI-specific differences: function-call results, `FunctionCallResultProperties(run_llm=False)`, and the nudge on an empty turn. The bot's existing http-options retry is Gemini-only, so note what the Groq service does on a 429.
+
+**Part B — finish the remaining Task 10 runs with `ORDER_AGENT_LLM_PROVIDER=groq`.** run_suite.py must pass the bot's env through, so check that it does.
+1. Smoke test: `--only happy_path` in text mode. If qwen3.8-27b misbehaves as the bot (no tool calls, broken role, many tool-format errors), switch to `ORDER_AGENT_GROQ_MODEL=openai/gpt-oss-20b` and say why.
+2. Audio: `--audio --only` each of happy_path, sold_out_substitute and pushes_forbidden.
+3. Text retries: minimum_reachable, staff_asks_details, terse_staff.
+4. Use the default `--attempts 3` and `--sleep 20`. Copy every summary into `evals/confirmation/task10b/`.
+5. Re-run evals/latency.py on the audio runs.
+
+**Part C — update docs/results-v1.md and README**
+- Add a "Bot on Groq (2026-11-23 evening)" section: why it was run; the bot model used; a per-scenario table of the new results; and latency (median and P90 per stage, with n) computed from these audio runs, next to the earlier Gemini figures.
+- Update the overall scenario status. Results from different bot models are kept apart, never merged silently. A scenario that passed with either bot is "pass (bot: <model>)".
+- README: document `ORDER_AGENT_LLM_PROVIDER` and `ORDER_AGENT_GROQ_MODEL`.
+- Every number must link to a committed file.
+
+**Commits**
+- Code: `feat: configurable bot LLM provider (Gemini default, Groq option)`.
+- Docs and evidence: `docs: results with bot on Groq`.
+- Don't push.

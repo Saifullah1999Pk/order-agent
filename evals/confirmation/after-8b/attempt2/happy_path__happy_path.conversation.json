@@ -1,0 +1,81 @@
+[
+  {
+    "role": "assistant",
+    "content": "Hello, I would like to place a delivery order, please."
+  },
+  {
+    "role": "user",
+    "content": "Welcome to Karachi Kitchen, what can I get started for you?"
+  },
+  {
+    "role": "assistant",
+    "content": "I would like to order two plates of chicken biryani and a raita for delivery. Do you have those available, and what are the prices?"
+  },
+  {
+    "role": "user",
+    "content": "Yes, chicken biryani is nine hundred rupees per plate and raita is one hundred and fifty rupees."
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "name": "chicken biryani",
+      "unit_pkr": 900,
+      "quantity": 2
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Could you please repeat the price for the chicken biryani?"
+  },
+  {
+    "role": "user",
+    "content": "Chicken biryani is nine hundred rupees a plate."
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "name": "chicken biryani",
+      "unit_price_pkr": 900,
+      "quantity": 2
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "And could you please add one raita as well?"
+  },
+  {
+    "role": "user",
+    "content": "Got it, two chicken biryani and one raita. What is your delivery address?"
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "unit_price_pkr": 150,
+      "name": "raita",
+      "quantity": 1
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "My delivery address is House 12, Street 4, F-7/2, Islamabad. Also, my callback number is 0300-0000000, and if possible, please make it less spicy."
+  },
+  {
+    "role": "user",
+    "content": "We've noted that down for you. Your total including the hundred and fifty rupee delivery fee is two thousand one hundred and fifty rupees, and delivery will take forty-five minutes."
+  },
+  {
+    "role": "tool_call",
+    "name": "set_fees",
+    "arguments": {
+      "delivery_fee_pkr": 150,
+      "tax_pkr": 0
+    },
+    "cancelled": false
+  }
+]

@@ -1,0 +1,44 @@
+   0.000  [ --]  run: simulation 'sold_out_no_substitute/sold_out_no_substitute' -> ws://localhost:7860/ws
+   0.000  [ --]  user  -> modality: text | persona: factory:order_agent.eval_llm.groq_llm | max_turns: 12 | max_duration_s: 240 | max_silence_s: 30
+   0.000  [ --]  judge -> modality: text | eval: factory:order_agent.eval_llm.groq_llm
+   0.000  [ --]  goal  -> Try to take the customer's order, then say goodbye politely when the customer cannot order.
+   0.000  [ --]  connected
+   2.750  [ --]  handshake: ok (bot-ready)
+   2.750  [ --]  persona: listening (up to 12 turn(s), 240s, 30s of silence)
+   2.750  [ --]  event: metrics  'ttfb, processing'
+   5.750  [ --]  event: llm_started
+   6.828  [ --]  event: metrics  'ttfb'
+   6.828  [ --]  event: metrics  'ttfat'
+   7.172  [ --]  event: metrics  'tokens'
+   7.172  [ --]  event: llm_response  'Hello, I would like to place a delivery order, please.'
+   8.750  [ --]  send: 'Certainly, our chicken biryani, karahi and pulao are sold out today, but we have prawn biryani for Rs\u202f1300. Would you like to order that?' (persona, text)
+   8.750  [ --]  event: persona_turn  'Certainly, our chicken biryani, karahi and pulao are sold out today, but we have prawn biryani for Rs\u202f1300. Would you like to order that?'
+   8.750  [ --]  event: bot_interrupted
+   8.765  [ --]  event: llm_started
+   9.718  [ --]  event: metrics  'ttfb'
+   9.718  [ --]  event: metrics  'ttfat'
+   9.718  [ --]  event: metrics  'tokens'
+   9.718  [ --]  event: llm_response
+   9.718  [ --]  event: function_call  'add_item'
+   9.718  [ --]  event: function_call_stopped  'add_item'
+   9.718  [ --]  event: llm_started
+  10.390  [ --]  event: metrics  'ttfb'
+  10.390  [ --]  event: metrics  'ttfat'
+  10.484  [ --]  event: metrics
+  10.484  [ --]  event: metrics  'characters'
+  10.484  [ --]  event: metrics  'tokens'
+  10.484  [ --]  event: llm_response  'Ah, actually I cannot have seafood. Do you have any chicken biryani, or perhaps chicken karahi or chicken pulao?'
+  11.343  [ --]  event: metrics  'ttfb'
+  11.343  [ --]  event: metrics  'ttfa'
+  11.343  [ --]  event: metrics  'processing'
+  11.343  [ --]  event: metrics
+  11.343  [ --]  event: metrics  'characters'
+  11.343  [ --]  event: bot_started_speaking
+  11.343  [ --]  event: end_call  'All main dishes are sold out and the customer cannot have seafood.'
+  11.343  [ --]  persona: ended by end_call after 1 turn(s)
+  11.343  [ --]  judge: the bot's tool calls: add_item({"unit_price_pkr": 1300, "quantity": 2, "name": "prawn biryani"})
+  12.359  [ --]  judge: turn 1 conduct yes: P(meets)=0.99, P(fails)=0.01, P(not_applicable)=0.00
+  12.359  [ --]  judge: turn 2 conduct yes: P(meets)=0.95, P(fails)=0.04, P(not_applicable)=0.01
+  12.359  [ --]  judge: conduct = 1.00: all 2 turn(s)
+  12.359  [ --]  judge: goal achieved: P(yes)=0.98
+  12.359  [ --]  done: PASS (0 failure(s))

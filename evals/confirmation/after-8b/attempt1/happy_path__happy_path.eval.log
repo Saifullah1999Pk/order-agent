@@ -1,0 +1,93 @@
+   0.000  [ --]  run: simulation 'happy_path/happy_path' -> ws://localhost:7860/ws
+   0.000  [ --]  user  -> modality: text | persona: factory:order_agent.eval_llm.gemini_native_llm | max_turns: 12 | max_duration_s: 240 | max_silence_s: 30
+   0.000  [ --]  judge -> modality: text | eval: factory:order_agent.eval_llm.gemini_llm
+   0.000  [ --]  goal  -> Take the customer's order, quote the total and delivery time, then end the call.
+   0.000  [ --]  connected
+   3.047  [ --]  handshake: ok (bot-ready)
+   3.047  [ --]  persona: listening (up to 12 turn(s), 240s, 30s of silence)
+   3.063  [ --]  event: metrics  'ttfb, processing'
+   6.063  [ --]  event: llm_started
+   6.782  [ --]  event: metrics  'ttfb'
+   6.782  [ --]  event: metrics  'ttfat'
+   6.813  [ --]  event: metrics  'tokens'
+   6.813  [ --]  event: llm_response  'Hello, I would like to place a delivery order, please.'
+   7.938  [ --]  send: 'Welcome to Karachi Kitchen, what can I get started for you?' (persona, text)
+   7.938  [ --]  event: persona_turn  'Welcome to Karachi Kitchen, what can I get started for you?'
+   7.938  [ --]  event: bot_interrupted
+   7.953  [ --]  event: llm_started
+   8.625  [ --]  event: metrics  'ttfb'
+   8.625  [ --]  event: metrics  'ttfat'
+   8.719  [ --]  event: metrics  'tokens'
+   8.719  [ --]  event: llm_response  "I'd like to order two chicken biryanis, and if it fits, one raita. Do you have those available, and what are the prices?"
+   9.375  [ --]  send: 'Yes, we have both. Chicken biryani is nine hundred rupees each and raita is one hundred and fifty rupees.' (persona, text)
+   9.375  [ --]  event: persona_turn  'Yes, we have both. Chicken biryani is nine hundred rupees each and raita is one hundred and fifty rupees.'
+   9.375  [ --]  event: bot_interrupted
+   9.391  [ --]  event: llm_started
+  10.469  [ --]  event: metrics  'ttfb'
+  10.469  [ --]  event: metrics  'ttfat'
+  10.469  [ --]  event: metrics  'tokens'
+  10.469  [ --]  event: llm_response
+  10.469  [ --]  event: function_call  'add_item'
+  10.469  [ --]  event: function_call_stopped  'add_item'
+  10.469  [ --]  event: llm_started
+  11.016  [ --]  event: metrics  'ttfb'
+  11.016  [ --]  event: metrics  'ttfat'
+  11.016  [ --]  event: metrics  'tokens'
+  11.016  [ --]  event: llm_response
+  11.016  [ --]  event: function_call  'add_item'
+  11.016  [ --]  event: function_call_stopped  'add_item'
+  11.032  [ --]  event: llm_started
+  11.719  [ --]  event: metrics  'ttfb'
+  11.719  [ --]  event: metrics  'ttfat'
+  11.797  [ --]  event: metrics  'tokens'
+  11.797  [ --]  event: llm_response  'Could you please tell me if there is any delivery fee or tax, and is there a minimum order?'
+  11.797  [ --]  event: metrics
+  11.797  [ --]  event: metrics  'characters'
+  12.828  [ --]  send: 'There is no minimum order and no tax, but the delivery fee is one hundred and fifty rupees.' (persona, text)
+  12.828  [ --]  event: persona_turn  'There is no minimum order and no tax, but the delivery fee is one hundred and fifty rupees.'
+  12.828  [ --]  event: bot_interrupted
+  12.828  [ --]  event: metrics  'ttfb'
+  12.828  [ --]  event: metrics  'processing'
+  12.860  [ --]  event: llm_started
+  13.485  [ --]  event: metrics  'ttfb'
+  13.485  [ --]  event: metrics  'ttfat'
+  13.485  [ --]  event: metrics  'tokens'
+  13.485  [ --]  event: llm_response
+  13.485  [ --]  event: function_call  'set_fees'
+  13.485  [ --]  event: function_call_stopped  'set_fees'
+  13.485  [ --]  event: llm_started
+  14.235  [ --]  event: metrics  'ttfb'
+  14.235  [ --]  event: metrics  'ttfat'
+  14.235  [ --]  event: metrics  'tokens'
+  14.235  [ --]  event: llm_response
+  14.235  [ --]  event: function_call  'set_minimum_order'
+  14.235  [ --]  event: function_call_stopped  'set_minimum_order'
+  14.235  [ --]  event: llm_started
+  14.828  [ --]  event: metrics  'ttfb'
+  14.828  [ --]  event: metrics  'ttfat'
+  14.844  [ --]  event: metrics  'tokens'
+  14.844  [ --]  event: llm_response  'Could you please tell me what the minimum order amount is, just to be sure?'
+  14.844  [ --]  event: metrics
+  14.844  [ --]  event: metrics  'characters'
+  15.485  [ --]  send: 'There is no minimum order at all.' (persona, text)
+  15.485  [ --]  event: persona_turn  'There is no minimum order at all.'
+  15.500  [ --]  event: bot_interrupted
+  15.500  [ --]  event: metrics  'ttfb'
+  15.500  [ --]  event: metrics  'processing'
+  15.516  [ --]  event: llm_started
+  16.672  [ --]  event: metrics  'ttfb'
+  16.672  [ --]  event: metrics  'ttfat'
+  16.672  [ --]  event: metrics  'tokens'
+  16.672  [ --]  event: llm_response  "That's great. Could you also make them less spicy, if possible?"
+  17.282  [ --]  send: 'Sure, I can make the biryani less spicy. Is that two chicken biryanis and one raita?' (persona, text)
+  17.282  [ --]  event: persona_turn  'Sure, I can make the biryani less spicy. Is that two chicken biryanis and one raita?'
+  17.282  [ --]  event: bot_interrupted
+  17.297  [ --]  event: llm_started
+  17.969  [ --]  event: metrics  'ttfb'
+  17.969  [ --]  event: metrics  'ttfat'
+  18.078  [ --]  event: metrics  'tokens'
+  18.078  [ --]  event: llm_response  'Yes, exactly that. Also, what is your delivery time, and what is the total amount?'
+  18.297  [ --]  event: harness_error  'Unknown error occurred: 429 Too Many Requests. {\'message\': \'{\\n  "error": {\\n    "code": 429,\\n    "message": "You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://aistudio.google.com/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\\\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 15, model: gemini-3.5-flash-lite, description: Generate content requests per minute limit exceeded on Free Tier. See https://aistudio.google.com/docs/rate-limits.\\\\nPlease retry in 46.681406893s.",\\n    "status": "RESOURCE_EXHAUSTED",\\n    "details": [\\n      {\\n        "@type": "type.googleapis.com/google.rpc.Help",\\n        "links": [\\n          {\\n            "description": "Learn more about Gemini API quotas",\\n            "url": "https://aistudio.google.com/docs/rate-limits"\\n          }\\n        ]\\n      },\\n      {\\n        "@type": "type.googleapis.com/google.rpc.QuotaFailure",\\n        "violations": [\\n          {\\n            "description": "Generate content requests per minute limit exceeded on Free Tier. See https://aistudio.google.com/docs/rate-limits.",\\n            "quotaMetric": "generativelanguage.googleapis.com/generate_content_free_tier_requests",\\n            "quotaId": "GenerateRequestsPerMinutePerProjectPerModel-FreeTier",\\n            "quotaDimensions": {\\n              "model": "gemini-3.5-flash-lite",\\n              "location": "global"\\n            },\\n            "quotaValue": "15"\\n          }\\n        ]\\n      },\\n      {\\n        "@type": "type.googleapis.com/google.rpc.RetryInfo",\\n        "retryDelay": "46s"\\n      }\\n    ]\\n  }\\n}\\n\', \'status\': \'Too Many Requests\'}'
+  18.297  [ --]  error: harness pipeline: Unknown error occurred: 429 Too Many Requests. {'message': '{\n  "error": {\n    "code": 429,\n    "message": "You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://aistudio.google.com/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 15, model: gemini-3.5-flash-lite, description: Generate content requests per minute limit exceeded on Free Tier. See https://aistudio.google.com/docs/rate-limits.\\nPlease retry in 46.681406893s.",\n    "status": "RESOURCE_EXHAUSTED",\n    "details": [\n      {\n        "@type": "type.googleapis.com/google.rpc.Help",\n        "links": [\n          {\n            "description": "Learn more about Gemini API quotas",\n            "url": "https://aistudio.google.com/docs/rate-limits"\n          }\n        ]\n      },\n      {\n        "@type": "type.googleapis.com/google.rpc.QuotaFailure",\n        "violations": [\n          {\n            "description": "Generate content requests per minute limit exceeded on Free Tier. See https://aistudio.google.com/docs/rate-limits.",\n            "quotaMetric": "generativelanguage.googleapis.com/generate_content_free_tier_requests",\n            "quotaId": "GenerateRequestsPerMinutePerProjectPerModel-FreeTier",\n            "quotaDimensions": {\n              "model": "gemini-3.5-flash-lite",\n              "location": "global"\n            },\n            "quotaValue": "15"\n          }\n        ]\n      },\n      {\n        "@type": "type.googleapis.com/google.rpc.RetryInfo",\n        "retryDelay": "46s"\n      }\n    ]\n  }\n}\n', 'status': 'Too Many Requests'}
+  18.297  [ --]  persona: ended by error after 5 turn(s)
+  18.313  [ --]  done: FAIL (1 failure(s))

@@ -1,0 +1,88 @@
+[
+  {
+    "role": "assistant",
+    "content": "Hello, I would like to place a delivery order, please."
+  },
+  {
+    "role": "user",
+    "content": "Welcome to Karachi Kitchen, what can I get started for you?"
+  },
+  {
+    "role": "assistant",
+    "content": "Could you please tell me what you have available and your prices?"
+  },
+  {
+    "role": "user",
+    "content": "We have chicken biryani for nine hundred rupees, chicken karahi for fourteen hundred, chicken pulao for eight hundred, and raita for one hundred fifty rupees."
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "unit_price_pkr": 900,
+      "name": "chicken biryani",
+      "quantity": 2
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "quantity": 1,
+      "unit_price_pkr": 150,
+      "name": "raita"
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Could you tell me what the delivery fee and tax are, and if you have a minimum order?"
+  },
+  {
+    "role": "user",
+    "content": "The delivery fee is one hundred fifty rupees, there is no tax, and we do not have a minimum order."
+  },
+  {
+    "role": "tool_call",
+    "name": "set_fees",
+    "arguments": {
+      "delivery_fee_pkr": 150,
+      "tax_pkr": 0
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Could you please make it less spicy if possible?"
+  },
+  {
+    "role": "user",
+    "content": "Sure, we can make it less spicy. What would you like to order?"
+  },
+  {
+    "role": "assistant",
+    "content": "Could you please tell me if you need my delivery address and phone number now?"
+  },
+  {
+    "role": "user",
+    "content": "Yes, please tell me your address and phone number, and what food you would like."
+  },
+  {
+    "role": "assistant",
+    "content": "My address is House 12, Street 4, F-7/2, Islamabad, and my callback number is 0300-0000000. I would like two chicken biryani and one raita, and please make it less spicy if possible."
+  },
+  {
+    "role": "user",
+    "content": "Got it, two chicken biryani and one raita, less spicy. That is nineteen hundred fifty rupees total including delivery, and it will take forty-five minutes."
+  },
+  {
+    "role": "tool_call",
+    "name": "confirm_order",
+    "arguments": {
+      "delivery_minutes": 45,
+      "quoted_total_pkr": 2100
+    },
+    "cancelled": false
+  }
+]

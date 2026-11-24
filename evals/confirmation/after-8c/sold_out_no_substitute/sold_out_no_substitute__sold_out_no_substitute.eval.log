@@ -1,0 +1,28 @@
+   0.000  [ --]  run: simulation 'sold_out_no_substitute/sold_out_no_substitute' -> ws://localhost:7860/ws
+   0.000  [ --]  user  -> modality: text | persona: factory:order_agent.eval_llm.groq_llm | max_turns: 12 | max_duration_s: 240 | max_silence_s: 30
+   0.000  [ --]  judge -> modality: text | eval: factory:order_agent.eval_llm.groq_llm
+   0.000  [ --]  goal  -> Try to take the customer's order, then say goodbye politely when the customer cannot order.
+   0.000  [ --]  connected
+   3.031  [ --]  handshake: ok (bot-ready)
+   3.031  [ --]  persona: listening (up to 12 turn(s), 240s, 30s of silence)
+   3.031  [ --]  event: metrics  'ttfb, processing'
+   6.063  [ --]  event: llm_started
+   6.922  [ --]  event: metrics  'ttfb'
+   6.922  [ --]  event: metrics  'ttfat'
+   6.969  [ --]  event: metrics  'tokens'
+   6.969  [ --]  event: llm_response  'Hello, I would like to place a delivery order, please.'
+   8.172  [ --]  send: 'Our chicken biryani, chicken karahi and chicken pulao are sold out today. We do have prawn biryani for Rs\u202f1300—would you like to order that?' (persona, text)
+   8.172  [ --]  event: persona_turn  'Our chicken biryani, chicken karahi and chicken pulao are sold out today. We do have prawn biryani for Rs\u202f1300—would you like to order that?'
+   8.188  [ --]  event: bot_interrupted
+   8.188  [ --]  event: llm_started
+   9.031  [ --]  event: metrics  'ttfb'
+   9.031  [ --]  event: metrics  'ttfat'
+   9.063  [ --]  event: metrics  'tokens'
+   9.063  [ --]  event: llm_response  "Ah, I'd rather not have seafood. Do you have any other chicken dishes available?"
+  10.125  [ --]  event: end_call  'Customer declined all available items; no order placed.'
+  10.125  [ --]  persona: ended by end_call after 1 turn(s)
+  11.094  [ --]  judge: turn 1 conduct yes: P(meets)=0.99, P(fails)=0.01, P(not_applicable)=0.00
+  11.094  [ --]  judge: turn 2 conduct yes: P(meets)=0.95, P(fails)=0.04, P(not_applicable)=0.01
+  11.094  [ --]  judge: conduct = 1.00: all 2 turn(s)
+  11.094  [ --]  judge: goal achieved: P(yes)=0.95
+  11.109  [ --]  done: PASS (0 failure(s))

@@ -1,0 +1,1 @@
+The call dropped before it was finished (call_dropped); no order was confirmed. Reason: call ended without end_call

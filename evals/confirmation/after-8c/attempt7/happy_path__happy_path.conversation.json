@@ -1,0 +1,81 @@
+[
+  {
+    "role": "assistant",
+    "content": "Hello, I would like to place a delivery order, please."
+  },
+  {
+    "role": "user",
+    "content": "Sure, what would you like to order?"
+  },
+  {
+    "role": "assistant",
+    "content": "I would like to order two chicken biryanis and one raita, for delivery. Do you have these available and what are the prices?"
+  },
+  {
+    "role": "user",
+    "content": "Yes, we have those items. Two chicken biryanis are Rs\u202f900 each and the raita is Rs\u202f150, so the food comes to Rs\u202f1,950. Adding the Rs\u202f150 delivery fee brings the total to Rs\u202f2,100. Would you like to confirm this order?"
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "unit_price_pkr": 900,
+      "quantity": 2,
+      "name": "chicken biryani"
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "quantity": 1,
+      "unit_price_pkr": 150,
+      "name": "raita"
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "set_fees",
+    "arguments": {
+      "delivery_fee_pkr": 150,
+      "tax_pkr": 0
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Could you also make it less spicy if possible, please?"
+  },
+  {
+    "role": "user",
+    "content": "Sure, we can prepare the biryanis less spicy. May I have your delivery address and a contact phone number, please?"
+  },
+  {
+    "role": "assistant",
+    "content": "My address is House 12, Street 4, F-7/2, Islamabad, and my callback number is 0300-0000000. Also, could you please let me know what time it will be delivered and what the total is?"
+  },
+  {
+    "role": "user",
+    "content": "Your order comes to Rs\u202f2,100 total, and it will be delivered in about 45 minutes. Shall I go ahead and confirm your order?"
+  },
+  {
+    "role": "tool_call",
+    "name": "confirm_order",
+    "arguments": {
+      "quoted_total_pkr": 2100,
+      "delivery_minutes": 45
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "end_call",
+    "arguments": {
+      "reason": "Order confirmed successfully within budget and brief.",
+      "outcome": "ordered"
+    },
+    "cancelled": false
+  }
+]

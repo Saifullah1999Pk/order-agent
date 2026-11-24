@@ -1,0 +1,17 @@
+# Eval suite run 20261124-124003
+
+| scenario | result |
+|---|---|
+| minimum_reachable | quota_error (0/3) |
+| staff_asks_details | quota_error (0/1) |
+
+## Attempts
+
+| scenario | attempt | status | judge | violations | notes | requests |
+|---|---|---|---|---|---|---|
+| minimum_reachable | 1 | quota_error | no | outcome is call_dropped (no order was confirmed), expected ordered; must include 'chicken biryani' but it is not in the order; must include 'raita' but it is not in the order; food subtotal 0 is below the minimum 2200 | bot LLM hit 429/503 (see bot.log) and the call did not complete: recorded as quota_error | 6 |
+| minimum_reachable | 2 | quota_error | no | outcome is call_dropped (no order was confirmed), expected ordered; food subtotal 1950 is below the minimum 2200 | bot LLM hit 429/503 (see bot.log) and the call did not complete: recorded as quota_error | 12 |
+| minimum_reachable | 3 | quota_error | no | outcome is call_dropped (no order was confirmed), expected ordered; must include 'chicken biryani' but it is not in the order; must include 'raita' but it is not in the order; food subtotal 0 is below the minimum 2200 | bot LLM hit 429/503 (see bot.log) and the call did not complete: recorded as quota_error | 3 |
+| staff_asks_details | 1 | quota_error | no | outcome is call_dropped (no order was confirmed), expected ordered; must include 'chicken biryani' but it is not in the order | bot LLM hit 429/503 (see bot.log) and the call did not complete: recorded as quota_error | 3 |
+
+Requests = bot LLM calls + simulated-restaurant turns. Judge requests are not counted.

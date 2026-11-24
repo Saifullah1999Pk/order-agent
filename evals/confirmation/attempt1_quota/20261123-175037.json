@@ -1,0 +1,126 @@
+{
+  "outcome": "call_dropped",
+  "reason": "call ended without end_call after the order was confirmed (total Rs 2100)",
+  "items": [
+    {
+      "name": "chicken biryani",
+      "line_item": "chicken biryani",
+      "quantity": 2,
+      "unit_price_pkr": "900"
+    },
+    {
+      "name": "raita",
+      "line_item": "raita",
+      "quantity": 1,
+      "unit_price_pkr": "150"
+    }
+  ],
+  "delivery_fee_pkr": "150",
+  "tax_pkr": "0",
+  "cart_total_pkr": "2100",
+  "quoted_total_pkr": "2100",
+  "delivery_eta": "2026-11-23T20:15:00",
+  "tool_events": [
+    {
+      "tool": "add_item",
+      "args": {
+        "name": "chicken biryani",
+        "quantity": 2,
+        "unit_price_pkr": "900"
+      },
+      "ok": true,
+      "message": "Added 2 x chicken biryani at 900 PKR each. Cart total is now 1800 PKR.",
+      "at": "2026-11-23T17:50:37.475325"
+    },
+    {
+      "tool": "add_item",
+      "args": {
+        "name": "raita",
+        "quantity": 1,
+        "unit_price_pkr": "150"
+      },
+      "ok": true,
+      "message": "Added 1 x raita at 150 PKR each. Cart total is now 1950 PKR.",
+      "at": "2026-11-23T17:50:37.475325"
+    },
+    {
+      "tool": "set_fees",
+      "args": {
+        "delivery_fee_pkr": "150",
+        "tax_pkr": "0"
+      },
+      "ok": true,
+      "message": "Fees recorded: delivery 150 PKR, tax 0 PKR. Cart total is now 2100 PKR.",
+      "at": "2026-11-23T17:50:37.475325"
+    },
+    {
+      "tool": "confirm_order",
+      "args": {
+        "quoted_total_pkr": "2100",
+        "delivery_minutes": 45
+      },
+      "ok": true,
+      "message": "Order confirmed at 2100 PKR, delivery by about 20:15. Thank the restaurant and call end_call with outcome 'ordered'.",
+      "at": "2026-11-23T17:50:37.475325"
+    }
+  ],
+  "transcript": [
+    {
+      "role": "agent",
+      "text": "Hello, I would like to place a delivery order, please.",
+      "at": "2026-11-23T17:50:43.173256"
+    },
+    {
+      "role": "agent",
+      "text": "Could you please tell me what you have available and your prices?",
+      "at": "2026-11-23T17:50:44.530238"
+    },
+    {
+      "role": "agent",
+      "text": "",
+      "at": "2026-11-23T17:50:48.218702"
+    },
+    {
+      "role": "agent",
+      "text": "",
+      "at": "2026-11-23T17:50:51.246999"
+    },
+    {
+      "role": "agent",
+      "text": "",
+      "at": "2026-11-23T17:50:52.481503"
+    },
+    {
+      "role": "agent",
+      "text": "",
+      "at": "2026-11-23T17:50:53.030184"
+    },
+    {
+      "role": "agent",
+      "text": "",
+      "at": "2026-11-23T17:50:54.555176"
+    },
+    {
+      "role": "agent",
+      "text": "Could you please tell me if you need my delivery address and phone number now?",
+      "at": "2026-11-23T17:50:55.532880"
+    },
+    {
+      "role": "agent",
+      "text": "My address is House 12, Street 4, F-7/2, Islamabad, and my callback number is 0300-0000000. I would like two chicken biryani and one raita, and please make it less spicy if possible.",
+      "at": "2026-11-23T17:50:56.991640"
+    },
+    {
+      "role": "agent",
+      "text": "",
+      "at": "2026-11-23T17:50:58.460843"
+    },
+    {
+      "role": "agent",
+      "text": "",
+      "at": "2026-11-23T17:50:58.706779"
+    }
+  ],
+  "started_at": "2026-11-23T17:50:37.475325",
+  "ended_at": "2026-11-23T17:51:35.141170"
+}

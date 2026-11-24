@@ -1,0 +1,30 @@
+Simulated scenarios:
+  happy_path/happy_path:
+    user  -> modality: text | persona: factory:order_agent.eval_llm.groq_llm | max_turns: 12 | max_duration_s: 240 | max_silence_s: 30
+    judge -> modality: text | eval: factory:order_agent.eval_llm.groq_llm
+    goal  -> Take the customer's order, quote the total and delivery time, then end the call.
+
+    conversation:
+      bot: Hello, I would like to place a delivery order, please.
+      user: Sure, go ahead and tell me what you'd like to order.
+      bot: I'd like to order two chicken biryanis and one raita, if you have them, please. Also, could you please make them less spicy if possible?
+
+      ended by end_call after 1 persona turn(s)
+
+    judge: The bot never confirmed the order nor established a total price, so the required total of at most Rs 2500 was never verified and the order was not confirmed.
+
+    metrics:
+      conduct: 1.00 (min 1.00) | 2/2 turns
+
+    persona: gave up: I ended the call because I can't order food from the customer.
+
+  ✗ ws://localhost:7860/ws happy_path/happy_path end_call (13609ms)
+
+  Failures (1 of 1):
+
+  ✗ ws://localhost:7860/ws happy_path/happy_path
+      • goal not met: The bot never confirmed the order nor established a total price, so the required total of at most Rs 2500 was never verified and the order was not confirmed. end_call
+
+  0/1 passed, 1 failed  ·  13.6s
+  logs: C:\Users\Saif\Voice-Agent\order-agent\evals\confirmation\after-8c\attempt3
+

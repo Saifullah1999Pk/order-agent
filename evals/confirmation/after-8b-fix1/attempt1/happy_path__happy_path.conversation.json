@@ -1,0 +1,84 @@
+[
+  {
+    "role": "assistant",
+    "content": "Hello, I would like to place a delivery order, please."
+  },
+  {
+    "role": "user",
+    "content": "Welcome to Karachi Kitchen. What can I get for you?"
+  },
+  {
+    "role": "assistant",
+    "content": "I would like to order two chicken biryanis for delivery, and please make them less spicy if possible. Also, do you have raita?"
+  },
+  {
+    "role": "user",
+    "content": "Yes, we have raita. We can make the biryani less spicy for you. So that's two less spicy chicken biryanis and one raita. Anything else?"
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "quantity": 2,
+      "unit_price_pkr": 900,
+      "name": "chicken biryani"
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "quantity": 1,
+      "unit_price_pkr": 200,
+      "name": "raita"
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "No, that's everything. Could you please tell me how much the delivery fee and tax are, and if you have any minimum order?"
+  },
+  {
+    "role": "user",
+    "content": "There is no minimum order. Delivery is an additional one hundred and fifty rupees. There is no tax."
+  },
+  {
+    "role": "tool_call",
+    "name": "set_fees",
+    "arguments": {
+      "delivery_fee_pkr": 150,
+      "tax_pkr": 0
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "set_minimum_order",
+    "arguments": {
+      "minimum_pkr": 0
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "That is fine. What is your delivery fee and tax, and do you have a minimum order?"
+  },
+  {
+    "role": "user",
+    "content": "There is no minimum order and no tax. The delivery fee is one hundred and fifty rupees."
+  },
+  {
+    "role": "tool_call",
+    "name": "set_fees",
+    "arguments": {
+      "delivery_fee_pkr": 150,
+      "tax_pkr": 0
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Could you please tell me what the total comes to, and how long delivery will take? Also, my address is House 12, Street 4, F-7/2, Islamabad, and my callback number is 0300-0000000."
+  }
+]

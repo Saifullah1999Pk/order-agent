@@ -1,0 +1,17 @@
+   0.000  [ --]  run: simulation 'restaurant/biryani_order' -> ws://localhost:7861/ws
+   0.000  [ --]  user  -> modality: text | persona: factory:order_agent.eval_llm.gemini_llm | max_turns: 10 | max_duration_s: 180 | max_silence_s: 30
+   0.000  [ --]  judge -> modality: text | eval: factory:order_agent.eval_llm.gemini_llm
+   0.000  [ --]  goal  -> Take the customer's order, quote the total and delivery time, then end the call.
+   0.015  [ --]  connected
+   2.140  [ --]  handshake: ok (bot-ready)
+   2.140  [ --]  persona: listening (up to 10 turn(s), 180s, 30s of silence)
+   2.140  [ --]  event: metrics  'ttfb, processing'
+   5.125  [ --]  event: llm_started
+   5.890  [ --]  event: metrics  'ttfb'
+   5.890  [ --]  event: metrics  'ttfat'
+   5.890  [ --]  event: metrics  'tokens'
+   5.890  [ --]  event: llm_response  'Hello, I would like to order two chicken biryanis for delivery, please.'
+   9.031  [ --]  event: harness_error  'Error during completion: Error code: 429'
+   9.031  [ --]  error: harness pipeline: Error during completion: Error code: 429
+   9.031  [ --]  persona: ended by error after 0 turn(s)
+   9.031  [ --]  done: FAIL (1 failure(s))

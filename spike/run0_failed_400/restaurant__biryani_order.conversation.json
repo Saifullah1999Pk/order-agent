@@ -1,0 +1,22 @@
+[
+  {
+    "role": "assistant",
+    "content": "Hi, I would like to order two chicken biryani for delivery, please."
+  },
+  {
+    "role": "user",
+    "content": "Got it, two chicken biryani. Would you like to add any raita or anything else?"
+  },
+  {
+    "role": "assistant",
+    "content": "No, just the biryani, please. What is the total?"
+  },
+  {
+    "role": "user",
+    "content": "That will be eighteen hundred for the biryani plus one fifty for delivery, so nineteen fifty total, and it will take about forty-five minutes."
+  },
+  {
+    "role": "assistant",
+    "content": "That is fine. My address is 42-B, Block 6, PECHS."
+  }
+]

@@ -1,0 +1,44 @@
+## 20261123-185933
+scenario/attempt | bot model | bot LLM errors (429/503/timeout) | nudges | persona end | persona turns | report outcome
+happy_path/attempt-1 | gemini-3.5-flash-lite | 429:0 503:0 timeout:0 | 0 | ended by end_call after 3 turn(s) | 3 | call_dropped
+happy_path/attempt-2 | gemini-3.5-flash-lite | 429:0 503:1 timeout:3 | 2 | ended by silence after 3 turn(s) | 3 | call_dropped
+happy_path/attempt-3 | gemini-3.5-flash-lite | 429:0 503:0 timeout:1 | 0 | ended by bot after 3 turn(s) | 3 | ordered
+late_delivery/attempt-1 | gemini-2.5-flash (primary probe failed) | 429:3 503:0 timeout:0 | 2 | ended by silence after 0 turn(s) | 0 | call_dropped
+late_delivery/attempt-2 | gemini-3.5-flash-lite | 429:0 503:0 timeout:1 | 2 | hung up; waiting for the bot's closing turn | 3 | call_dropped
+minimum_reachable/attempt-1 | gemini-3.5-flash-lite | 429:0 503:1 timeout:0 | 1 | hung up; waiting for the bot's closing turn | 3 | call_dropped
+minimum_reachable/attempt-2 | gemini-3.5-flash-lite | 429:0 503:0 timeout:2 | 2 | hung up; waiting for the bot's closing turn | 3 | call_dropped
+minimum_reachable/attempt-3 | gemini-3.5-flash-lite | 429:0 503:1 timeout:0 | 2 | hung up; waiting for the bot's closing turn | 3 | call_dropped
+minimum_unreachable/attempt-1 | gemini-3.5-flash-lite | 429:0 503:0 timeout:0 | 0 | ended by end_call after 2 turn(s) | 2 | call_dropped
+price_drop_optional/attempt-1 | gemini-2.5-flash (primary probe failed) | 429:3 503:0 timeout:0 | 2 | ended by silence after 1 turn(s) | 1 | call_dropped
+price_drop_optional/attempt-2 | gemini-3.5-flash-lite | 429:0 503:0 timeout:0 | 0 | hung up; waiting for the bot's closing turn | 3 | call_dropped
+price_drop_optional/attempt-3 | gemini-2.5-flash (primary probe failed) | 429:3 503:0 timeout:0 | 2 | ended by silence after 0 turn(s) | 0 | call_dropped
+price_over_budget/attempt-1 | gemini-3.5-flash-lite | 429:0 503:0 timeout:4 | 3 | ended by silence after 1 turn(s) | 1 | call_dropped
+price_over_budget/attempt-2 | gemini-3.5-flash-lite | 429:0 503:0 timeout:1 | 1 | ended by end_call after 1 turn(s) | 1 | call_dropped
+pushes_forbidden/attempt-1 | gemini-3.5-flash-lite | 429:0 503:0 timeout:0 | 0 | ended by bot after 3 turn(s) | 3 | ordered
+sold_out_no_substitute/attempt-1 | gemini-3.5-flash-lite | 429:0 503:0 timeout:0 | 0 | ended by end_call after 1 turn(s) | 1 | call_dropped
+sold_out_substitute/attempt-1 | gemini-3.5-flash-lite | 429:0 503:0 timeout:1 | 1 | ended by bot after 5 turn(s) | 5 | ordered
+staff_asks_details/attempt-1 | gemini-3.5-flash-lite | 429:0 503:0 timeout:0 | 0 | ended by bot after 4 turn(s) | 4 | ordered
+staff_asks_details/attempt-2 | gemini-3.5-flash-lite | 429:0 503:0 timeout:0 | 0 | hung up; waiting for the bot's closing turn | 3 | call_dropped
+staff_asks_details/attempt-3 | gemini-3.5-flash-lite | 429:0 503:2 timeout:0 | 0 | hung up; waiting for the bot's closing turn | 3 | call_dropped
+terse_staff/attempt-1 | gemini-3.5-flash-lite | 429:0 503:0 timeout:0 | 0 | hung up; waiting for the bot's closing turn | 2 | call_dropped
+terse_staff/attempt-2 | gemini-3.5-flash-lite | 429:0 503:0 timeout:0 | 0 | hung up; waiting for the bot's closing turn | 2 | call_dropped
+terse_staff/attempt-3 | gemini-3.5-flash-lite | 429:0 503:0 timeout:0 | 0 | hung up; waiting for the bot's closing turn | 4 | call_dropped
+## 20261123-192810
+scenario/attempt | bot model | bot LLM errors (429/503/timeout) | nudges | persona end | persona turns | report outcome
+happy_path/attempt-1 | gemini-3.5-flash-lite | 429:0 503:1 timeout:0 | 0 | ended by bot after 3 turn(s) | 3 | ordered
+minimum_reachable/attempt-1 | gemini-3.5-flash-lite | 429:0 503:3 timeout:0 | 0 | hung up; waiting for the bot's closing turn | 4 | call_dropped
+minimum_reachable/attempt-2 | gemini-3.5-flash-lite | 429:1 503:0 timeout:0 | 2 | hung up; waiting for the bot's closing turn | 3 | call_dropped
+minimum_reachable/attempt-3 | gemini-2.5-flash (primary probe failed) | 429:3 503:0 timeout:0 | 2 | ended by silence after 0 turn(s) | 0 | call_dropped
+price_drop_optional/attempt-1 | gemini-3.5-flash-lite | 429:0 503:0 timeout:0 | 0 | hung up; waiting for the bot's closing turn | 3 | ordered
+staff_asks_details/attempt-1 | gemini-2.5-flash (primary probe failed) | 429:3 503:0 timeout:0 | 2 | ended by silence after 0 turn(s) | 0 | call_dropped
+staff_asks_details/attempt-2 | gemini-3.5-flash-lite | 429:7 503:0 timeout:0 | 6 | ended by silence after 1 turn(s) | 1 | call_dropped
+staff_asks_details/attempt-3 | gemini-2.5-flash (primary probe failed) | 429:3 503:0 timeout:0 | 2 | ended by silence after 0 turn(s) | 0 | call_dropped
+terse_staff/attempt-1 | gemini-2.5-flash (primary probe failed) | 429:3 503:0 timeout:0 | 2 | ended by silence after 0 turn(s) | 0 | call_dropped
+terse_staff/attempt-2 | gemini-2.5-flash (primary probe failed) | 429:3 503:0 timeout:0 | 2 | ended by silence after 0 turn(s) | 0 | call_dropped
+terse_staff/attempt-3 | gemini-2.5-flash (primary probe failed) | 429:3 503:0 timeout:0 | 2 | ended by silence after 0 turn(s) | 0 | call_dropped
+## 20261123-194523
+scenario/attempt | bot model | bot LLM errors (429/503/timeout) | nudges | persona end | persona turns | report outcome
+happy_path/attempt-1 | gemini-2.5-flash (primary probe failed) | 429:3 503:0 timeout:0 | 2 | ended by max_duration after 0 turn(s) | 0 | call_dropped
+happy_path/attempt-2 | gemini-2.5-flash (primary probe failed) | 429:3 503:0 timeout:0 | 2 | ended by max_duration after 0 turn(s) | 0 | call_dropped
+happy_path/attempt-3 | gemini-2.5-flash (primary probe failed) | 429:3 503:0 timeout:0 | 2 | ended by max_duration after 0 turn(s) | 0 | call_dropped
+sold_out_substitute/attempt-1 | gemini-2.5-flash (primary probe failed) | 429:3 503:0 timeout:0 | 2 | ? | ? | ?

@@ -1,0 +1,29 @@
+   0.000  [ --]  run: simulation 'happy_path/happy_path' -> ws://localhost:7860/ws
+   0.000  [ --]  user  -> modality: text | persona: factory:order_agent.eval_llm.groq_llm | max_turns: 12 | max_duration_s: 240 | max_silence_s: 30
+   0.000  [ --]  judge -> modality: text | eval: factory:order_agent.eval_llm.groq_llm
+   0.000  [ --]  goal  -> Take the customer's order, quote the total and delivery time, then end the call.
+   0.015  [ --]  connected
+   3.531  [ --]  handshake: ok (bot-ready)
+   3.531  [ --]  persona: listening (up to 12 turn(s), 240s, 30s of silence)
+   3.531  [ --]  event: metrics  'ttfb, processing'
+   6.547  [ --]  event: llm_started
+   7.500  [ --]  event: metrics  'ttfb'
+   7.500  [ --]  event: metrics  'ttfat'
+   7.515  [ --]  event: metrics  'tokens'
+   7.515  [ --]  event: llm_response  'Hello, I would like to place a delivery order, please.'
+   9.656  [ --]  send: "Sure, go ahead and tell me what you'd like to order." (persona, text)
+   9.656  [ --]  event: persona_turn  "Sure, go ahead and tell me what you'd like to order."
+   9.656  [ --]  event: end_call  "I ended the call because I can't order food from the customer."
+   9.656  [ --]  persona: hung up; waiting for the bot's closing turn
+   9.656  [ --]  event: bot_interrupted
+   9.672  [ --]  event: llm_started
+  10.375  [ --]  event: metrics  'ttfb'
+  10.375  [ --]  event: metrics  'ttfat'
+  10.375  [ --]  event: metrics  'tokens'
+  10.375  [ --]  event: llm_response  "I'd like to order two chicken biryanis and one raita, if you have them, please. Also, could you please make them less spicy if possible?"
+  10.375  [ --]  persona: ended by end_call after 1 turn(s)
+  12.500  [ --]  judge: turn 1 conduct yes: P(meets)=0.97, P(fails)=0.02, P(not_applicable)=0.01
+  12.500  [ --]  judge: turn 2 conduct yes: P(meets)=0.93, P(fails)=0.04, P(not_applicable)=0.03
+  12.500  [ --]  judge: conduct = 1.00: all 2 turn(s)
+  12.500  [ --]  judge: goal not achieved: The bot never confirmed the order nor established a total price, so the required total of at most Rs 2500 was never verified and the order was not confirmed.
+  12.515  [ --]  done: PASS (0 failure(s))

@@ -1,0 +1,162 @@
+2026-11-23 18:13:12.070 | INFO     | pipecat:<module>:54 - ᓚᘏᗢ Pipecat 1.17.0 (Python 3.12.16 (main, Oct 26 2026, 14:10:56) [MSC v.1944 64 bit (AMD64)]) ᓚᘏᗢ
+2026-11-23 18:13:13.000 | DEBUG    | pipecat.transports.smallwebrtc.connection:<module>:80 - [SCTP] USERDATA_MAX_LENGTH set to 1100
+INFO:     Started server process [13240]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://localhost:7860 (Press CTRL+C to quit)
+
+╭─────────────────────────────────────────────────────╮
+│ ᓚᘏᗢ PIPECAT DEVELOPMENT RUNNER                      │
+│                                                     │
+│ Learn about running bots locally and in production: │
+│ https://docs.pipecat.ai/pipecat/deployment/overview │
+╰─────────────────────────────────────────────────────╯
+
+🚀 Bot ready!
+   → Open: http://localhost:7860
+   → Enabled transports: webrtc, telephony, websocket
+   → Disabled transports: daily (install pipecat-ai[daily]), livekit (install pipecat-ai[livekit]), moq (install pipecat-ai[moq]), sip (install pipecat-ai[sip])
+   → Allowed origins: all (no restriction)
+
+Looking for dist directory at: c:\Users\Saif\Voice-Agent\order-agent\.venv\Lib\site-packages\pipecat_ai_prebuilt\client\dist
+INFO:     ::1:60098 - "GET /client/ HTTP/1.1" 200 OK
+INFO:     ::1:60102 - "WebSocket /ws?skip_tts=true" [accepted]
+INFO:     connection open
+2026-11-23 18:13:16.417 | DEBUG    | pipecat.runner.run:_handle_telephony_ws:1761 - WebSocket connection accepted
+2026-11-23 18:13:16.418 | DEBUG    | pipecat.runner.utils:parse_telephony_websocket:223 - Detected transport: eval (from first message)
+2026-11-23 18:13:16.421 | DEBUG    | pipecat.runner.utils:_get_transport_params:540 - Using transport params for eval
+2026-11-23 18:13:16.421 | INFO     | __main__:run_bot:81 - Starting bot
+2026-11-23 18:13:17.333 | INFO     | __main__:run_bot:87 - Using model gemini-3.5-flash-lite
+2026-11-23 18:13:17.333 | DEBUG    | pipecat.services.whisper.stt:_load:360 - Loading Whisper model...
+2026-11-23 18:13:18.100 | DEBUG    | pipecat.services.whisper.stt:_load:363 - Loaded Whisper model
+2026-11-23 18:13:18.100 | DEBUG    | pipecat.services.llm_service:_compose_system_instruction:1082 - GoogleLLMService#0: System instruction composed: You are Ali Raza, a customer phoning a restaurant to place a delivery order. You are the customer, not the restaurant. You speak English.
+
+Your order brief:
+What you want:
+- 2 x chicken biryani. If unavailable, you may take instead: chicken karahi, chicken pulao
+- 1 x raita (optional: only if it fits the budget)
+Budget: 2500 PKR in total, including delivery fee and tax.
+Never order:
+- seafood (this covers: seafood, fish, prawn, jhinga)
+- beef (this covers: beef)
+It must be delivered by 21:00.
+Delivery address: House 12, Street 4, F-7/2, Islamabad
+Your callback number: 0300-0000000
+Notes from the customer: Less spicy if possible.
+
+How to run the call:
+- Wait for the restaurant to greet you and answer it. If you hear nothing for a few seconds, speak first: say hello and that you would like to place a delivery order.
+- Right after the greeting, say clearly what you would like: the items and quantities from your brief, and that it is for delivery. Then ask about availability and prices. Do not ask odd side questions before you have stated your order.
+- Never state a price or item the restaurant did not say. If you are unsure, ask them to repeat.
+- Ask about the delivery fee, tax and any minimum order. Give your address and callback number when asked.
+- You must use the tools for every change: add_item, remove_item, set_fees, set_minimum_order. The tools check your brief. If a tool refuses, read the reason and adapt: ask for another allowed item, a smaller quantity, or a cheaper option. Do not argue with a refusal and do not work around it.
+- When the order is complete, read the total and the delivery time back to the restaurant, then call confirm_order with the total they quoted and the delivery time in minutes (the longest end of any range). quoted_total_pkr must be exactly the number the restaurant said, never your own sum. If it differs from your own total, say so politely and ask them to check the total before you confirm; never correct the quote yourself.
+- After confirm_order succeeds, thank them and call end_call with outcome "ordered". If the order cannot be made within your brief, say so politely and call end_call with outcome "not_ordered" and a reason.
+- Say a brief goodbye before ending the call.
+
+Speaking style: this is a phone call, so keep every turn short, one or two sentences, natural and polite. Use no lists or markdown. Say numbers the way people say them aloud.
+2026-11-23 18:13:18.892 | DEBUG    | pipecat.audio.vad.silero:__init__:169 - Loading Silero VAD model...
+2026-11-23 18:13:18.948 | DEBUG    | pipecat.audio.vad.silero:__init__:194 - Loaded Silero VAD
+2026-11-23 18:13:18.951 | DEBUG    | pipecat.audio.turn.smart_turn.local_smart_turn_v3:__init__:69 - Loading Local Smart Turn v3.x model from c:\Users\Saif\Voice-Agent\order-agent\.venv\Lib\site-packages\pipecat\audio\turn\smart_turn\data\smart-turn-v3.2-cpu.onnx...
+2026-11-23 18:13:19.003 | DEBUG    | pipecat.audio.turn.smart_turn.local_smart_turn_v3:__init__:79 - Loaded Local Smart Turn v3.x
+2026-11-23 18:13:19.004 | DEBUG    | pipecat.processors.frame_processor:link:705 - Linking Pipeline#0::Source -> EvalFastAPIWebsocketInputTransport#0
+2026-11-23 18:13:19.004 | DEBUG    | pipecat.processors.frame_processor:link:705 - Linking EvalFastAPIWebsocketInputTransport#0 -> WhisperSTTService#0
+2026-11-23 18:13:19.004 | DEBUG    | pipecat.processors.frame_processor:link:705 - Linking WhisperSTTService#0 -> LLMUserAggregator#0
+2026-11-23 18:13:19.004 | DEBUG    | pipecat.processors.frame_processor:link:705 - Linking LLMUserAggregator#0 -> GoogleLLMService#0
+2026-11-23 18:13:19.004 | DEBUG    | pipecat.processors.frame_processor:link:705 - Linking GoogleLLMService#0 -> KokoroTTSService#0
+2026-11-23 18:13:19.004 | DEBUG    | pipecat.processors.frame_processor:link:705 - Linking KokoroTTSService#0 -> EvalFastAPIWebsocketOutputTransport#0
+2026-11-23 18:13:19.004 | DEBUG    | pipecat.processors.frame_processor:link:705 - Linking EvalFastAPIWebsocketOutputTransport#0 -> LLMAssistantAggregator#0
+2026-11-23 18:13:19.004 | DEBUG    | pipecat.processors.frame_processor:link:705 - Linking LLMAssistantAggregator#0 -> Pipeline#0::Sink
+2026-11-23 18:13:19.004 | DEBUG    | pipecat.processors.frame_processor:link:705 - Linking PipelineWorker#0::Source -> RTVIProcessor#0
+2026-11-23 18:13:19.006 | DEBUG    | pipecat.processors.frame_processor:link:705 - Linking RTVIProcessor#0 -> Pipeline#0
+2026-11-23 18:13:19.006 | DEBUG    | pipecat.processors.frame_processor:link:705 - Linking Pipeline#0 -> PipelineWorker#0::Sink
+2026-11-23 18:13:19.006 | DEBUG    | pipecat.workers.runner:add_workers:230 - WorkerRunner 'runner-2f2bc84a': added worker 'PipelineWorker#0'
+2026-11-23 18:13:19.006 | DEBUG    | pipecat.workers.runner:run:273 - WorkerRunner 'runner-2f2bc84a': started running
+2026-11-23 18:13:19.006 | DEBUG    | pipecat.workers.runner:_start_worker:459 - WorkerRunner 'runner-2f2bc84a': starting worker 'PipelineWorker#0'
+2026-11-23 18:13:19.008 | DEBUG    | pipecat.audio.vad.vad_analyzer:set_params:157 - Setting VAD params to: confidence=0.7 start_secs=0.2 stop_secs=0.2 min_volume=0.6
+2026-11-23 18:13:19.008 | DEBUG    | pipecat.services.tts_service:setup:614 - KokoroTTSService#0: TTS sample rate 24000 Hz (from pipeline)
+2026-11-23 18:13:19.008 | DEBUG    | pipecat.transports.base_output:setup:146 - EvalFastAPIWebsocketOutputTransport#0: output audio sample rate 24000 Hz (from pipeline)
+2026-11-23 18:13:19.009 | DEBUG    | pipecat.pipeline.worker:_wait_for_pipeline_start:1361 - PipelineWorker#0: Starting. Waiting for StartFrame#0 to reach the end of the pipeline...
+2026-11-23 18:13:19.010 | DEBUG    | pipecat.evals.fastapi_transport:_on_client_connected:133 - EvalFastAPIWebsocketTransport#0: configuring eval LLM output with skip_tts=True
+2026-11-23 18:13:19.010 | WARNING  | pipecat.services.stt_service:service_metadata_frame:885 - WhisperSTTService#0: ttfs_p99_latency not set, using default 1.0s
+2026-11-23 18:13:19.010 | INFO     | __main__:on_client_connected:162 - Client connected
+2026-11-23 18:13:19.011 | DEBUG    | pipecat.processors.frameworks.rtvi.processor:_handle_client_ready:409 - Received client-ready: version 2.4.0
+2026-11-23 18:13:19.011 | DEBUG    | pipecat.processors.frameworks.rtvi.processor:_handle_client_ready:446 - Client Details: library='pipecat' library_version=None platform=None platform_version=None platform_details=None
+2026-11-23 18:13:19.011 | DEBUG    | pipecat.processors.frameworks.rtvi.processor:set_client_ready:136 - RTVIProcessor#0: client is ready
+2026-11-23 18:13:19.013 | DEBUG    | pipecat.registry.registry:register:132 - Worker 'PipelineWorker#0' ready (local)
+2026-11-23 18:13:19.013 | DEBUG    | pipecat.workers.runner:_send_registry:511 - WorkerRunner 'runner-2f2bc84a': broadcasting registry: ['PipelineWorker#0']
+2026-11-23 18:13:19.013 | DEBUG    | pipecat.workers.base_worker:_maybe_activate:1284 - Worker 'PipelineWorker#0': activated
+2026-11-23 18:13:19.013 | DEBUG    | pipecat.pipeline.worker:_wait_for_pipeline_start:1378 - PipelineWorker#0: StartFrame#0 reached the end of the pipeline, pipeline is now ready.
+2026-11-23 18:13:19.014 | DEBUG    | pipecat.processors.frameworks.rtvi.observer:_apply_config:526 - RTVIObserver#0: function_call_report_level set to {'*': <RTVIFunctionCallReportLevel.FULL: 'full'>}
+2026-11-23 18:13:22.028 | DEBUG    | pipecat.services.llm_service:_register_advertised_tool_handlers:1838 - GoogleLLMService#0: auto-registered handler for advertised FunctionSchema 'add_item'
+2026-11-23 18:13:22.028 | DEBUG    | pipecat.services.llm_service:_register_advertised_tool_handlers:1838 - GoogleLLMService#0: auto-registered handler for advertised FunctionSchema 'remove_item'
+2026-11-23 18:13:22.028 | DEBUG    | pipecat.services.llm_service:_register_advertised_tool_handlers:1838 - GoogleLLMService#0: auto-registered handler for advertised FunctionSchema 'set_fees'
+2026-11-23 18:13:22.028 | DEBUG    | pipecat.services.llm_service:_register_advertised_tool_handlers:1838 - GoogleLLMService#0: auto-registered handler for advertised FunctionSchema 'set_minimum_order'
+2026-11-23 18:13:22.028 | DEBUG    | pipecat.services.llm_service:_register_advertised_tool_handlers:1838 - GoogleLLMService#0: auto-registered handler for advertised FunctionSchema 'confirm_order'
+2026-11-23 18:13:22.028 | DEBUG    | pipecat.services.llm_service:_register_advertised_tool_handlers:1838 - GoogleLLMService#0: auto-registered handler for advertised FunctionSchema 'end_call'
+2026-11-23 18:13:22.028 | DEBUG    | pipecat.services.google.llm:_stream_content:580 - GoogleLLMService#0: Generating LLM response [{'parts': [{'text': "Nobody has spoken yet. Open the call: greet, say you'd like to place a delivery order."}], 'role': 'user'}]
+2026-11-23 18:13:22.028 | INFO     | pipecat.services.llm_service:_apply_thinking_default:758 - GoogleLLMService#0: sending thinking_config={'thinking_level': 'minimal'} to gemini-3.5-flash-lite, Pipecat's low-latency thinking default for it. If your bot needs multistep reasoning, set `thinking` in GoogleLLMService.Settings.
+2026-11-23 18:13:23.043 | DEBUG    | pipecat.processors.metrics.frame_processor_metrics:stop_ttfb_metrics:175 - GoogleLLMService#0 TTFB: 1.015s
+2026-11-23 18:13:23.043 | DEBUG    | pipecat.processors.metrics.frame_processor_metrics:stop_ttfat_metrics:269 - GoogleLLMService#0 TTFAT: 1.015s (0.000s thinking)
+2026-11-23 18:13:23.046 | DEBUG    | pipecat.processors.metrics.frame_processor_metrics:start_llm_usage_metrics:337 - GoogleLLMService#0 prompt tokens: 1185, completion tokens: 13
+2026-11-23 18:13:23.049 | INFO     | __main__:on_assistant_turn:204 - Transcript agent: Hello, I would like to place a delivery order, please.
+2026-11-23 18:13:24.525 | DEBUG    | pipecat.processors.frame_processor:broadcast_interruption:1050 - RTVIProcessor#0: broadcasting interruption
+2026-11-23 18:13:24.526 | DEBUG    | pipecat.pipeline.worker:flush_pipeline:1032 - PipelineWorker#0: pushing PipelineFlushFrame#0(flush_id: 103, origin: PipelineWorker#0, returning: False) downstream
+2026-11-23 18:13:24.527 | DEBUG    | pipecat.pipeline.worker:_advance_flush_probe:1613 - PipelineWorker#0: PipelineFlushFrame#0(flush_id: 103, origin: PipelineWorker#0, returning: False) reached sink, bouncing upstream
+2026-11-23 18:13:24.528 | DEBUG    | pipecat.pipeline.worker:_advance_flush_probe:1607 - PipelineWorker#0: PipelineFlushFrame#1(flush_id: 103, origin: PipelineWorker#0, returning: False) reached source, sending it down again
+2026-11-23 18:13:24.528 | DEBUG    | pipecat.pipeline.worker:_advance_flush_probe:1619 - PipelineWorker#0: PipelineFlushFrame#2(flush_id: 103, origin: PipelineWorker#0, returning: True) reached sink again, pipeline drained
+2026-11-23 18:13:24.529 | DEBUG    | pipecat.adapters.llm.services.gemini_adapter:_apply_thought_signatures_to_messages:850 - Thought signatures to apply: 1
+2026-11-23 18:13:24.529 | DEBUG    | pipecat.adapters.llm.services.gemini_adapter:_apply_thought_signatures_to_messages:901 - Applied 1 thought signatures.
+2026-11-23 18:13:24.529 | DEBUG    | pipecat.adapters.llm.services.gemini_adapter:_apply_thought_signatures_to_messages:850 - Thought signatures to apply: 1
+2026-11-23 18:13:24.529 | DEBUG    | pipecat.adapters.llm.services.gemini_adapter:_apply_thought_signatures_to_messages:901 - Applied 1 thought signatures.
+2026-11-23 18:13:24.529 | DEBUG    | pipecat.services.google.llm:_stream_content:580 - GoogleLLMService#0: Generating LLM response [{'parts': [{'text': "Nobody has spoken yet. Open the call: greet, say you'd like to place a delivery order."}], 'role': 'user'}, {'parts': [{'text': 'Hello, I would like to place a delivery order, please.', 'thought_signature': '...'}], 'role': 'model'}, {'parts': [{'text': 'Welcome to Karachi Kitchen. What can I get for you?'}], 'role': 'user'}]
+2026-11-23 18:13:25.195 | DEBUG    | pipecat.processors.metrics.frame_processor_metrics:stop_ttfb_metrics:175 - GoogleLLMService#0 TTFB: 0.667s
+2026-11-23 18:13:25.195 | DEBUG    | pipecat.processors.metrics.frame_processor_metrics:stop_ttfat_metrics:269 - GoogleLLMService#0 TTFAT: 0.667s (0.000s thinking)
+2026-11-23 18:13:25.222 | DEBUG    | pipecat.processors.metrics.frame_processor_metrics:start_llm_usage_metrics:337 - GoogleLLMService#0 prompt tokens: 1212, completion tokens: 30
+2026-11-23 18:13:25.223 | INFO     | __main__:on_assistant_turn:204 - Transcript agent: I'd like to order two chicken biryanis and one raita for delivery, please. Are they available, and what are the prices?
+2026-11-23 18:13:25.857 | DEBUG    | pipecat.processors.frame_processor:broadcast_interruption:1050 - RTVIProcessor#0: broadcasting interruption
+2026-11-23 18:13:25.857 | DEBUG    | pipecat.pipeline.worker:flush_pipeline:1032 - PipelineWorker#0: pushing PipelineFlushFrame#3(flush_id: 146, origin: PipelineWorker#0, returning: False) downstream
+2026-11-23 18:13:25.859 | DEBUG    | pipecat.pipeline.worker:_advance_flush_probe:1613 - PipelineWorker#0: PipelineFlushFrame#3(flush_id: 146, origin: PipelineWorker#0, returning: False) reached sink, bouncing upstream
+2026-11-23 18:13:25.859 | DEBUG    | pipecat.pipeline.worker:_advance_flush_probe:1607 - PipelineWorker#0: PipelineFlushFrame#4(flush_id: 146, origin: PipelineWorker#0, returning: False) reached source, sending it down again
+2026-11-23 18:13:25.860 | DEBUG    | pipecat.pipeline.worker:_advance_flush_probe:1619 - PipelineWorker#0: PipelineFlushFrame#5(flush_id: 146, origin: PipelineWorker#0, returning: True) reached sink again, pipeline drained
+2026-11-23 18:13:25.861 | DEBUG    | pipecat.adapters.llm.services.gemini_adapter:_apply_thought_signatures_to_messages:850 - Thought signatures to apply: 2
+2026-11-23 18:13:25.861 | DEBUG    | pipecat.adapters.llm.services.gemini_adapter:_apply_thought_signatures_to_messages:901 - Applied 2 thought signatures.
+2026-11-23 18:13:25.861 | DEBUG    | pipecat.adapters.llm.services.gemini_adapter:_apply_thought_signatures_to_messages:850 - Thought signatures to apply: 2
+2026-11-23 18:13:25.861 | DEBUG    | pipecat.adapters.llm.services.gemini_adapter:_apply_thought_signatures_to_messages:901 - Applied 2 thought signatures.
+2026-11-23 18:13:25.861 | DEBUG    | pipecat.services.google.llm:_stream_content:580 - GoogleLLMService#0: Generating LLM response [{'parts': [{'text': "Nobody has spoken yet. Open the call: greet, say you'd like to place a delivery order."}], 'role': 'user'}, {'parts': [{'text': 'Hello, I would like to place a delivery order, please.', 'thought_signature': '...'}], 'role': 'model'}, {'parts': [{'text': 'Welcome to Karachi Kitchen. What can I get for you?'}], 'role': 'user'}, {'parts': [{'text': "I'd like to order two chicken biryanis and one raita for delivery, please. Are they available, and what are the prices?", 'thought_signature': '...'}], 'role': 'model'}, {'parts': [{'text': "Yes, they're both available. The chicken biryani is 900 rupees each, and the raita is 150 rupees."}], 'role': 'user'}]
+2026-11-23 18:13:26.492 | DEBUG    | pipecat.processors.metrics.frame_processor_metrics:stop_ttfb_metrics:175 - GoogleLLMService#0 TTFB: 0.631s
+2026-11-23 18:13:26.492 | DEBUG    | pipecat.processors.metrics.frame_processor_metrics:stop_ttfat_metrics:269 - GoogleLLMService#0 TTFAT: 0.631s (0.000s thinking)
+2026-11-23 18:13:26.492 | DEBUG    | pipecat.services.google.llm:_process_context:724 - Function call: add_item:call_6199284678920843913
+2026-11-23 18:13:26.494 | DEBUG    | pipecat.services.google.llm:_process_context:724 - Function call: add_item:call_6199284678920845144
+2026-11-23 18:13:26.494 | DEBUG    | pipecat.processors.metrics.frame_processor_metrics:start_llm_usage_metrics:337 - GoogleLLMService#0 prompt tokens: 1275, completion tokens: 65
+2026-11-23 18:13:26.495 | DEBUG    | pipecat.services.llm_service:_run_function_call:2194 - GoogleLLMService#0 Calling function [add_item:call_6199284678920843913] with arguments {'quantity': 2, 'unit_price_pkr': 900, 'name': 'chicken biryani'}
+2026-11-23 18:13:26.495 | DEBUG    | pipecat.services.llm_service:_run_function_call:2194 - GoogleLLMService#0 Calling function [add_item:call_6199284678920845144] with arguments {'name': 'raita', 'quantity': 1, 'unit_price_pkr': 150}
+2026-11-23 18:13:26.496 | DEBUG    | pipecat.processors.aggregators.llm_response_universal:_handle_function_calls_started:2304 - LLMAssistantAggregator#0 FunctionCallsStartedFrame: ['add_item:call_6199284678920843913', 'add_item:call_6199284678920845144']
+2026-11-23 18:13:26.498 | INFO     | __main__:on_assistant_turn:204 - Transcript agent: 
+2026-11-23 18:13:26.498 | DEBUG    | pipecat.processors.aggregators.llm_response_universal:_handle_function_call_in_progress:2309 - LLMAssistantAggregator#0 FunctionCallInProgressFrame: [add_item:call_6199284678920843913]
+2026-11-23 18:13:26.498 | DEBUG    | pipecat.processors.aggregators.llm_response_universal:_handle_function_call_result:2345 - LLMAssistantAggregator#0 FunctionCallResultFrame: [add_item:call_6199284678920843913]
+2026-11-23 18:13:26.498 | DEBUG    | pipecat.processors.aggregators.llm_response_universal:_maybe_push_context:2445 - LLMAssistantAggregator#0: More results or appends queued — deferring context frame push.
+2026-11-23 18:13:26.499 | DEBUG    | pipecat.processors.aggregators.llm_response_universal:_handle_function_call_in_progress:2309 - LLMAssistantAggregator#0 FunctionCallInProgressFrame: [add_item:call_6199284678920845144]
+2026-11-23 18:13:26.499 | DEBUG    | pipecat.processors.aggregators.llm_response_universal:_handle_function_call_result:2345 - LLMAssistantAggregator#0 FunctionCallResultFrame: [add_item:call_6199284678920845144]
+2026-11-23 18:13:26.499 | DEBUG    | pipecat.processors.aggregators.llm_response_universal:_maybe_push_context:2456 - LLMAssistantAggregator#0: Pushing context frame!
+2026-11-23 18:13:26.501 | DEBUG    | pipecat.adapters.llm.services.gemini_adapter:_apply_thought_signatures_to_messages:850 - Thought signatures to apply: 3
+2026-11-23 18:13:26.501 | DEBUG    | pipecat.adapters.llm.services.gemini_adapter:_apply_thought_signatures_to_messages:901 - Applied 3 thought signatures.
+2026-11-23 18:13:26.501 | DEBUG    | pipecat.adapters.llm.services.gemini_adapter:_apply_thought_signatures_to_messages:850 - Thought signatures to apply: 3
+2026-11-23 18:13:26.501 | DEBUG    | pipecat.adapters.llm.services.gemini_adapter:_apply_thought_signatures_to_messages:901 - Applied 3 thought signatures.
+2026-11-23 18:13:26.501 | DEBUG    | pipecat.services.google.llm:_stream_content:580 - GoogleLLMService#0: Generating LLM response [{'parts': [{'text': "Nobody has spoken yet. Open the call: greet, say you'd like to place a delivery order."}], 'role': 'user'}, {'parts': [{'text': 'Hello, I would like to place a delivery order, please.', 'thought_signature': '...'}], 'role': 'model'}, {'parts': [{'text': 'Welcome to Karachi Kitchen. What can I get for you?'}], 'role': 'user'}, {'parts': [{'text': "I'd like to order two chicken biryanis and one raita for delivery, please. Are they available, and what are the prices?", 'thought_signature': '...'}], 'role': 'model'}, {'parts': [{'text': "Yes, they're both available. The chicken biryani is 900 rupees each, and the raita is 150 rupees."}], 'role': 'user'}, {'parts': [{'function_call': {'id': 'call_6199284678920843913', 'args': {'quantity': 2, 'unit_price_pkr': 900, 'name': 'chicken biryani'}, 'name': 'add_item'}, 'thought_signature': '...'}, {'function_call': {'id': 'call_6199284678920845144', 'args': {'name': 'raita', 'quantity': 1, 'unit_price_pkr': 150}, 'name': 'add_item'}}], 'role': 'model'}, {'parts': [{'function_response': {'id': 'call_6199284678920843913', 'name': 'add_item', 'response': {'ok': True, 'message': 'Added 2 x chicken biryani at 900 PKR each. Cart total is now 1800 PKR.'}}}, {'function_response': {'id': 'call_6199284678920845144', 'name': 'add_item', 'response': {'ok': True, 'message': 'Added 1 x raita at 150 PKR each. Cart total is now 1950 PKR.'}}}], 'role': 'user'}]
+2026-11-23 18:13:28.229 | DEBUG    | pipecat.processors.metrics.frame_processor_metrics:stop_ttfb_metrics:175 - GoogleLLMService#0 TTFB: 1.730s
+2026-11-23 18:13:28.229 | DEBUG    | pipecat.processors.metrics.frame_processor_metrics:stop_ttfat_metrics:269 - GoogleLLMService#0 TTFAT: 1.730s (0.000s thinking)
+2026-11-23 18:13:28.230 | DEBUG    | pipecat.processors.metrics.frame_processor_metrics:stop_text_aggregation_metrics:387 - KokoroTTSService#0 text aggregation time: 0.0009999275207519531
+2026-11-23 18:13:28.230 | DEBUG    | pipecat.services.tts_service:_synthesize_text:1993 - KokoroTTSService#0: Generating TTS [That's great.]
+2026-11-23 18:13:28.230 | DEBUG    | pipecat.processors.metrics.frame_processor_metrics:start_tts_usage_metrics:370 - KokoroTTSService#0 usage characters: 13
+2026-11-23 18:13:28.327 | DEBUG    | pipecat.processors.metrics.frame_processor_metrics:start_llm_usage_metrics:337 - GoogleLLMService#0 prompt tokens: 1423, completion tokens: 26
+2026-11-23 18:13:28.561 | DEBUG    | pipecat.pipeline.worker:_sink_push_frame:1752 - PipelineWorker#0: received cancel worker frame downstream CancelWorkerFrame#0(reason: None)
+2026-11-23 18:13:28.562 | DEBUG    | pipecat.pipeline.worker:_source_push_frame:1660 - PipelineWorker#0: received cancel worker frame upstream CancelWorkerFrame#1(reason: None)
+2026-11-23 18:13:28.562 | DEBUG    | pipecat.pipeline.worker:_wait_for_pipeline_end:1398 - PipelineWorker#0: Closing. Waiting for CancelFrame#0(reason: None) to reach the end of the pipeline...
+2026-11-23 18:13:28.567 | DEBUG    | pipecat.processors.metrics.frame_processor_metrics:stop_ttfb_metrics:175 - KokoroTTSService#0 TTFB: 0.337s
+2026-11-23 18:13:28.569 | INFO     | __main__:on_assistant_turn:204 - Transcript agent: 
+2026-11-23 18:13:28.569 | DEBUG    | pipecat.pipeline.worker:wait_for_cancel:1389 - PipelineWorker#0: CancelFrame#0(reason: None) reached the end of the pipeline.
+2026-11-23 18:13:28.570 | DEBUG    | pipecat.utils.base_object:cleanup:179 - PipelineWorker#0: waiting on event handlers to finish ['on_pipeline_finished']...
+2026-11-23 18:13:28.571 | DEBUG    | pipecat.pipeline.worker:run:936 - Pipeline worker PipelineWorker#0 is finishing...
+2026-11-23 18:13:28.571 | DEBUG    | pipecat.pipeline.worker:run:941 - Pipeline worker PipelineWorker#0 has finished
+2026-11-23 18:13:28.571 | DEBUG    | pipecat.workers.runner:run:316 - WorkerRunner 'runner-2f2bc84a': finished running

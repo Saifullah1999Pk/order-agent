@@ -1,0 +1,36 @@
+Simulated scenarios:
+  happy_path/happy_path:
+    user  -> modality: text | persona: factory:order_agent.eval_llm.groq_llm | max_turns: 12 | max_duration_s: 240 | max_silence_s: 30
+    judge -> modality: text | eval: factory:order_agent.eval_llm.groq_llm
+    goal  -> Take the customer's order, quote the total and delivery time, then end the call.
+
+    conversation:
+      bot: Hello, I would like to place a delivery order, please.
+      user: Sure, could you tell me which items and how many of each you’d like?
+      bot: I'd like two chicken biryani, and one raita if you have it. Also, could you make them less spicy if possible?
+      user: Absolutely, we can make them less spicy. May I have your delivery address, please?
+      bot: It's House 12, Street 4, F-7/2, Islamabad, and my callback number is 0300-0000000. Also, could you let me know about the delivery fee, tax, and any minimum order requirement?
+      user: The delivery fee is Rs 150, there’s no tax and no minimum order required. Would you like to add anything else, or shall I confirm your order?
+      bot: Could you please tell me the minimum order again?
+      user: There’s no minimum order required. Would you like to add anything else, or should I go ahead and confirm your order?
+      bot: That is fine. Could you tell me what the total comes to, and how long delivery will take? We need it by 21:00.
+
+      ended by end_call after 4 persona turn(s)
+
+    judge: P(yes)=0.10
+
+    metrics:
+      conduct: 1.00 (min 1.00) | 5/5 turns
+
+    persona: succeeded: Order confirmed, total given, delivery time provided.
+
+  ✗ ws://localhost:7860/ws happy_path/happy_path end_call (51265ms)
+
+  Failures (1 of 1):
+
+  ✗ ws://localhost:7860/ws happy_path/happy_path
+      • goal not met: P(yes)=0.10 end_call
+
+  0/1 passed, 1 failed  ·  51.3s
+  logs: C:\Users\Saif\Voice-Agent\order-agent\evals\confirmation\after-8c\attempt1
+

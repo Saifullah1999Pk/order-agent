@@ -1,0 +1,25 @@
+Simulated scenarios:
+  sold_out_no_substitute/sold_out_no_substitute:
+    user  -> modality: text | persona: factory:order_agent.eval_llm.groq_llm | max_turns: 12 | max_duration_s: 240 | max_silence_s: 30
+    judge -> modality: text | eval: factory:order_agent.eval_llm.groq_llm
+    goal  -> Try to take the customer's order, then say goodbye politely when the customer cannot order.
+
+    conversation:
+      bot: Hello, I would like to place a delivery order, please.
+      user: Our chicken biryani, chicken karahi and chicken pulao are sold out today. We do have prawn biryani for Rs 1300—would you like to order that?
+      bot: Ah, I'd rather not have seafood. Do you have any other chicken dishes available?
+
+      ended by end_call after 1 persona turn(s)
+
+    judge: P(yes)=0.95
+
+    metrics:
+      conduct: 1.00 (min 1.00) | 2/2 turns
+
+    persona: gave up: Customer declined all available items; no order placed.
+
+  ✓ ws://localhost:7860/ws sold_out_no_substitute/sold_out_no_substitute end_call (12030ms)
+
+  1/1 passed  ·  12.0s
+  logs: C:\Users\Saif\Voice-Agent\order-agent\evals\confirmation\after-8c\sold_out_no_substitute
+

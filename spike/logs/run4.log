@@ -1,0 +1,24 @@
+[32m2026-11-23 16:46:45.587[0m | [1mINFO    [0m | [36mpipecat[0m:[36m<module>[0m:[36m54[0m - [1mᓚᘏᗢ Pipecat 1.17.0 (Python 3.12.16 (main, Oct 26 2026, 14:10:56) [MSC v.1944 64 bit (AMD64)]) ᓚᘏᗢ[0m
+OPENAI_ERR 400 [{'error': {'code': 400, 'message': '* GenerateContentRequest.contents[5].parts[0].function_response.name: Name cannot be empty.\n', 'status': 'INVALID_ARGUMENT'}}]
+Simulated scenarios:
+  restaurant/biryani_order:
+    user  -> modality: text | persona: factory:order_agent.eval_llm.gemini_llm | max_turns: 10 | max_duration_s: 180 | max_silence_s: 30
+    judge -> modality: text | eval: factory:order_agent.eval_llm.gemini_llm
+    goal  -> Take the customer's order, quote the total and delivery time, then end the call.
+
+    conversation:
+      bot: Hi, I'd like to order two chicken biryanis for delivery, please.
+      user: Alright, two chicken biryanis. Anything else for you today?
+      bot: No, that's everything. What's the total and how long will it take?
+      user: Your total will be nineteen hundred and fifty rupees, and delivery should take about forty-five minutes. Thanks for calling Karachi Kitchen, goodbye!
+
+      ended by error after 2 persona turn(s)
+  ✗ ws://localhost:7861/ws restaurant/biryani_order error (13563ms)
+
+  Failures (1 of 1):
+
+  ✗ ws://localhost:7861/ws restaurant/biryani_order — Error during completion: Error code: 400
+
+  0/1 passed, 1 failed  ·  13.6s
+  logs: C:\Users\Saif\Voice-Agent\order-agent
+
