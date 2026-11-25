@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parent.parent / "order_agent"
 
 # Flat modules that exist today and are moved into layers by later steps.
 LEGACY_FLAT = {
-    "brief", "matching", "rules", "report", "prompt", "call", "tools",
+    "brief", "matching", "rules", "report", "prompt", "call",
     "llm_factory", "eval_config", "eval_llm", "suite", "throttle", "preflight",
 }
 
@@ -119,3 +119,10 @@ def test_checker_accepts_clean_voice_head_snippet():
         "from order_agent.config import Settings\nfrom order_agent.model.brief import OrderBrief\n"
     )
     assert violations(src, "heads/voice", package="order_agent.heads.voice") == []
+
+
+def test_legacy_tools_module_gone():
+    import order_agent.call as call
+
+    assert not (ROOT / "tools.py").exists()
+    assert not hasattr(call, "make_on_end")

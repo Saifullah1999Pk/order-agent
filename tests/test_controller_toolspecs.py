@@ -1,8 +1,8 @@
 from types import SimpleNamespace
 
 from order_agent.controller.toolspecs import TOOL_SPECS, ToolSpec
-from order_agent.rules import OrderSession
-from order_agent.tools import build_tools
+from order_agent.controller import CallController
+from order_agent.heads.voice.tools import build_tools
 
 NAMES = ["add_item", "set_price", "remove_item", "set_fees", "set_minimum_order", "confirm_order", "end_call"]
 
@@ -17,11 +17,8 @@ def test_specs_are_frozen_toolspecs():
     assert all(isinstance(spec, ToolSpec) for spec in TOOL_SPECS)
 
 
-def test_specs_match_legacy_function_schemas(brief):
-    async def on_end(outcome, reason):
-        pass
-
-    legacy = {t.name: t for t in build_tools(OrderSession(brief, brief.call_time), on_end).standard_tools}
+def test_specs_match_voice_function_schemas(brief, tmp_path):
+    legacy = {t.name: t for t in build_tools(CallController(brief, reports_dir=tmp_path)).standard_tools}
     for spec in TOOL_SPECS:
         schema = legacy[spec.name]
         assert spec.description == schema.description
