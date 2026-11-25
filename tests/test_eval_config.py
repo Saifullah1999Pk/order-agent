@@ -18,7 +18,9 @@ def load():
 
 def test_defaults_untouched_without_overrides():
     s = apply_eval_configs(load(), None, None)
-    assert s.simulator["factory"] == "order_agent.eval_llm.gemini_native_llm"
+    # hybrid default: local Ollama persona, Groq judge (the bot is configured separately, Gemini by default)
+    assert s.simulator["service"] == "ollama"
+    assert s.simulator["model"] == "qwen3:8b"
     assert s.judge["factory"] == "order_agent.eval_llm.groq_llm"
 
 

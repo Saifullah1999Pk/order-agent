@@ -12,7 +12,7 @@ checks it. Results: [docs/results-v1.md](docs/results-v1.md).
 Create `.env` (gitignored) with two free-tier keys:
 
     GOOGLE_API_KEY=...   # bot LLM (gemini-3.5-flash-lite, fallback gemini-2.5-flash)
-    GROQ_API_KEY=...     # judge (gpt-oss-20b), suite only. The simulated restaurant now defaults to Gemini (evals/simulator.yaml; Groq kept there as a comment)
+    GROQ_API_KEY=...     # judge (gpt-oss-20b), suite only. The simulated restaurant defaults to a local Ollama model (see below)
 
 The bot's LLM is Gemini by default. To run it on Groq's free tier instead (for example when Gemini's daily
 cap is used up), set in `.env` or the environment:
@@ -22,6 +22,17 @@ cap is used up), set in `.env` or the environment:
 
 The suite passes these to the bot it starts. Keep results from different bot models apart
 (see docs/results-v1.md section 9).
+
+### Default test setup: hybrid (Gemini bot, local Ollama restaurant, Groq judge)
+
+The suite's simulated restaurant (`evals/simulator.yaml`) is local Ollama `qwen3:8b`, so running the suite needs Ollama
+running with the model pulled (`ollama pull qwen3:8b`). On Windows (PowerShell), start the server in its own window:
+
+    $env:OLLAMA_NUM_PARALLEL=1; $env:OLLAMA_CONTEXT_LENGTH=8192; $env:OLLAMA_KV_CACHE_TYPE="q8_0"; $env:OLLAMA_FLASH_ATTENTION=1; $env:OLLAMA_KEEP_ALIVE="2h"; ollama serve
+
+Check `ollama ps` says `100% GPU`. This halves Gemini use per test call, because the persona no longer calls Gemini. To use a
+cloud persona instead, pass `--simulator` with a config that has the Gemini or Groq block (both are kept as comments in
+`evals/simulator.yaml`; copy that file and uncomment one).
 
 ### All-local (Ollama): bot, simulated restaurant and judge, no cloud keys
 
@@ -38,7 +49,7 @@ Then run the suite with the bot, persona and judge on Ollama:
 `ORDER_AGENT_OLLAMA_MODEL` (default `qwen3:8b`) and `ORDER_AGENT_OLLAMA_URL` (default `http://localhost:11434/v1`) change
 the bot's model and server. qwen3's hidden thinking is switched off with `reasoning_effort: none` in the request (Ollama's
 OpenAI-compatible endpoint ignores `think: false`); the bot, persona and judge all send it. `--simulator` / `--judge`
-replace the persona and judge configs for that run only; the committed defaults (Gemini persona, Groq judge) are unchanged.
+replace the persona and judge configs for that run only; the committed defaults (Ollama persona, Groq judge) are unchanged.
 Results and an honest quality comparison: `evals/confirmation/all-ollama/README.md`.
 
 Anything that imports Pipecat must be run with `PYTHONIOENCODING=utf-8` on Windows (the dev
