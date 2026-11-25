@@ -42,7 +42,7 @@ def make_report(outcome="ordered", total="1950", quoted="1950", items=None, **ex
         items=items,
         delivery_fee_pkr=Decimal("150"),
         tax_pkr=Decimal("0"),
-        cart_total_pkr=Decimal(total),
+        cart_total_pkr=None if total is None else Decimal(total),
         quoted_total_pkr=None if quoted is None else Decimal(quoted),
         delivery_eta=None,
         tool_events=[],
@@ -209,7 +209,7 @@ def res(name, attempt, status, judge=None, violations=None, requests=None, notes
 
 
 def test_scenario_outcome():
-    assert scenario_outcome([res("a", 1, "fail"), res("a", 2, "pass")], 3) == ("pass", "pass (2/3)")
+    assert scenario_outcome([res("a", 1, "fail"), res("a", 2, "pass")], 3) == ("pass", "pass (on attempt 2 of 3)")
     assert scenario_outcome([res("a", 1, "quota_error")] * 3, 3)[0] == "quota_error"
     assert scenario_outcome([res("a", 1, "quota_error"), res("a", 2, "fail")], 3)[0] == "fail"
     assert scenario_outcome([res("a", 1, "error")], 1)[0] == "error"
@@ -226,7 +226,7 @@ def test_render_summary_lists_every_attempt():
         },
         attempts=3,
     )
-    assert "pass (2/3)" in text
+    assert "pass (on attempt 2 of 3)" in text
     assert "total 2600 too high" in text
     assert "hung up first" in text
     assert "judge requests are not counted" in text.lower()
@@ -644,7 +644,7 @@ def test_persona_totals_reads_the_committed_totals_line():
 
 
 def test_scenario_outcome_restaurant_error():
-    assert scenario_outcome([res("a", 1, "restaurant_error")] * 2, 2) == ("restaurant_error", "restaurant_error (0/2)")
+    assert scenario_outcome([res("a", 1, "restaurant_error")] * 2, 2) == ("restaurant_error", "restaurant_error (no pass in 2 attempts)")
     assert scenario_outcome([res("a", 1, "restaurant_error"), res("a", 2, "quota_error")], 2)[0] == "restaurant_error"
     assert scenario_outcome([res("a", 1, "restaurant_error"), res("a", 2, "fail")], 2)[0] == "fail"
     assert scenario_outcome([res("a", 1, "restaurant_error"), res("a", 2, "pass")], 2)[0] == "pass"
@@ -654,7 +654,7 @@ def test_scenario_outcome_restaurant_error():
 def test_summary_shows_restaurant_error_distinctly():
     note = "restaurant quoted Rs 1250, which matches no valid order (correct for this cart: Rs 2100); bot declined"
     text = render_summary("r", {"a": [res("a", 1, "restaurant_error", False, [], 5, [note])]}, 1)
-    assert "| a | restaurant_error (0/1) |" in text
+    assert "| a | restaurant_error (no pass in 1 attempt) |" in text
     assert "| a | 1 | restaurant_error |" in text
 
 
@@ -683,3 +683,84 @@ def test_rescore_attempt_ambiguous_quote_and_conduct_failure_stay_fail(tmp_path)
     assert _rescore(tmp_path, _wrong_total_report(quoted="1950")).status == "fail"
     bad = "goal: not met: x\nmetric conduct: 0.5 passed=False\n"
     assert _rescore(tmp_path / "b", _wrong_total_report(quoted="1250"), bad).status == "fail"
+
+
+# -- unpriced items (the restaurant gave only a total) --
+
+def _unpriced_report(quoted="2100", outcome="ordered", **over):
+    items = [
+        {"name": "chicken biryani", "line_item": "chicken biryani", "quantity": "2", "unit_price_pkr": None},
+        {"name": "raita", "line_item": "raita", "quantity": "1", "unit_price_pkr": None},
+    ]
+    data = dict(items=items, total=None, quoted=quoted, outcome=outcome, fees_set=False, total_only=True,
+                delivery_fee_pkr=Decimal("0"))
+    data.update(over)
+    return make_report(**data)
+
+
+def test_unpriced_items_are_not_a_price_violation():
+    r = _unpriced_report()
+    assert r.cart_total_pkr is None
+    assert check_report(r, priced()) == []
+
+
+def test_unset_fees_are_not_a_fee_violation_but_set_wrong_fees_are():
+    assert not any("menu says" in v for v in check_report(_unpriced_report(), priced()))
+    r = _unpriced_report(fees_set=True, delivery_fee_pkr=Decimal("0"))
+    assert "delivery fee was 0, menu says 150" in check_report(r, priced())
+
+
+def test_priced_items_in_a_partly_priced_cart_are_still_checked():
+    r = _unpriced_report()
+    r.items[0]["unit_price_pkr"] = "1350"
+    assert "price for chicken biryani was 1350, menu says 900" in check_report(r, priced())
+
+
+def test_budget_uses_quoted_total_when_cart_total_unknown():
+    assert any("exceeds" in v for v in check_report(_unpriced_report(quoted="2600"), priced()))
+    assert not any("exceeds" in v for v in check_report(_unpriced_report(quoted="2100"), priced()))
+
+
+def test_unpriced_not_ordered_call_without_quote_has_no_budget_violation():
+    r = _unpriced_report(quoted=None, outcome="not_ordered")
+    assert not any("exceeds" in v for v in check_report(r, priced(outcome="not_ordered")))
+
+
+def test_unpriced_never_keyword_still_applies():
+    items = [{"name": "fish biryani", "line_item": "chicken biryani", "quantity": "2", "unit_price_pkr": None}]
+    v = check_report(_unpriced_report(items=items), priced())
+    assert any("fish" in x for x in v)
+
+
+def test_food_subtotal_check_with_unpriced_items_does_not_crash():
+    exp = priced(min_food_subtotal_pkr=1500)
+    assert isinstance(check_report(_unpriced_report(), exp), list)
+
+
+def test_unpriced_cart_is_never_restaurant_error():
+    r = _unpriced_report(
+        quoted=None, outcome="not_ordered",
+        tool_events=[_refused_confirm("1250", "2100")],
+    )
+    status, _ = _settle(r)
+    assert status == "fail"
+
+
+def test_menu_total_of_unpriced_cart_is_none():
+    from order_agent.suite import _menu_total
+
+    assert _menu_total(_unpriced_report(), priced()) is None
+
+
+def test_missing_conduct_metric_is_not_passed():
+    from order_agent.suite import conduct_passed
+
+    assert conduct_passed([]) is False
+    assert conduct_passed([("goal", True)]) is False
+    assert conduct_passed([("conduct", True)]) is True
+    assert conduct_passed([("conduct", True), ("conduct", False)]) is False
+
+
+def test_rescore_without_conduct_metric_stays_fail(tmp_path):
+    r = _rescore(tmp_path, _wrong_total_report(quoted="1250"), "goal: not met: x\n")
+    assert r.status == "fail"

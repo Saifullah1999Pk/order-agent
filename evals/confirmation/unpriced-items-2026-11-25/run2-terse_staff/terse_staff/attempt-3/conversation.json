@@ -1,0 +1,79 @@
+[
+  {
+    "role": "assistant",
+    "content": "Hello, I would like to place a delivery order, please."
+  },
+  {
+    "role": "user",
+    "content": "what?"
+  },
+  {
+    "role": "assistant",
+    "content": "I would like to order two chicken biryanis and one raita for delivery, please. Are those available, and what are their prices? Also, if possible, could we have them less spicy?"
+  },
+  {
+    "role": "user",
+    "content": "2 chicken biryani + 1 raita = 2100. 45 minutes."
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "name": "chicken biryani",
+      "quantity": 2
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "name": "raita",
+      "quantity": 1
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "What about the delivery fee, tax, and minimum order? And my delivery address is House 12, Street 4, F-7/2, Islamabad, and my callback number is 0300-0000000."
+  },
+  {
+    "role": "user",
+    "content": "Delivery is Rs 150, no tax, no minimum. Fine."
+  },
+  {
+    "role": "tool_call",
+    "name": "set_fees",
+    "arguments": {
+      "tax_pkr": 0,
+      "delivery_fee_pkr": 150
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Is there any delivery fee, or tax, or minimum order? Also, could you please confirm the total and when it will arrive at House 12, Street 4, F-7/2, Islamabad? My callback number is 0300-0000000."
+  },
+  {
+    "role": "user",
+    "content": "2100. 45 minutes."
+  },
+  {
+    "role": "tool_call",
+    "name": "confirm_order",
+    "arguments": {
+      "delivery_minutes": 45,
+      "quoted_total_pkr": 2100
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "end_call",
+    "arguments": {
+      "outcome": "ordered",
+      "reason": "Order successfully placed and confirmed."
+    },
+    "cancelled": false
+  }
+]

@@ -1,0 +1,94 @@
+[
+  {
+    "role": "assistant",
+    "content": "Hello, I would like to place a delivery order, please."
+  },
+  {
+    "role": "user",
+    "content": "what?"
+  },
+  {
+    "role": "assistant",
+    "content": "I would like to order two chicken biryanis for delivery, please. Are they available, and how much do they cost?"
+  },
+  {
+    "role": "user",
+    "content": "1950. 45 minutes."
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "quantity": 2,
+      "name": "chicken biryani"
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Also, could you please tell me about the delivery fee, tax, and if there's any minimum order? And please make it less spicy if possible."
+  },
+  {
+    "role": "user",
+    "content": "no. 45 minutes."
+  },
+  {
+    "role": "assistant",
+    "content": "Could you please let me know about the delivery fee, any tax, and if there is a minimum order amount? Also, what is my delivery address?"
+  },
+  {
+    "role": "user",
+    "content": "no. 45 minutes."
+  },
+  {
+    "role": "tool_call",
+    "name": "set_fees",
+    "arguments": {
+      "tax_pkr": 0,
+      "delivery_fee_pkr": 0
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "set_minimum_order",
+    "arguments": {
+      "minimum_pkr": 0
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Could you please tell me the delivery fee, any tax, and if there is a minimum order?"
+  },
+  {
+    "role": "user",
+    "content": "no. 45 minutes."
+  },
+  {
+    "role": "assistant",
+    "content": "Could you tell me if you have a minimum order requirement, and what the total is for my two chicken biryanis?"
+  },
+  {
+    "role": "user",
+    "content": "1950. 45 minutes."
+  },
+  {
+    "role": "tool_call",
+    "name": "confirm_order",
+    "arguments": {
+      "quoted_total_pkr": 1950,
+      "delivery_minutes": 45
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "end_call",
+    "arguments": {
+      "outcome": "ordered",
+      "reason": "Order successfully placed and confirmed."
+    },
+    "cancelled": false
+  }
+]

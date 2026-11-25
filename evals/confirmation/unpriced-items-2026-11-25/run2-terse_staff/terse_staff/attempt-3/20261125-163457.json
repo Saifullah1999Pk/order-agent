@@ -1,0 +1,96 @@
+{
+  "outcome": "ordered",
+  "reason": "Order successfully placed and confirmed.",
+  "items": [
+    {
+      "name": "chicken biryani",
+      "line_item": "chicken biryani",
+      "quantity": 2,
+      "unit_price_pkr": null
+    },
+    {
+      "name": "raita",
+      "line_item": "raita",
+      "quantity": 1,
+      "unit_price_pkr": null
+    }
+  ],
+  "delivery_fee_pkr": "150",
+  "tax_pkr": "0",
+  "cart_total_pkr": null,
+  "quoted_total_pkr": "2100",
+  "delivery_eta": "2026-11-23T20:15:00",
+  "fees_set": true,
+  "total_only": true,
+  "tool_events": [
+    {
+      "tool": "add_item",
+      "args": {
+        "name": "chicken biryani",
+        "quantity": 2,
+        "unit_price_pkr": null,
+        "price_corrected": false
+      },
+      "ok": true,
+      "message": "Added 2 x chicken biryani with no price recorded (the restaurant has not given one). Do not guess a price: if they only give a total, confirm with their total.",
+      "at": "2026-11-25T16:34:57.310366"
+    },
+    {
+      "tool": "add_item",
+      "args": {
+        "name": "raita",
+        "quantity": 1,
+        "unit_price_pkr": null,
+        "price_corrected": false
+      },
+      "ok": true,
+      "message": "Added 1 x raita with no price recorded (the restaurant has not given one). Do not guess a price: if they only give a total, confirm with their total.",
+      "at": "2026-11-25T16:34:57.310366"
+    },
+    {
+      "tool": "set_fees",
+      "args": {
+        "delivery_fee_pkr": "150",
+        "tax_pkr": "0",
+        "corrected": false
+      },
+      "ok": true,
+      "message": "Fees recorded: delivery 150 PKR, tax 0 PKR. Known so far: 150 PKR; the full cart total is not known yet (an item has no price or the fees are not recorded).",
+      "at": "2026-11-25T16:34:57.310366"
+    },
+    {
+      "tool": "confirm_order",
+      "args": {
+        "quoted_total_pkr": "2100",
+        "delivery_minutes": 45
+      },
+      "ok": true,
+      "message": "Order confirmed at 2100 PKR, delivery by about 20:15. Thank the restaurant and call end_call with outcome 'ordered'.",
+      "at": "2026-11-25T16:34:57.310366"
+    },
+    {
+      "tool": "end",
+      "args": {
+        "outcome": "ordered",
+        "reason": "Order successfully placed and confirmed."
+      },
+      "ok": true,
+      "message": "Call ended as ordered: Order successfully placed and confirmed.",
+      "at": "2026-11-25T16:34:57.310366"
+    }
+  ],
+  "transcript": [
+    {
+      "role": "agent",
+      "text": "Hello, I would like to place a delivery order, please.",
+      "at": "2026-11-25T16:35:04.443991"
+    },
+    {
+      "role": "agent",
+      "text": "I would like to order two chicken biryanis and one raita for delivery, please. Are those available, and what are their prices? Also, if possible, could we have them less spicy?",
+      "at": "2026-11-25T16:35:05.858842"
+    }
+  ],
+  "started_at": "2026-11-25T16:34:57.310366",
+  "ended_at": "2026-11-25T16:35:34.200800"
+}

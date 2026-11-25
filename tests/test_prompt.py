@@ -58,8 +58,8 @@ def test_prompt_asks_total_and_time_once_items_agreed(brief):
 
 def test_prompt_add_item_only_with_stated_price(brief):
     prompt = build_system_prompt(brief).lower()
-    assert "only call add_item after the restaurant has said the price" in prompt
-    assert "never guess a price" in prompt
+    assert "give add_item a price only when the restaurant said that item's price" in prompt
+    assert "never guess or work out a price" in prompt
 
 
 def test_prompt_refusal_guidance_matches_rules(brief):
@@ -92,3 +92,18 @@ def test_prompt_forbids_bending_prices_to_match_total(brief):
     prompt = build_system_prompt(brief)
     assert "never change prices, fees or items to make a total match" in prompt
     assert "ask them to itemise" in prompt
+
+
+def test_prompt_total_only_rule(brief):
+    prompt = build_system_prompt(brief)
+    assert "do not work out item prices from it" in prompt
+    assert "add the items without a price and confirm with their total" in prompt
+    assert "Never invent a price or a fee" in prompt
+    assert "set_price" in prompt
+
+
+def test_prompt_no_derived_prices_or_guessed_fees(brief):
+    prompt = build_system_prompt(brief)
+    assert "never by dividing or subtracting from a total" in prompt
+    assert "Only record fees the restaurant stated" in prompt
+    assert "a bare 'no' to a combined question" in prompt

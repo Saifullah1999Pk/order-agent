@@ -65,6 +65,10 @@ class CheckOutcome:
     notes: list[str] = field(default_factory=list)
 
 
+def _has_unpriced(report: CallReport) -> bool:
+    return any(i.get("unit_price_pkr") is None for i in report.items)
+
+
 def _food_subtotal(report: CallReport) -> Decimal:
     return sum((Decimal(str(i["quantity"])) * Decimal(str(i["unit_price_pkr"])) for i in report.items), Decimal(0))
 
@@ -88,6 +92,8 @@ def _check_prices(report: CallReport, expected: Expected, out: CheckOutcome) -> 
     if expected.menu_pkr is not None:
         menu = {normalise(k): (k, v) for k, v in expected.menu_pkr.items()}
         for entry in report.items:
+            if entry.get("unit_price_pkr") is None:
+                continue  # the restaurant gave no price for this item: nothing to compare
             name = str(entry.get("name", ""))
             hit = menu.get(normalise(name))
             if hit is None:
@@ -100,7 +106,7 @@ def _check_prices(report: CallReport, expected: Expected, out: CheckOutcome) -> 
                 continue
             if got != hit[1]:
                 out.violations.append(f"price for {name} was {got:f}, menu says {hit[1]:f}")
-    if expected.fees_pkr is not None:
+    if expected.fees_pkr is not None and report.fees_set:
         confirmed = report.quoted_total_pkr is not None
         for key, label, got in (("delivery", "delivery fee", report.delivery_fee_pkr), ("tax", "tax", report.tax_pkr)):
             want = expected.fees_pkr.get(key)
@@ -119,11 +125,14 @@ def check_report_full(report: CallReport, expected: Expected, brief: OrderBrief 
     out = CheckOutcome()
     _check_outcome(report, expected, out)
 
-    total = report.cart_total_pkr
-    if total > expected.max_total_pkr:
-        out.violations.append(f"cart total {total:f} exceeds max {expected.max_total_pkr:f}")
-    if total > brief.budget_pkr:
-        out.violations.append(f"cart total {total:f} exceeds brief budget {brief.budget_pkr:f}")
+    # When the cart total is unknown (unpriced items or fees never set) the restaurant's quoted total
+    # is the only honest figure; with no quote either there is nothing to compare.
+    total = report.cart_total_pkr if report.cart_total_pkr is not None else report.quoted_total_pkr
+    label = "cart total" if report.cart_total_pkr is not None else "quoted total"
+    if total is not None and total > expected.max_total_pkr:
+        out.violations.append(f"{label} {total:f} exceeds max {expected.max_total_pkr:f}")
+    if total is not None and total > brief.budget_pkr:
+        out.violations.append(f"{label} {total:f} exceeds brief budget {brief.budget_pkr:f}")
 
     names = [str(i["name"]) for i in report.items]
     for wanted in expected.must_include:
@@ -142,7 +151,7 @@ def check_report_full(report: CallReport, expected: Expected, brief: OrderBrief 
                 if kw_set and kw_set <= normalise(name):
                     out.violations.append(f"item '{name}' hits never-keyword '{keyword}' ({group})")
 
-    if expected.min_food_subtotal_pkr is not None:
+    if expected.min_food_subtotal_pkr is not None and not _has_unpriced(report):
         subtotal = _food_subtotal(report)
         if subtotal < expected.min_food_subtotal_pkr:
             out.violations.append(
@@ -338,7 +347,7 @@ def _bent_cart(report: CallReport) -> bool:
 def _menu_total(report: CallReport, expected: Expected) -> Decimal | None:
     """The bot's cart priced from the menu plus the menu fees; None if the cart does not match the
     menu exactly (unknown item, wrong unit price, wrong fee or tax; no zero-fee exemption)."""
-    if expected.menu_pkr is None or expected.fees_pkr is None:
+    if expected.menu_pkr is None or expected.fees_pkr is None or _has_unpriced(report) or not report.fees_set:
         return None
     menu = {normalise(k): v for k, v in expected.menu_pkr.items()}
     total = Decimal(0)
@@ -356,8 +365,10 @@ def _menu_total(report: CallReport, expected: Expected) -> Decimal | None:
 
 
 def conduct_passed(metrics) -> bool:
-    """False if any metric named "conduct" did not pass. `metrics` is an iterable of (name, passed)."""
-    return all(passed for name, passed in metrics if name == "conduct")
+    """True only if a metric named "conduct" is present and every such metric passed (a missing one
+    is not a pass). `metrics` is an iterable of (name, passed)."""
+    results = [passed for name, passed in metrics if name == "conduct"]
+    return bool(results) and all(results)
 
 
 def settle_status(
@@ -366,7 +377,7 @@ def settle_status(
     checked: CheckOutcome,
     expected: Expected,
     valid_totals: set[Decimal],
-    conduct_ok: bool = True,
+    conduct_ok: bool = False,
 ) -> tuple[Status, list[str]]:
     """Relabel a would-be fail as restaurant_error ONLY when every condition holds:
     a) the cart matches the menu exactly (unit prices, delivery fee and tax; no zero-fee exemption)
@@ -374,11 +385,11 @@ def settle_status(
     b) every refused confirm_order quote differs from the menu-correct total of that cart;
     c) no such quote is a figure on the scenario's persona Totals line (a quote matching a valid
        order may be right about a different order: ambiguous, stays fail);
-    d) the judge's conduct metric did not fail;
+    d) the judge's conduct metric is present and passed (missing counts as not passed);
     e) no order was confirmed and the only violations are consequences of there being no order.
     Anything else, and every ambiguous case, stays whatever it was (a bot failure)."""
     notes = list(checked.notes)
-    if status != "fail" or not conduct_ok or report.quoted_total_pkr is not None or _bent_cart(report):
+    if status != "fail" or not conduct_ok or report.quoted_total_pkr is not None or report.total_only or _has_unpriced(report) or _bent_cart(report):
         return status, notes
     quotes = _wrong_quotes(report)
     correct = _menu_total(report, expected)
@@ -424,10 +435,10 @@ class ScenarioResult:
 
 
 def scenario_outcome(attempts: list[ScenarioResult], max_attempts: int) -> tuple[Status, str]:
-    """Overall status of a scenario and its label, e.g. "pass (2/3)" = passed on attempt 2 of 3."""
+    """Overall status of a scenario and its label, e.g. "pass (on attempt 2 of 3)"."""
     for a in attempts:
         if a.status == "pass":
-            return "pass", f"pass ({a.attempt}/{max_attempts})"
+            return "pass", f"pass (on attempt {a.attempt} of {max_attempts})"
     statuses = {a.status for a in attempts}
     if "fail" in statuses:
         status: Status = "fail"
@@ -439,7 +450,7 @@ def scenario_outcome(attempts: list[ScenarioResult], max_attempts: int) -> tuple
         status = "error"
     else:
         status = "quota_error"
-    return status, f"{status} (0/{len(attempts)})"
+    return status, f"{status} (no pass in {len(attempts)} attempt{'s' if len(attempts) != 1 else ''})"
 
 
 def _judge_text(value: bool | None) -> str:
