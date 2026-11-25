@@ -20,7 +20,7 @@ from order_agent.brief import OrderBrief, load_brief
 from order_agent.matching import normalise
 from order_agent.report import CallReport
 
-Status = Literal["pass", "fail", "quota_error", "error"]
+Status = Literal["pass", "fail", "quota_error", "restaurant_error", "error"]
 
 # Quota / overload signs. The status codes and the upper-case Google names are matched
 # case-sensitively so a judge reason like "item unavailable" is not mistaken for quota.
@@ -297,6 +297,103 @@ def stop_process(
     return None
 
 
+_QUOTE_MISMATCH = re.compile(r"the restaurant quoted (\d+(?:\.\d+)?) PKR but the cart total is (\d+(?:\.\d+)?) PKR")
+# Violations that mean the bot's cart does not match the menu (prices, fees, unknown items).
+_PRICE_VIOLATION = re.compile(r"^(?:price for |item '.*' is not on the menu|delivery fee was |tax was )")
+
+
+_TOTALS_LINE = re.compile(
+    r"Totals \(Rs, delivery included\): (?P<body>.+?)\. When you quote a total, use these exact figures; never add it up yourself\."
+)
+SCENARIO_DIR = Path(__file__).resolve().parent.parent / "evals" / "scenarios"
+
+
+def persona_totals(name: str, scenario_dir: Path = SCENARIO_DIR) -> set[Decimal]:
+    """Every figure on the scenario persona's Totals line (the totals of the valid orders)."""
+    text = (scenario_dir / f"{name}.yaml").read_text(encoding="utf-8")
+    text = text.replace("!include ../simulator.yaml", "x").replace("!include ../judge.yaml", "x")
+    persona = " ".join(yaml.safe_load(text)["scenarios"][0]["persona"].split())
+    match = _TOTALS_LINE.search(persona)
+    return {Decimal(m) for m in re.findall(r"= (\d+)", match["body"])} if match else set()
+
+
+def _wrong_quotes(report: CallReport) -> list[Decimal]:
+    """Quoted totals of every refused confirm_order whose quote differed from the cart total."""
+    quotes = []
+    for event in report.tool_events:
+        if event.get("tool") == "confirm_order" and event.get("ok") is False:
+            m = _QUOTE_MISMATCH.search(str(event.get("message", "")))
+            if m and Decimal(m.group(1)) != Decimal(m.group(2)):
+                quotes.append(Decimal(m.group(1)))
+    return quotes
+
+
+def _bent_cart(report: CallReport) -> bool:
+    return any(
+        e.get("tool") in ("add_item", "set_fees") and (e.get("args") or {}).get("price_corrected" if e["tool"] == "add_item" else "corrected")
+        for e in report.tool_events
+    )
+
+
+def _menu_total(report: CallReport, expected: Expected) -> Decimal | None:
+    """The bot's cart priced from the menu plus the menu fees; None if the cart does not match the
+    menu exactly (unknown item, wrong unit price, wrong fee or tax; no zero-fee exemption)."""
+    if expected.menu_pkr is None or expected.fees_pkr is None:
+        return None
+    menu = {normalise(k): v for k, v in expected.menu_pkr.items()}
+    total = Decimal(0)
+    for entry in report.items:
+        price = menu.get(normalise(str(entry.get("name", ""))))
+        try:
+            if price is None or Decimal(str(entry["unit_price_pkr"])) != price:
+                return None
+            total += Decimal(str(entry["quantity"])) * price
+        except Exception:  # noqa: BLE001 - unreadable value
+            return None
+    if report.delivery_fee_pkr != expected.fees_pkr.get("delivery", Decimal(0)) or report.tax_pkr != expected.fees_pkr.get("tax", Decimal(0)):
+        return None
+    return total + report.delivery_fee_pkr + report.tax_pkr
+
+
+def conduct_passed(metrics) -> bool:
+    """False if any metric named "conduct" did not pass. `metrics` is an iterable of (name, passed)."""
+    return all(passed for name, passed in metrics if name == "conduct")
+
+
+def settle_status(
+    status: Status,
+    report: CallReport,
+    checked: CheckOutcome,
+    expected: Expected,
+    valid_totals: set[Decimal],
+    conduct_ok: bool = True,
+) -> tuple[Status, list[str]]:
+    """Relabel a would-be fail as restaurant_error ONLY when every condition holds:
+    a) the cart matches the menu exactly (unit prices, delivery fee and tax; no zero-fee exemption)
+       and the bot never used a correction flag;
+    b) every refused confirm_order quote differs from the menu-correct total of that cart;
+    c) no such quote is a figure on the scenario's persona Totals line (a quote matching a valid
+       order may be right about a different order: ambiguous, stays fail);
+    d) the judge's conduct metric did not fail;
+    e) no order was confirmed and the only violations are consequences of there being no order.
+    Anything else, and every ambiguous case, stays whatever it was (a bot failure)."""
+    notes = list(checked.notes)
+    if status != "fail" or not conduct_ok or report.quoted_total_pkr is not None or _bent_cart(report):
+        return status, notes
+    quotes = _wrong_quotes(report)
+    correct = _menu_total(report, expected)
+    if not quotes or correct is None:
+        return status, notes
+    if any(q == correct or q in valid_totals for q in quotes):
+        return status, notes
+    if not any(v.startswith("outcome is ") for v in checked.violations):
+        return status, notes
+    if any(not _DROP_CONSEQUENCE.match(v) for v in checked.violations):  # budget, forbidden item, price violations, ...
+        return status, notes
+    notes.append(f"restaurant quoted Rs {quotes[0]:f}, which matches no valid order (correct for this cart: Rs {correct:f}); bot declined")
+    return "restaurant_error", notes
+
+
 def final_status(judge_passed: bool | None, violations: list[str]) -> Literal["pass", "fail"]:
     """Pass only if the judge passed AND there are no violations (violations override the judge)."""
     return "pass" if judge_passed and not violations else "fail"
@@ -334,6 +431,8 @@ def scenario_outcome(attempts: list[ScenarioResult], max_attempts: int) -> tuple
     statuses = {a.status for a in attempts}
     if "fail" in statuses:
         status: Status = "fail"
+    elif statuses <= {"quota_error", "restaurant_error"} and "restaurant_error" in statuses:
+        status = "restaurant_error"
     elif statuses == {"quota_error"}:
         status = "quota_error"
     elif "error" in statuses:
@@ -410,8 +509,11 @@ def rescore_attempt(attempt_dir: Path, name: str, attempt: int, expected: Expect
         return ScenarioResult(name, status, judge_passed, ["no call report was written"], None, requests, attempt, [])
     report = CallReport.model_validate_json(reports[-1].read_text(encoding="utf-8"))
     checked = check_report_full(report, expected)
-    notes = list(checked.notes)
     status = final_status(judge_passed, checked.violations)
+    conduct = conduct_passed(
+        (ln.split()[1].rstrip(":"), "passed=True" in ln) for ln in judge.splitlines() if ln.startswith("metric ")
+    )
+    status, notes = settle_status(status, report, checked, expected, persona_totals(name), conduct)
     if downgrade_for_bot_quota(status, checked.violations, report.outcome, bot_log, report.quoted_total_pkr):
         notes.append("bot LLM hit 429/503 (see bot.log) and the call did not complete: recorded as quota_error")
         status = "quota_error"

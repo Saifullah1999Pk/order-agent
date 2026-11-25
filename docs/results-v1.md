@@ -423,3 +423,35 @@ Notes on scope:
 ## 17. Groq judge throttle (2026-11-25)
 
 The default judge (Groq `openai/gpt-oss-20b`) timed out in the hybrid run because its ~7 parallel questions, each carrying the whole transcript, exceed Groq's free 8000 tokens/minute per model. The throttle built for Gemini now covers Groq: `evals/judge.yaml` uses `groq_classifier` with one call at a time, 30 s apart, 3 retries on rate-limit errors (15 s base backoff) and a 600 s classifier timeout (queue wait counts toward it; the judge asks 1 goal question plus 1 per bot turn). The spacing is a rough estimate: a question is ~2.5-3.4k input tokens plus a JSON answer, so 2 per minute is ~6-7k TPM, and long transcripts rely on the 429 retry. Cost: a full judgement takes ~2-5 minutes per call (re-judging 3 saved all-Ollama conversations took 6 min 23 s in total at the earlier 20 s spacing, 100-140 s each in the runs observed, with no timeouts). Re-judge only, no bot run, so judge quality is untested beyond that. Pipecat reads only the `eval:` block; its explainer reuses the classifier's service, so it shares the limiter.
+
+## 18. Short live check of the final setup (2026-11-25)
+
+Four scenarios, 1 attempt each, committed defaults (Gemini gemini-3.5-flash-lite bot, Ollama qwen3:8b persona, throttled Groq gpt-oss-20b judge). Evidence: `evals/confirmation/short-check-2026-11-25/`.
+
+| Scenario | Result | Note |
+|---|---|---|
+| happy_path | fail | persona quoted Rs 1250 for a Rs 2100 cart; lock refused confirm_order; bot ended not_ordered |
+| terse_staff | fail | persona quoted 1950 (items only); lock refused twice; bot asked to itemise, kept the correct prices, ended not_ordered |
+| minimum_reachable | pass | ordered, 2400 |
+| sold_out_no_substitute | pass | not_ordered, item sold out |
+
+The price lock refused only wrong totals (3 refusals, all quoted totals that did not match the correct cart); no refusal on a legitimate order, no `price_corrected`/`corrected` misuse, no price violation in any report. The two fails come from the simulated restaurant's arithmetic, not the bot. Judge took 2-5.5 min per call with no timeouts and no 429s; one Groq 400 on the explainer was retried. One attempt per scenario, so this shows the pieces work together, not a pass rate.
+
+## 19. Persona totals and the restaurant_error status (2026-11-25)
+
+Section 18 showed the two fails came from the simulated restaurant's arithmetic (Rs 1250 for a Rs 2100 cart; 1950 with the delivery fee forgotten), with the bot behaving correctly. Two changes so the suite measures the bot:
+
+1. **Totals in every persona.** Each of the 11 personas now has a line `Totals (Rs, delivery included): 2 chicken biryani = 1950; 2 chicken biryani + 1 raita = 2100; ... When you quote a total, use these exact figures; never add it up yourself.` `tests/test_persona_totals.py` recomputes every figure from `menu_pkr`/`fees_pkr` in `evals/expected.yaml` (format documented at the top of the test), which also pins the persona menu values to expected.yaml.
+2. **`restaurant_error` status** (`order_agent/suite.py`, `settle_status`; also applied by `--rescore`). A would-be `fail` becomes `restaurant_error` only if all of these hold: the bot's cart matches the menu exactly (unit prices, delivery fee and tax; no zero-fee exemption; no `price_corrected`/`corrected` flag); every refused `confirm_order` quote differs from the menu-correct total of that cart; no such quote is a figure on the persona's Totals line (a quote that matches a valid order may be right about a different order, so it is ambiguous); the judge's `conduct` metric passed; no order was confirmed and the only violations are consequences of there being no order. Ambiguous cases count as bot failures. It is retried like `quota_error`; a scenario with only `restaurant_error`/`quota_error` attempts is reported as such, never as pass or fail. The note reads "restaurant quoted Rs X, which matches no valid order (correct for this cart: Rs Y); bot declined". A first version of the rule was too loose: it would have labelled a bot that never set the delivery fee (cart 1950, persona correctly quoting 2100) as a restaurant error.
+
+**Rescore of the section 18 short check** (`evals/results/20261125-145529`) under the conservative rule: both now stay `fail`. happy_path (quote 1250 vs a correct 2100 cart) meets the cart and quote conditions, but the judge's conduct metric failed (0.67), so it is not relabelled; terse_staff (quote 1950) is ambiguous because 1950 is the valid total of 2 biryani. The two passes are unchanged. So the section 18 fails remain bot-side in the record, and the rule would only have relabelled happy_path had its conduct metric passed.
+
+**Live check** (`--only happy_path,terse_staff --attempts 2 --sleep 30`, committed defaults; evidence in `evals/confirmation/persona-totals-2026-11-25/`):
+
+| Scenario | Attempt | Persona total | Status | Note |
+|---|---|---|---|---|
+| happy_path | 1 | correct (2100) | pass | order confirmed |
+| terse_staff | 1 | correct (1950 for 2 biryani + delivery) | fail | bot's own error: it added the biryani at 975 and set delivery to 0 to make the cart match, then the lock refused; price violation |
+| terse_staff | 2 | correct (2100) | fail | bot's own error: it recorded raita at 300 and delivery at 0 so the cart matched 2100, and confirmed; two price violations |
+
+With correct totals the restaurant no longer causes the fail, which exposes a real bot weakness: with the terse persona the bot sometimes invents prices to reconcile a total (the engine's price lock cannot catch a wrong first price). No `restaurant_error` occurred live, because the persona did not misquote. Two attempts show that the persona quoted the right total every time (3 of 3 quotes); they are not a pass rate.

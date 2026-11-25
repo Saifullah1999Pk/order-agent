@@ -1,0 +1,46 @@
+{
+  "outcome": "not_ordered",
+  "reason": "No acceptable items available within the brief.",
+  "items": [],
+  "delivery_fee_pkr": "0",
+  "tax_pkr": "0",
+  "cart_total_pkr": "0",
+  "quoted_total_pkr": null,
+  "delivery_eta": null,
+  "tool_events": [
+    {
+      "tool": "end",
+      "args": {
+        "outcome": "not_ordered",
+        "reason": "No acceptable items available within the brief."
+      },
+      "ok": true,
+      "message": "Call ended as not_ordered: No acceptable items available within the brief.",
+      "at": "2026-11-25T15:10:03.979814"
+    }
+  ],
+  "transcript": [
+    {
+      "role": "agent",
+      "text": "Hello, I would like to place a delivery order, please.",
+      "at": "2026-11-25T15:10:10.952308"
+    },
+    {
+      "role": "agent",
+      "text": "I would like to order two chicken biryanis and one raita for delivery, please. Are those available, and what are their prices?",
+      "at": "2026-11-25T15:10:21.500332"
+    },
+    {
+      "role": "agent",
+      "text": "No, I cannot eat seafood. Do you have chicken karahi or chicken pulao instead?",
+      "at": "2026-11-25T15:10:25.763780"
+    },
+    {
+      "role": "agent",
+      "text": "Ah, I see. What other chicken dishes or vegetarian dishes do you have available that are not seafood or beef?",
+      "at": "2026-11-25T15:10:28.328609"
+    }
+  ],
+  "started_at": "2026-11-25T15:10:03.979814",
+  "ended_at": "2026-11-25T15:10:30.523108"
+}

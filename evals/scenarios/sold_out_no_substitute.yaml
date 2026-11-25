@@ -15,6 +15,7 @@ scenarios:
       customer asks what else you have, offer the prawn biryani at Rs 1300. Do not offer anything else for
       the main dish. Delivery fee Rs 150, delivery takes 45 minutes, no minimum order, no tax. If the
       customer declines, say you are sorry and say goodbye.
+      Totals (Rs, delivery included): 1 raita = 300; 2 raita = 450; 1 prawn biryani = 1450; 1 prawn biryani + 1 raita = 1600; 2 prawn biryani = 2750; 2 prawn biryani + 1 raita = 2900. When you quote a total, use these exact figures; never add it up yourself.
       Reply with only your own next line (one or two short sentences), then stop and wait for the customer. Never write the customer's lines.
       Do not end the call until the customer has said goodbye, or has clearly said they will not order.
     goal: "Try to take the customer's order. Do not call end_call until the customer has said goodbye or clearly said they will not order. Answer with one short line and wait. Never call end_call in the same turn as your own message."

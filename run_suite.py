@@ -44,6 +44,9 @@ from order_agent.suite import (
     rescore_run,
     harness_status_with_report,
     scenario_outcome,
+    conduct_passed,
+    persona_totals,
+    settle_status,
     stop_process,
 )
 
@@ -212,8 +215,12 @@ def _run_attempt(
 
     report = CallReport.model_validate_json(report_file.read_text(encoding="utf-8"))
     checked = check_report_full(report, expected)
-    notes += checked.notes
     status = final_status(result.passed, checked.violations)
+    status, report_notes = settle_status(
+        status, report, checked, expected, persona_totals(name),
+        conduct_passed((m.name, m.passed) for m in result.metrics),
+    )
+    notes += report_notes
     if downgrade_for_bot_quota(status, checked.violations, report.outcome, bot_log, report.quoted_total_pkr):
         notes.append("bot LLM hit 429/503 (see bot.log) and the call did not complete: recorded as quota_error")
         status = "quota_error"

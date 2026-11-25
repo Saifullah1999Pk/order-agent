@@ -517,3 +517,169 @@ def test_every_committed_scenario_has_menu_and_fees():
     for name, exp in load_expected().items():
         assert exp.menu_pkr, name
         assert exp.fees_pkr and set(exp.fees_pkr) == {"delivery", "tax"}, name
+
+
+# -- restaurant_error: the simulated restaurant quoted a total that matches no valid order --
+
+HP_TOTALS = {Decimal(x) for x in ("1050", "1200", "1950", "2100", "2250", "2400")}
+
+
+def _ev(tool, args, ok=True, message=""):
+    return {"tool": tool, "args": args, "ok": ok, "message": message, "at": "2026-11-25T14:55:35"}
+
+
+def _refused_confirm(quoted, cart):
+    return _ev(
+        "confirm_order",
+        {"quoted_total_pkr": str(quoted), "delivery_minutes": 45},
+        False,
+        f"Refused: the restaurant quoted {quoted} PKR but the cart total is {cart} PKR (items 1950, delivery 150, tax 0). Do not edit",
+    )
+
+
+def _wrong_total_report(quoted="1250", cart="2100", events=None, outcome="not_ordered", items=None, **extra):
+    if items is None:
+        items = [item("chicken biryani", "2", "900"), item("raita", "1", "150", "raita")]
+    events = events if events is not None else [_refused_confirm(quoted, cart)]
+    return make_report(outcome=outcome, total=cart, quoted=None, items=items, tool_events=events, **extra)
+
+
+def _settle(report, conduct_passed=True, totals=HP_TOTALS, **over):
+    from order_agent.suite import settle_status
+
+    exp = priced(**over)
+    checked = check_report_full(report, exp)
+    return settle_status(final_status(False, checked.violations), report, checked, exp, totals, conduct_passed)
+
+
+def test_quote_matching_no_valid_order_is_restaurant_error():
+    status, notes = _settle(_wrong_total_report(quoted="1250"))
+    assert status == "restaurant_error"
+    assert "restaurant quoted Rs 1250, which matches no valid order (correct for this cart: Rs 2100); bot declined" in notes
+
+
+def test_quote_on_totals_line_is_ambiguous_and_stays_fail():
+    # 1950 is the valid total of 2 biryani; the restaurant may have been right about a different order.
+    assert _settle(_wrong_total_report(quoted="1950"))[0] == "fail"
+
+
+def test_bot_omitted_fees_is_fail_even_though_persona_was_right():
+    r = _wrong_total_report(quoted="2100", cart="1950", delivery_fee_pkr=Decimal("0"))
+    assert _settle(r)[0] == "fail"
+    r2 = _wrong_total_report(quoted="1250", cart="1950", delivery_fee_pkr=Decimal("0"))
+    assert _settle(r2)[0] == "fail"  # no zero-fee exemption
+
+
+def test_bot_omitted_raita_is_fail_because_quote_is_on_totals_line():
+    r = _wrong_total_report(quoted="2100", cart="1950", items=[item("chicken biryani", "2", "900")])
+    assert _settle(r)[0] == "fail"
+
+
+def test_quote_that_matches_the_menu_correct_cart_is_not_restaurant_error():
+    r = _wrong_total_report(quoted="2100", cart="2100")
+    assert _settle(r, totals=set())[0] == "fail"
+
+
+def test_judge_conduct_failure_stays_fail():
+    assert _settle(_wrong_total_report(quoted="1250"), conduct_passed=False)[0] == "fail"
+
+
+def test_every_mismatch_refusal_must_qualify():
+    events = [_refused_confirm("1250", "2100"), _refused_confirm("1950", "2100")]
+    assert _settle(_wrong_total_report(events=events))[0] == "fail"
+    events = [_refused_confirm("1250", "2100"), _refused_confirm("1300", "2100")]
+    assert _settle(_wrong_total_report(events=events))[0] == "restaurant_error"
+
+
+def test_wrong_quote_but_bot_bent_prices_is_fail():
+    items = [item("chicken biryani", "2", "900"), item("raita", "1", "150", "raita"), item("chicken biryani", "1", "1350")]
+    r = make_report(outcome="not_ordered", total="3450", quoted=None, items=items, tool_events=[_refused_confirm("1250", "3450")])
+    assert _settle(r)[0] == "fail"
+
+
+def test_wrong_quote_then_corrected_flags_are_fail():
+    events = [
+        _refused_confirm("1250", "2100"),
+        _ev("add_item", {"name": "raita", "quantity": 1, "unit_price_pkr": "150", "price_corrected": True}),
+    ]
+    assert _settle(_wrong_total_report(events=events))[0] == "fail"
+    events[1] = _ev("set_fees", {"delivery_fee_pkr": "150", "tax_pkr": "0", "corrected": True})
+    assert _settle(_wrong_total_report(events=events))[0] == "fail"
+
+
+def test_wrong_quote_with_budget_violation_stays_fail():
+    assert _settle(_wrong_total_report(quoted="1250", cart="2700"))[0] == "fail"
+
+
+def test_confirmed_order_uses_normal_logic():
+    from order_agent.suite import settle_status
+
+    exp = priced()
+    ok = make_report(total="1950", quoted="1950", tool_events=[_refused_confirm("1250", "1950")])
+    assert settle_status("fail", ok, check_report_full(ok, exp), exp, set(), True)[0] == "fail"
+    ok2 = make_report(total="1950", quoted="1950", tool_events=[])
+    assert settle_status("pass", ok2, check_report_full(ok2, exp), exp, set(), True)[0] == "pass"
+
+
+def test_refusal_that_is_not_a_total_mismatch_is_not_restaurant_error():
+    ev = [_ev("confirm_order", {"quoted_total_pkr": "2100", "delivery_minutes": 45}, False, "Refused: the order is incomplete")]
+    assert _settle(_wrong_total_report(events=ev))[0] == "fail"
+
+
+def test_passing_status_is_never_changed():
+    from order_agent.suite import settle_status
+
+    exp = priced(outcome="not_ordered", must_include=[])
+    r = _wrong_total_report()
+    checked = check_report_full(r, exp)
+    assert settle_status("pass", r, checked, exp, HP_TOTALS, True) == ("pass", checked.notes)
+
+
+def test_persona_totals_reads_the_committed_totals_line():
+    from order_agent.suite import persona_totals
+
+    assert {Decimal(x) for x in ("1950", "2100", "2250", "2400")} <= persona_totals("happy_path")
+    assert Decimal("1250") not in persona_totals("happy_path")
+    assert Decimal("1950") in persona_totals("terse_staff")
+
+
+def test_scenario_outcome_restaurant_error():
+    assert scenario_outcome([res("a", 1, "restaurant_error")] * 2, 2) == ("restaurant_error", "restaurant_error (0/2)")
+    assert scenario_outcome([res("a", 1, "restaurant_error"), res("a", 2, "quota_error")], 2)[0] == "restaurant_error"
+    assert scenario_outcome([res("a", 1, "restaurant_error"), res("a", 2, "fail")], 2)[0] == "fail"
+    assert scenario_outcome([res("a", 1, "restaurant_error"), res("a", 2, "pass")], 2)[0] == "pass"
+    assert scenario_outcome([res("a", 1, "restaurant_error"), res("a", 2, "error")], 2)[0] == "error"
+
+
+def test_summary_shows_restaurant_error_distinctly():
+    note = "restaurant quoted Rs 1250, which matches no valid order (correct for this cart: Rs 2100); bot declined"
+    text = render_summary("r", {"a": [res("a", 1, "restaurant_error", False, [], 5, [note])]}, 1)
+    assert "| a | restaurant_error (0/1) |" in text
+    assert "| a | 1 | restaurant_error |" in text
+
+
+def _rescore(tmp_path, report, judge="goal: not met: no order\nmetric conduct: 1.0 passed=True\n"):
+    import json
+
+    from order_agent.suite import rescore_attempt
+
+    exp = load_expected("evals/expected.yaml")["happy_path"]
+    d = tmp_path / "attempt-1"
+    d.mkdir(parents=True)
+    (d / "bot.log").write_text("", encoding="utf-8")
+    (d / "conversation.json").write_text(json.dumps([]), encoding="utf-8")
+    (d / "judge.txt").write_text(judge, encoding="utf-8")
+    (d / "20261125-120000.json").write_text(report.model_dump_json(), encoding="utf-8")
+    return rescore_attempt(d, "happy_path", 1, exp)
+
+
+def test_rescore_attempt_reclassifies_restaurant_error(tmp_path):
+    r = _rescore(tmp_path, _wrong_total_report(quoted="1250"))
+    assert r.status == "restaurant_error"
+    assert any("matches no valid order" in n for n in r.notes)
+
+
+def test_rescore_attempt_ambiguous_quote_and_conduct_failure_stay_fail(tmp_path):
+    assert _rescore(tmp_path, _wrong_total_report(quoted="1950")).status == "fail"
+    bad = "goal: not met: x\nmetric conduct: 0.5 passed=False\n"
+    assert _rescore(tmp_path / "b", _wrong_total_report(quoted="1250"), bad).status == "fail"

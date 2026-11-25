@@ -1,0 +1,3 @@
+goal: not met: not achieved
+metric conduct: 1.0 passed=True
+metric no_repeat_loop: 0.9 passed=True
