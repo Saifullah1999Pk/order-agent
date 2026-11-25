@@ -430,3 +430,76 @@ async def test_nudge_goes_through_hooks_attached_later(brief, tmp_path):
     c.llm_turn_ended("")
     await _settle()
     assert log == [("inject", NUDGE_TEXT)]
+
+
+async def test_opening_injects_after_wait_once(brief, tmp_path):
+    gate = Gate()
+    log = []
+    c = _controller(brief, tmp_path, hooks=FakeHooks(log), sleep=gate, opening_wait_secs=4.0)
+    c.channel_opened()
+    await _settle()
+    assert log == [] and gate.delays == [4.0]
+    gate.event.set()
+    await _settle()
+    assert log == [("inject", c.opening_text)]
+
+
+async def test_opening_skipped_if_restaurant_spoke_first(brief, tmp_path):
+    gate = Gate()
+    log = []
+    c = _controller(brief, tmp_path, hooks=FakeHooks(log), sleep=gate)
+    c.channel_opened()
+    await _settle()
+    c.restaurant_spoke()
+    gate.event.set()
+    await _settle()
+    assert log == []
+
+
+async def test_opening_skipped_if_restaurant_spoke_before_channel_opened(brief, tmp_path):
+    log = []
+    c = _controller(brief, tmp_path, hooks=FakeHooks(log), sleep=_no_sleep)
+    c.restaurant_spoke()
+    c.channel_opened()
+    await _settle()
+    assert log == []
+
+
+async def test_opening_skipped_if_call_finished_first(brief, tmp_path):
+    gate = Gate()
+    log = []
+    c = _controller(brief, tmp_path, hooks=FakeHooks(log), sleep=gate)
+    c.channel_opened()
+    await _settle()
+    await c.finish("not_ordered", "x")
+    gate.event.set()
+    await _settle()
+    assert log == []
+
+
+async def test_channel_opened_with_hooks_none_is_a_noop(brief, tmp_path):
+    gate = Gate()
+    c = _controller(brief, tmp_path, sleep=gate)
+    c.channel_opened()
+    await _settle()
+    assert gate.delays == []
+
+
+async def test_channel_opened_twice_injects_once(brief, tmp_path):
+    log = []
+    c = _controller(brief, tmp_path, hooks=FakeHooks(log), sleep=_no_sleep)
+    c.channel_opened()
+    c.channel_opened()
+    await _settle()
+    assert log == [("inject", c.opening_text)]
+
+
+async def test_attach_hooks_after_finish_is_accepted_and_inert(brief, tmp_path):
+    c = _controller(brief, tmp_path, sleep=_no_sleep)
+    await c.finish("not_ordered", "x")
+    fake = FakeHooks()
+    c.attach_hooks(fake)  # accepted
+    c.channel_opened()
+    c.llm_turn_ended("")
+    await _settle()
+    assert fake.log == []

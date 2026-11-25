@@ -66,6 +66,9 @@ class CallController:
         self._lock = asyncio.Lock()
         self._dispatcher = ToolDispatcher(self.session)
         self._nudges = NudgeTracker()
+        self._opened = False
+        self._restaurant_has_spoken = False
+        self._opening = NudgeScheduler(self._fire_opening, delay=opening_wait_secs, sleep=sleep)
         self._nudge_scheduler = NudgeScheduler(self._fire_nudge, delay=nudge_delay_secs, sleep=sleep)
 
     @property
@@ -102,6 +105,7 @@ class CallController:
                 self.report_path = write_report(report, self.reports_dir)
                 self.report = report
                 self._nudge_scheduler.cancel()  # nothing fires after the call ended
+                self._opening.cancel()
             return self.report_path
 
     async def drop(self) -> Path:
@@ -144,6 +148,7 @@ class CallController:
         except Exception:
             logger.exception("Could not write the report; the call will still end")
         self._nudge_scheduler.cancel()  # also when the report write failed
+        self._opening.cancel()
         if self._hooks is not None:
             try:
                 await self._hooks.hangup()
@@ -154,6 +159,8 @@ class CallController:
 
     def restaurant_spoke(self, text: str | None = None) -> None:
         """The restaurant's turn started: reset the nudge flags, cancel a pending nudge."""
+        self._restaurant_has_spoken = True
+        self._opening.cancel()
         self._nudges.on_user_turn_started()
         self._nudge_scheduler.cancel()
         if text is not None:
@@ -182,3 +189,15 @@ class CallController:
         # The hooks are read now, not at construction, so late attachment loses nothing.
         if self._hooks is not None and not self.finished:
             await self._hooks.inject(NUDGE_TEXT)
+
+    def channel_opened(self) -> None:
+        """Start the opening timer: if nobody speaks first, the agent opens the call."""
+        if self._opened or self._hooks is None:
+            return
+        self._opened = True
+        self._opening.schedule()
+
+    async def _fire_opening(self) -> None:
+        if self._hooks is None or self.finished or self._restaurant_has_spoken:
+            return  # the normal turn flow answers them
+        await self._hooks.inject(self.opening_text)
