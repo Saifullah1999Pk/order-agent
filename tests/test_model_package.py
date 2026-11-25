@@ -26,3 +26,16 @@ def test_rules_live_in_model():
     assert old.ToolResult is ToolResult
     assert old.ToolEvent is ToolEvent
     assert old.CartItem is CartItem
+
+
+def test_report_lives_in_model():
+    from order_agent.model.report import (
+        CallReport, TranscriptLine, build_report, summarise, write_report,
+    )
+    import order_agent.report as old
+
+    assert old.CallReport is CallReport
+    assert old.TranscriptLine is TranscriptLine
+    assert old.build_report is build_report
+    assert old.summarise is summarise
+    assert old.write_report is write_report
