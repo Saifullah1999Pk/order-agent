@@ -58,8 +58,8 @@ def test_prompt_asks_total_and_time_once_items_agreed(brief):
 
 def test_prompt_add_item_only_with_stated_price(brief):
     prompt = build_system_prompt(brief).lower()
-    assert "only call add_item after the restaurant has said the price" in prompt
-    assert "never guess a price" in prompt
+    assert "give add_item a price only when the restaurant said that item's price" in prompt
+    assert "never guess or work out a price" in prompt
 
 
 def test_prompt_refusal_guidance_matches_rules(brief):
