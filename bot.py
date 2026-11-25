@@ -20,8 +20,9 @@ from order_agent.call import (
     NudgeTracker,
     make_on_end,
 )
-from order_agent.config import Settings, load_settings, pick_model, require_google_key
-from order_agent.llm_factory import build_bot_llm
+from order_agent.config import load_settings, pick_model
+from order_agent.heads.voice.llm_factory import build_bot_llm
+from order_agent.heads.voice.probe import make_probe
 from order_agent.prompt import build_system_prompt
 from order_agent.tools import build_tools
 from pipecat.audio.vad.silero import SileroVADAnalyzer
@@ -44,37 +45,11 @@ from pipecat.transports.base_transport import BaseTransport, TransportParams
 from pipecat.workers.runner import WorkerRunner
 
 OPENING_WAIT_SECS = 3.0
-PROBE_TIMEOUT_SECS = 10.0
 
 transport_params = {
     "webrtc": lambda: TransportParams(audio_in_enabled=True, audio_out_enabled=True),
     "eval": lambda: EvalTransportParams(audio_in_enabled=True, audio_out_enabled=True),
 }
-
-
-def make_probe(settings: Settings):
-    """A single 1-token Gemini request with a 10 s timeout. Any failure counts as 'not usable'."""
-    from google import genai  # Gemini only: imported here so the Groq path never touches it
-    from google.genai import types as genai_types
-
-    client = genai.Client(api_key=require_google_key(settings))
-
-    async def probe(model: str) -> bool:
-        try:
-            await asyncio.wait_for(
-                client.aio.models.generate_content(
-                    model=model,
-                    contents="hi",
-                    config=genai_types.GenerateContentConfig(max_output_tokens=1),
-                ),
-                timeout=PROBE_TIMEOUT_SECS,
-            )
-            return True
-        except Exception as exc:  # includes timeout, 429, 503, bad key
-            logger.warning(f"Model probe failed for {model}: {exc!r}")
-            return False
-
-    return probe
 
 
 async def run_bot(transport: BaseTransport, runner_args: RunnerArguments):
