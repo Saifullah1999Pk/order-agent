@@ -234,6 +234,35 @@ async def test_finish_failure_still_hangs_up_and_does_not_escape(brief, tmp_path
     assert c.report_path is None
 
 
+async def test_end_call_write_failure_hangs_up_leaves_no_report_and_drop_retries(brief, tmp_path, monkeypatch):
+    """Port of the legacy end-hook failure test: the hangup runs, nothing escapes, drop() retries the write."""
+    from order_agent.controller import session as session_module
+
+    log = []
+    c = _controller(brief, tmp_path, hooks=FakeHooks(log))
+    real = session_module.write_report
+    monkeypatch.setattr(session_module, "write_report", lambda *a, **k: (_ for _ in ()).throw(OSError("disk full")))
+    out = await c.perform("end_call", _end_args())
+    assert out.ok and out.ended
+    assert log == [("hangup",)]
+    assert c.report_path is None  # retried later by drop()
+    monkeypatch.setattr(session_module, "write_report", real)
+    assert (await c.drop()).exists() and c.finished
+
+
+async def test_end_call_hangs_up_only_after_the_report_path_is_set(brief, tmp_path):
+    """Port of the legacy end-hook success test: report written, then the pipeline ends."""
+    seen = []
+
+    class Hooks(FakeHooks):
+        async def hangup(self):
+            seen.append(c.report_path)
+
+    c = _controller(brief, tmp_path, hooks=Hooks())
+    await c.perform("end_call", _end_args())
+    assert seen == [c.report_path] and c.report_path is not None
+
+
 async def test_refused_end_call_does_not_finish_or_hang_up(brief, tmp_path):
     log = []
     c = _controller(brief, tmp_path, hooks=FakeHooks(log))
@@ -506,7 +535,7 @@ async def test_attach_hooks_after_finish_is_accepted_and_inert(brief, tmp_path):
 
 
 async def test_callstate_shim(brief, tmp_path):
-    from order_agent.call import CallState, make_on_end
+    from order_agent.call import CallState
     from order_agent.config import Settings
 
     settings = Settings(google_api_key="test-key", reports_dir=tmp_path)
@@ -519,7 +548,6 @@ async def test_callstate_shim(brief, tmp_path):
     path = await state.on_disconnect()
     assert path == state.report_path and path.parent == tmp_path
     assert await state.finish("not_ordered", "again") == path
-    assert callable(make_on_end)
 
 
 def test_package_exports_public_api():
