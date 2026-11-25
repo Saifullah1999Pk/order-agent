@@ -21,18 +21,7 @@ from order_agent.controller.nudge import (  # noqa: F401 - re-exported
     should_nudge,
 )
 from order_agent.controller.session import CallController
-
-
-def llm_http_options() -> dict:
-    """google-genai HTTP options: retry 429/503 with exponential backoff (2 s, 4 s)."""
-    return {
-        "retry_options": {
-            "attempts": 3,
-            "initial_delay": 2.0,
-            "exp_base": 2.0,
-            "http_status_codes": [429, 503],
-        }
-    }
+from order_agent.heads.voice.llm_factory import llm_http_options  # noqa: F401 - re-exported
 
 
 class CallState(CallController):
