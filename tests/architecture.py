@@ -7,6 +7,9 @@ _THIRD_PARTY_BANNED = (
     "uvicorn", "aiohttp", "httpx", "requests", "websockets", "loguru", "dotenv",
 )
 
+# SC-005: no head reaches the rules engine or matching except through the Controller.
+_HEAD_NARROWING = ("order_agent.model.rules", "order_agent.model.matching")
+
 LAYERS = {
     "model": {
         "third_party": {"pydantic", "yaml"},
@@ -19,6 +22,12 @@ LAYERS = {
         "internal": ("order_agent.model", "order_agent.controller"),
         "forbidden": tuple(m for m in _THIRD_PARTY_BANNED if m != "loguru")
         + ("order_agent.heads", "order_agent.evaltools", "order_agent.config"),
+    },
+    "heads/voice": {
+        "third_party": {"pipecat", "google", "loguru", "dotenv"},
+        "internal": ("order_agent.model", "order_agent.controller", "order_agent.config", "order_agent.heads.voice"),
+        "forbidden": ("fastapi", "starlette", "uvicorn", "order_agent.heads.http_api", "order_agent.evaltools")
+        + _HEAD_NARROWING,
     },
 }
 
@@ -48,7 +57,7 @@ def _under(name: str, prefix: str) -> bool:
 
 def violations(source: str, layer: str, package: str | None = None) -> list[str]:
     rule = LAYERS[layer]
-    package = package or f"order_agent.{layer}"
+    package = package or "order_agent." + layer.replace("/", ".")
     bad = []
     for name in sorted(imported_modules(source, package)):
         top = name.split(".")[0]

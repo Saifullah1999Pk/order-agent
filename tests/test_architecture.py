@@ -96,3 +96,26 @@ def test_checker_catches_forbidden_controller_imports(src):
 def test_checker_accepts_clean_controller_snippet():
     src = "from loguru import logger\nfrom order_agent.model.brief import OrderBrief\n"
     assert violations(src, "controller") == []
+
+
+@pytest.mark.parametrize(
+    "src",
+    [
+        "from fastapi import FastAPI",
+        "from order_agent.heads.http_api import x",
+        "from order_agent.evaltools import x",
+        "from order_agent.model.rules import OrderSession",
+        "from order_agent.model.matching import match_line",
+        "from order_agent.model import rules",
+    ],
+)
+def test_checker_catches_forbidden_voice_head_imports(src):
+    assert violations(src, "heads/voice", package="order_agent.heads.voice") != []
+
+
+def test_checker_accepts_clean_voice_head_snippet():
+    src = (
+        "import pipecat\nfrom order_agent.controller import CallController\n"
+        "from order_agent.config import Settings\nfrom order_agent.model.brief import OrderBrief\n"
+    )
+    assert violations(src, "heads/voice", package="order_agent.heads.voice") == []
