@@ -4,7 +4,7 @@ from pipecat.adapters.llm.schemas.function_schema import FunctionSchema
 from pipecat.adapters.llm.schemas.tools_schema import ToolsSchema
 from pipecat.frames.frames import FunctionCallResultProperties
 
-from order_agent.controller.session import CallController
+from order_agent.controller import CallController
 from order_agent.controller.toolspecs import ToolSpec
 from order_agent.controller.tools import ToolOutcome
 

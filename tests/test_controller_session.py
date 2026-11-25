@@ -520,3 +520,14 @@ async def test_callstate_shim(brief, tmp_path):
     assert path == state.report_path and path.parent == tmp_path
     assert await state.finish("not_ordered", "again") == path
     assert callable(make_on_end)
+
+
+def test_package_exports_public_api():
+    import order_agent.controller as pkg
+    from order_agent.controller.session import CallController, CallHooks, NudgeDecision
+    from order_agent.controller.tools import ToolOutcome
+
+    assert pkg.CallController is CallController
+    assert pkg.CallHooks is CallHooks
+    assert pkg.NudgeDecision is NudgeDecision
+    assert pkg.ToolOutcome is ToolOutcome

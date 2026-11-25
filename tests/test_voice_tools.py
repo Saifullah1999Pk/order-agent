@@ -1,7 +1,7 @@
 import pytest
 
 from order_agent import tools as legacy_tools
-from order_agent.controller.session import CallController
+from order_agent.controller import CallController
 from order_agent.controller.toolspecs import TOOL_SPECS
 from order_agent.heads.voice.tools import build_tools
 from order_agent.rules import OrderSession

@@ -6,7 +6,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from order_agent.controller.session import CallController
+from order_agent.controller import CallController
 from order_agent.heads.voice.tools import build_tools as new_build_tools
 from order_agent.rules import OrderSession
 from order_agent.tools import build_tools as legacy_build_tools
