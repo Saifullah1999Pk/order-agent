@@ -120,3 +120,88 @@ def test_throttled_service_disables_sdk_internal_retries(monkeypatch):
     monkeypatch.setenv("GOOGLE_API_KEY", "test-key")
     llm = gemini_llm({"model": "m", "min_interval_s": 4.5})
     assert llm._client.max_retries == 0
+
+
+# --- Groq judge throttle ---
+
+def _groq_env(monkeypatch):
+    monkeypatch.setenv("GOOGLE_API_KEY", "test-key")
+    monkeypatch.setenv("GROQ_API_KEY", "groq-test")
+
+
+def test_groq_llm_plain_without_throttle_keys(monkeypatch):
+    from order_agent.eval_llm import ThrottledOpenAILLMService, groq_llm
+
+    _groq_env(monkeypatch)
+    assert not isinstance(groq_llm({"model": "openai/gpt-oss-20b"}), ThrottledOpenAILLMService)
+
+
+def test_groq_llm_throttled_keeps_groq_settings(monkeypatch):
+    from pipecat.services.groq.llm import GroqLLMService
+
+    from order_agent.eval_llm import ThrottledOpenAILLMService, groq_llm
+
+    _groq_env(monkeypatch)
+    llm = groq_llm({"model": "openai/gpt-oss-20b", "reasoning_effort": "low", "min_interval_s": 20})
+    assert isinstance(llm, ThrottledOpenAILLMService)
+    assert isinstance(llm, GroqLLMService)
+    assert llm._settings.model == "openai/gpt-oss-20b"
+    assert llm._settings.reasoning_effort == "low"
+    assert "api.groq.com" in str(llm._client.base_url)
+
+
+def test_groq_throttled_disables_sdk_retries(monkeypatch):
+    from order_agent.eval_llm import groq_llm
+
+    _groq_env(monkeypatch)
+    assert groq_llm({"model": "m", "min_interval_s": 20})._client.max_retries == 0
+
+
+def test_groq_classifier_sets_timeout_and_default(monkeypatch):
+    from order_agent.eval_llm import ThrottledOpenAILLMService, groq_classifier
+
+    _groq_env(monkeypatch)
+    c = groq_classifier({"model": "m", "min_interval_s": 20, "timeout_s": 300})
+    assert c._timeout == 300
+    assert isinstance(c._llm, ThrottledOpenAILLMService)
+    assert groq_classifier({"model": "m"})._timeout == 180.0
+
+
+def test_groq_eval_and_explainer_share_limiter(monkeypatch):
+    from order_agent.eval_llm import groq_classifier, groq_llm
+
+    _groq_env(monkeypatch)
+    cfg = {"model": "openai/gpt-oss-20b", "reasoning_effort": "low", "max_concurrency": 1,
+           "min_interval_s": 20, "max_retries": 3, "retry_base_s": 15}
+    assert groq_classifier({**cfg, "timeout_s": 300})._llm._throttle is groq_llm(cfg)._throttle
+
+
+async def test_groq_rate_limit_text_is_retried(monkeypatch):
+    from pipecat.services.openai.llm import OpenAILLMService
+
+    from order_agent.eval_llm import groq_llm
+    from order_agent.throttle import Throttle, is_rate_limit_error
+
+    _groq_env(monkeypatch)
+    msg = ("Error code: 400 - {'error': {'message': 'Rate limit reached for model "
+           "`openai/gpt-oss-20b` ...', 'code': 'rate_limit_exceeded'}}")
+    assert is_rate_limit_error(RuntimeError(msg))
+    assert is_rate_limit_error(RuntimeError("Rate limit reached for model"))
+    assert is_rate_limit_error(RuntimeError("Error code: 429"))
+
+    calls = []
+
+    async def flaky(self, context, **kw):
+        calls.append(1)
+        if len(calls) < 2:
+            raise RuntimeError(msg)
+        return "ok"
+
+    async def nosleep(_):
+        pass
+
+    monkeypatch.setattr(OpenAILLMService, "run_inference", flaky)
+    llm = groq_llm({"model": "m", "max_retries": 2})
+    llm._throttle = Throttle(max_retries=2, sleep=nosleep)
+    assert await llm.run_inference(None) == "ok"
+    assert len(calls) == 2
