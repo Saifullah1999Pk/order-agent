@@ -79,3 +79,39 @@ def test_summary_call_dropped_after_order_confirmed(brief):
     assert "no order was confirmed" not in text
     assert "dropped after the order was confirmed at Rs 1950" in text
     assert "20:15" in text
+
+
+def _terse_report(brief):
+    s = OrderSession(brief, NOW)
+    assert s.add_item("chicken biryani", 2, None).ok
+    assert s.add_item("raita", 1, None).ok
+    assert s.confirm_order(Decimal("2100"), 45).ok
+    assert s.end("ordered", "ok").ok
+    return build_report(s, "ordered", "ok", TRANSCRIPT, NOW, END)
+
+
+def test_unpriced_report_has_none_prices_and_unknown_cart_total(brief):
+    r = _terse_report(brief)
+    assert all(i["unit_price_pkr"] is None for i in r.items)
+    assert r.cart_total_pkr is None
+    assert r.quoted_total_pkr == Decimal("2100")
+    assert r.total_only is True
+
+
+def test_unpriced_report_summary_says_prices_not_itemised(brief):
+    text = summarise(_terse_report(brief))
+    assert "prices not itemised by the restaurant; confirmed at their total Rs 2100" in text
+    assert "None" not in text
+    assert "chicken biryani" in text
+
+
+def test_unpriced_report_roundtrip(brief, tmp_path):
+    r = _terse_report(brief)
+    path = write_report(r, tmp_path)
+    assert CallReport.model_validate_json(path.read_text(encoding="utf-8")) == r
+    assert "None" not in path.with_suffix(".txt").read_text(encoding="utf-8")
+
+
+def test_fully_priced_report_is_unchanged(brief):
+    r = _report(brief)
+    assert r.total_only is False and r.fees_set is True

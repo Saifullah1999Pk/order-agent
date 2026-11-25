@@ -92,3 +92,11 @@ def test_prompt_forbids_bending_prices_to_match_total(brief):
     prompt = build_system_prompt(brief)
     assert "never change prices, fees or items to make a total match" in prompt
     assert "ask them to itemise" in prompt
+
+
+def test_prompt_total_only_rule(brief):
+    prompt = build_system_prompt(brief)
+    assert "do not work out item prices from it" in prompt
+    assert "add the items without a price and confirm with their total" in prompt
+    assert "Never invent a price or a fee" in prompt
+    assert "set_price" in prompt

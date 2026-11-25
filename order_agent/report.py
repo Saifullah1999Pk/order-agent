@@ -26,9 +26,11 @@ class CallReport(BaseModel):
     items: list[dict]
     delivery_fee_pkr: Decimal
     tax_pkr: Decimal
-    cart_total_pkr: Decimal
+    cart_total_pkr: Decimal | None  # None when an item has no price or fees were never recorded
     quoted_total_pkr: Decimal | None
     delivery_eta: datetime | None
+    fees_set: bool = True  # False when set_fees was never called (the 0s above are then 'unknown')
+    total_only: bool = False  # confirmed against the restaurant's total, not an itemised cart
     tool_events: list[dict]
     transcript: list[TranscriptLine]
     started_at: datetime
@@ -62,9 +64,11 @@ def build_report(
         items=[_plain(dataclasses.asdict(i)) for i in session.items],
         delivery_fee_pkr=session.delivery_fee_pkr,
         tax_pkr=session.tax_pkr,
-        cart_total_pkr=session.cart_total(),
+        cart_total_pkr=session.cart_total() if session.cart_total_known() else None,
         quoted_total_pkr=session.quoted_total_pkr,
         delivery_eta=session.delivery_eta,
+        fees_set=session._fees_set,
+        total_only=session.confirmed_at_total_only,
         tool_events=[_plain(dataclasses.asdict(e)) for e in session.events],
         transcript=transcript,
         started_at=started_at,
@@ -77,7 +81,20 @@ def _money(amount: Decimal) -> str:
 
 
 def summarise(report: CallReport) -> str:
-    items = ", ".join(f"{i['quantity']} x {i['name']} at {i['unit_price_pkr']} PKR each" for i in report.items)
+    items = ", ".join(
+        f"{i['quantity']} x {i['name']}" + (f" at {i['unit_price_pkr']} PKR each" if i.get("unit_price_pkr") is not None else "")
+        for i in report.items
+    )
+    if report.outcome == "ordered" and report.cart_total_pkr is None and report.quoted_total_pkr is not None:
+        unpriced = any(i.get("unit_price_pkr") is None for i in report.items)
+        why = "prices not itemised by the restaurant" if unpriced else "delivery fee and tax not recorded"
+        text = (
+            f"The call ended with the order placed (ordered): {items} "
+            f"({why}; confirmed at their total Rs {report.quoted_total_pkr:f})."
+        )
+        if report.delivery_eta:
+            text += f" Delivery is expected by {report.delivery_eta:%H:%M}."
+        return f"{text} Reason: {report.reason}"
     if report.outcome == "ordered":
         text = (
             f"The call ended with the order placed (ordered): {items}. "

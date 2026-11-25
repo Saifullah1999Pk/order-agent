@@ -40,6 +40,13 @@ def _money(arguments: dict, key: str) -> Decimal:
     return number
 
 
+def _optional_money(arguments: dict, key: str) -> Decimal | None:
+    """A price that may be left out (None or absent = not given). A present but unreadable value is refused."""
+    if arguments.get(key) is None:
+        return None
+    return _money(arguments, key)
+
+
 def _flag(arguments: dict, key: str) -> bool:
     """An optional true/false argument; absent means false."""
     value = arguments.get(key)
@@ -118,8 +125,11 @@ def build_tools(
                 logger.exception("on_end failed")
 
     add_item = handler(
-        lambda a: (_text(a, "name"), _whole(a, "quantity"), _money(a, "unit_price_pkr"), _flag(a, "price_corrected")),
+        lambda a: (_text(a, "name"), _whole(a, "quantity"), _optional_money(a, "unit_price_pkr"), _flag(a, "price_corrected")),
         session.add_item,
+    )
+    set_price = handler(
+        lambda a: (_text(a, "name"), _money(a, "unit_price_pkr"), _flag(a, "price_corrected")), session.set_price
     )
     remove_item = handler(lambda a: (_text(a, "name"),), session.remove_item)
     set_fees = handler(
@@ -135,15 +145,26 @@ def build_tools(
         standard_tools=[
             FunctionSchema(
                 name="add_item",
-                description="Add an item the restaurant has offered to the order, at the price they stated.",
+                description="Add an item the restaurant has offered to the order. Give unit_price_pkr only if the restaurant actually stated that item's price; if they only give a total, leave it out. Never work out or guess a price.",
                 properties={
                     "name": {"type": "string", "description": "Item name as the restaurant said it."},
                     "quantity": {"type": "integer", "description": "How many to add."},
-                    "unit_price_pkr": {"type": "number", "description": "Price of one unit in PKR, as a number."},
+                    "unit_price_pkr": {"type": "number", "description": "Price of one unit in PKR, only if the restaurant stated it. Omit if unknown."},
                     "price_corrected": {"type": "boolean", "description": "Only true if the restaurant clearly said this item's price changed from what they said before. Never use it to make a total match."},
                 },
-                required=["name", "quantity", "unit_price_pkr"],
+                required=["name", "quantity"],
                 handler=add_item,
+            ),
+            FunctionSchema(
+                name="set_price",
+                description="Record the price of an item already in the order, when the restaurant states it later.",
+                properties={
+                    "name": {"type": "string", "description": "Name of the item in the order."},
+                    "unit_price_pkr": {"type": "number", "description": "Price of one unit in PKR, as the restaurant stated it."},
+                    "price_corrected": {"type": "boolean", "description": "Only true if the restaurant clearly said this item's price changed from what they said before. Never use it to make a total match."},
+                },
+                required=["name", "unit_price_pkr"],
+                handler=set_price,
             ),
             FunctionSchema(
                 name="remove_item",

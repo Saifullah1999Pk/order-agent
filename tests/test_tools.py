@@ -6,7 +6,7 @@ import pytest
 from order_agent.rules import OrderSession
 from order_agent.tools import build_tools
 
-NAMES = ["add_item", "remove_item", "set_fees", "set_minimum_order", "confirm_order", "end_call"]
+NAMES = ["add_item", "set_price", "remove_item", "set_fees", "set_minimum_order", "confirm_order", "end_call"]
 
 
 class Harness:
@@ -48,7 +48,7 @@ async def test_handler_add_item_calls_session(h):
     assert h.session.cart_total() == Decimal("1800")
 
 
-@pytest.mark.parametrize("price", ["twelve hundred", True, float("nan"), None, [900]])
+@pytest.mark.parametrize("price", ["twelve hundred", True, float("nan"), [900]])
 async def test_handler_rejects_unparseable_price(h, price):
     result = await h.call("add_item", name="chicken biryani", quantity=2, unit_price_pkr=price)
     assert result["ok"] is False
@@ -56,7 +56,7 @@ async def test_handler_rejects_unparseable_price(h, price):
 
 
 async def test_handler_rejects_missing_argument(h):
-    result = await h.call("add_item", name="chicken biryani", quantity=2)
+    result = await h.call("add_item", name="chicken biryani", unit_price_pkr=900)
     assert result["ok"] is False
     assert h.session.events == []
 
@@ -157,3 +157,37 @@ def test_correction_flags_are_in_the_schemas(h):
     assert props["set_fees"]["corrected"]["type"] == "boolean"
     required = {t.name: t.required for t in h.tools.standard_tools}
     assert "price_corrected" not in required["add_item"] and "corrected" not in required["set_fees"]
+
+
+def test_add_item_schema_price_is_optional_and_set_price_requires_it(h):
+    add = next(t for t in h.tools.standard_tools if t.name == "add_item")
+    assert "unit_price_pkr" in add.properties and "unit_price_pkr" not in add.required
+    sp = next(t for t in h.tools.standard_tools if t.name == "set_price")
+    assert set(sp.required) == {"name", "unit_price_pkr"}
+    assert "price_corrected" in sp.properties
+
+
+async def test_add_item_without_price_adds_unpriced(h):
+    for kwargs in ({}, {"unit_price_pkr": None}):
+        h.session.items.clear()
+        result = await h.call("add_item", name="chicken biryani", quantity=2, **kwargs)
+        assert result["ok"] is True
+        assert h.session.items[0].unit_price_pkr is None
+
+
+async def test_set_price_handler_fills_price_and_passes_flag(h):
+    await h.call("add_item", name="chicken biryani", quantity=2)
+    assert (await h.call("set_price", name="chicken biryani", unit_price_pkr="900"))["ok"] is True
+    assert h.session.items[0].unit_price_pkr == Decimal("900")
+    refused = await h.call("set_price", name="chicken biryani", unit_price_pkr=950)
+    assert refused["ok"] is False
+    ok = await h.call("set_price", name="chicken biryani", unit_price_pkr=950, price_corrected=True)
+    assert ok["ok"] is True
+    assert h.session.events[-1].args["price_corrected"] is True
+
+
+@pytest.mark.parametrize("args", [{"name": "chicken biryani"}, {"name": "chicken biryani", "unit_price_pkr": "lots"}, {"unit_price_pkr": 900}, {"name": "x", "unit_price_pkr": 1, "price_corrected": "maybe"}])
+async def test_set_price_bad_arguments_refused_without_touching_session(h, args):
+    result = await h.call("set_price", **args)
+    assert result["ok"] is False
+    assert h.session.events == []
