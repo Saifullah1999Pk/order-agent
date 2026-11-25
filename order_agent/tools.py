@@ -157,7 +157,7 @@ def build_tools(
             ),
             FunctionSchema(
                 name="set_price",
-                description="Record the price of an item already in the order, when the restaurant states it later.",
+                description="Record the price of an item already in the order, only when the restaurant states that item's price. Never divide, subtract or otherwise derive a price from a total.",
                 properties={
                     "name": {"type": "string", "description": "Name of the item in the order."},
                     "unit_price_pkr": {"type": "number", "description": "Price of one unit in PKR, as the restaurant stated it."},

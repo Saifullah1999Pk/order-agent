@@ -191,3 +191,8 @@ async def test_set_price_bad_arguments_refused_without_touching_session(h, args)
     result = await h.call("set_price", **args)
     assert result["ok"] is False
     assert h.session.events == []
+
+
+def test_set_price_description_forbids_deriving_from_total(h):
+    sp = next(t for t in h.tools.standard_tools if t.name == "set_price")
+    assert "total" in sp.description.lower() and "never" in sp.description.lower()

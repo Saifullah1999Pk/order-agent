@@ -100,3 +100,10 @@ def test_prompt_total_only_rule(brief):
     assert "add the items without a price and confirm with their total" in prompt
     assert "Never invent a price or a fee" in prompt
     assert "set_price" in prompt
+
+
+def test_prompt_no_derived_prices_or_guessed_fees(brief):
+    prompt = build_system_prompt(brief)
+    assert "never by dividing or subtracting from a total" in prompt
+    assert "Only record fees the restaurant stated" in prompt
+    assert "a bare 'no' to a combined question" in prompt
