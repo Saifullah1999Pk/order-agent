@@ -16,3 +16,13 @@ def test_matching_lives_in_model():
 
     assert old.normalise is normalise
     assert old.match_line is match_line
+
+
+def test_rules_live_in_model():
+    from order_agent.model.rules import CartItem, OrderSession, ToolEvent, ToolResult
+    import order_agent.rules as old
+
+    assert old.OrderSession is OrderSession
+    assert old.ToolResult is ToolResult
+    assert old.ToolEvent is ToolEvent
+    assert old.CartItem is CartItem
