@@ -77,3 +77,22 @@ def test_every_module_is_classified():
         if rel.stem not in LEGACY_FLAT:
             unclassified.append(str(rel))
     assert unclassified == []
+
+
+@pytest.mark.parametrize(
+    "src",
+    [
+        "import pipecat",
+        "from fastapi import FastAPI",
+        "from order_agent.heads.voice import x",
+        "from order_agent.config import Settings",
+        "from order_agent.evaltools import x",
+    ],
+)
+def test_checker_catches_forbidden_controller_imports(src):
+    assert violations(src, "controller") != []
+
+
+def test_checker_accepts_clean_controller_snippet():
+    src = "from loguru import logger\nfrom order_agent.model.brief import OrderBrief\n"
+    assert violations(src, "controller") == []

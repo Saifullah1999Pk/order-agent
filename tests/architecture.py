@@ -14,6 +14,12 @@ LAYERS = {
         "forbidden": _THIRD_PARTY_BANNED
         + ("order_agent.controller", "order_agent.heads", "order_agent.evaltools", "order_agent.config"),
     },
+    "controller": {
+        "third_party": {"loguru"},
+        "internal": ("order_agent.model", "order_agent.controller"),
+        "forbidden": tuple(m for m in _THIRD_PARTY_BANNED if m != "loguru")
+        + ("order_agent.heads", "order_agent.evaltools", "order_agent.config"),
+    },
 }
 
 
