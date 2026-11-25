@@ -1,0 +1,119 @@
+{
+  "outcome": "not_ordered",
+  "reason": "Total price disagreement with the restaurant",
+  "items": [
+    {
+      "name": "chicken biryani",
+      "line_item": "chicken biryani",
+      "quantity": 2,
+      "unit_price_pkr": "900"
+    },
+    {
+      "name": "raita",
+      "line_item": "raita",
+      "quantity": 1,
+      "unit_price_pkr": "150"
+    }
+  ],
+  "delivery_fee_pkr": "150",
+  "tax_pkr": "0",
+  "cart_total_pkr": "2100",
+  "quoted_total_pkr": null,
+  "delivery_eta": null,
+  "tool_events": [
+    {
+      "tool": "add_item",
+      "args": {
+        "name": "chicken biryani",
+        "quantity": 2,
+        "unit_price_pkr": "900",
+        "price_corrected": false
+      },
+      "ok": true,
+      "message": "Added 2 x chicken biryani at 900 PKR each. Cart total is now 1800 PKR.",
+      "at": "2026-11-25T15:00:44.144599"
+    },
+    {
+      "tool": "set_fees",
+      "args": {
+        "delivery_fee_pkr": "150",
+        "tax_pkr": "0",
+        "corrected": false
+      },
+      "ok": true,
+      "message": "Fees recorded: delivery 150 PKR, tax 0 PKR. Cart total is now 1950 PKR.",
+      "at": "2026-11-25T15:00:44.144599"
+    },
+    {
+      "tool": "add_item",
+      "args": {
+        "name": "raita",
+        "quantity": 1,
+        "unit_price_pkr": "150",
+        "price_corrected": false
+      },
+      "ok": true,
+      "message": "Added 1 x raita at 150 PKR each. Cart total is now 2100 PKR.",
+      "at": "2026-11-25T15:00:44.144599"
+    },
+    {
+      "tool": "confirm_order",
+      "args": {
+        "quoted_total_pkr": "1950",
+        "delivery_minutes": 45
+      },
+      "ok": false,
+      "message": "Refused: the restaurant quoted 1950 PKR but the cart total is 2100 PKR (items 1950, delivery 150, tax 0). Do not edit the cart or the fees to make the totals match. Ask the restaurant to itemise the total: each item with its price, then the delivery fee and tax. Only if they clearly state a changed price or fee, correct it (add_item with price_corrected=true, or set_fees with corrected=true); if they cannot explain it, end the call as not_ordered.",
+      "at": "2026-11-25T15:00:44.144599"
+    },
+    {
+      "tool": "confirm_order",
+      "args": {
+        "quoted_total_pkr": "1950",
+        "delivery_minutes": 45
+      },
+      "ok": false,
+      "message": "Refused: the restaurant quoted 1950 PKR but the cart total is 2100 PKR (items 1950, delivery 150, tax 0). Do not edit the cart or the fees to make the totals match. Ask the restaurant to itemise the total: each item with its price, then the delivery fee and tax. Only if they clearly state a changed price or fee, correct it (add_item with price_corrected=true, or set_fees with corrected=true); if they cannot explain it, end the call as not_ordered.",
+      "at": "2026-11-25T15:00:44.144599"
+    },
+    {
+      "tool": "end",
+      "args": {
+        "outcome": "not_ordered",
+        "reason": "Total price disagreement with the restaurant"
+      },
+      "ok": true,
+      "message": "Call ended as not_ordered: Total price disagreement with the restaurant",
+      "at": "2026-11-25T15:00:44.144599"
+    }
+  ],
+  "transcript": [
+    {
+      "role": "agent",
+      "text": "Hello, I would like to place a delivery order, please.",
+      "at": "2026-11-25T15:00:52.021271"
+    },
+    {
+      "role": "agent",
+      "text": "I would like to order two chicken biryanis for delivery, please. Do you have them available and how much do they cost?",
+      "at": "2026-11-25T15:00:54.003792"
+    },
+    {
+      "role": "agent",
+      "text": "Do you have raita as well, and if so, how much is it?",
+      "at": "2026-11-25T15:01:00.831234"
+    },
+    {
+      "role": "agent",
+      "text": "Could I please get that less spicy if possible? Also, what is the total and how long will delivery take?",
+      "at": "2026-11-25T15:01:05.542119"
+    },
+    {
+      "role": "agent",
+      "text": "Could you please check that total? I have two chicken biryanis at nine hundred each, plus one raita at one hundred fifty, and one hundred fifty for delivery.",
+      "at": "2026-11-25T15:01:11.600343"
+    }
+  ],
+  "started_at": "2026-11-25T15:00:44.144599",
+  "ended_at": "2026-11-25T15:01:17.774836"
+}

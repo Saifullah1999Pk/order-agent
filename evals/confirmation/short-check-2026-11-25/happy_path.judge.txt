@@ -1,0 +1,2 @@
+goal: not met: The order was not confirmed because the bot did not finalize the transaction with the restaurant’s stated total and did not provide a final confirmation to the user.
+metric conduct: 0.6666666666666666 passed=False

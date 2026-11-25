@@ -423,3 +423,16 @@ Notes on scope:
 ## 17. Groq judge throttle (2026-11-25)
 
 The default judge (Groq `openai/gpt-oss-20b`) timed out in the hybrid run because its ~7 parallel questions, each carrying the whole transcript, exceed Groq's free 8000 tokens/minute per model. The throttle built for Gemini now covers Groq: `evals/judge.yaml` uses `groq_classifier` with one call at a time, 30 s apart, 3 retries on rate-limit errors (15 s base backoff) and a 600 s classifier timeout (queue wait counts toward it; the judge asks 1 goal question plus 1 per bot turn). The spacing is a rough estimate: a question is ~2.5-3.4k input tokens plus a JSON answer, so 2 per minute is ~6-7k TPM, and long transcripts rely on the 429 retry. Cost: a full judgement takes ~2-5 minutes per call (re-judging 3 saved all-Ollama conversations took 6 min 23 s in total at the earlier 20 s spacing, 100-140 s each in the runs observed, with no timeouts). Re-judge only, no bot run, so judge quality is untested beyond that. Pipecat reads only the `eval:` block; its explainer reuses the classifier's service, so it shares the limiter.
+
+## 18. Short live check of the final setup (2026-11-25)
+
+Four scenarios, 1 attempt each, committed defaults (Gemini gemini-3.5-flash-lite bot, Ollama qwen3:8b persona, throttled Groq gpt-oss-20b judge). Evidence: `evals/confirmation/short-check-2026-11-25/`.
+
+| Scenario | Result | Note |
+|---|---|---|
+| happy_path | fail | persona quoted Rs 1250 for a Rs 2100 cart; lock refused confirm_order; bot ended not_ordered |
+| terse_staff | fail | persona quoted 1950 (items only); lock refused twice; bot asked to itemise, kept the correct prices, ended not_ordered |
+| minimum_reachable | pass | ordered, 2400 |
+| sold_out_no_substitute | pass | not_ordered, item sold out |
+
+The price lock refused only wrong totals (3 refusals, all quoted totals that did not match the correct cart); no refusal on a legitimate order, no `price_corrected`/`corrected` misuse, no price violation in any report. The two fails come from the simulated restaurant's arithmetic, not the bot. Judge took 2-5.5 min per call with no timeouts and no 429s; one Groq 400 on the explainer was retried. One attempt per scenario, so this shows the pieces work together, not a pass rate.
