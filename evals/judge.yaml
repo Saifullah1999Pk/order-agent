@@ -1,36 +1,26 @@
+# Default judge: Groq openai/gpt-oss-20b, throttled for the free tier.
+# Why: Pipecat's judge fires ~7 classifier questions at once (plus explainer calls),
+# each carrying the whole transcript (~2-3k tokens). Groq's free tier allows 8000
+# tokens/minute per model, so un-throttled calls hit the cap and time out.
+# The throttle runs one call at a time, >= 20 s apart (~3 questions/min ~ 8000 TPM),
+# and retries rate-limit errors with backoff (15 s, 30 s, 60 s).
+# Consequence: a full judgement takes a few minutes per call. timeout_s is long
+# because queue wait counts toward Pipecat's 10 s classifier timeout.
+# Eval and explainer have the same model + settings, so they share one limiter.
 eval:
-  factory: order_agent.eval_llm.groq_llm
+  factory: order_agent.eval_llm.groq_classifier  # LLMClassifier with timeout_s
   model: openai/gpt-oss-20b
   reasoning_effort: low
+  max_concurrency: 1
+  min_interval_s: 20
+  max_retries: 3
+  retry_base_s: 15
+  timeout_s: 300
 explainer:
-  factory: order_agent.eval_llm.groq_llm
+  factory: order_agent.eval_llm.groq_llm  # must be a service, not a classifier
   model: openai/gpt-oss-20b
   reasoning_effort: low
-# Gemini judge with throttle (free tier is 15 requests/min; the judge fires ~7
-# questions at once). Replace the blocks above with:
-#
-# eval:
-#   factory: order_agent.eval_llm.gemini_classifier  # LLMClassifier with timeout_s
-#   model: gemini-3.5-flash-lite
-#   max_concurrency: 1   # one judge call at a time
-#   min_interval_s: 4.5  # >= 4.5s between calls (~13/min)
-#   max_retries: 3       # retry 429 / RESOURCE_EXHAUSTED
-#   retry_base_s: 5      # backoff 5s, 10s, 20s
-#   timeout_s: 120       # Pipecat's default 10s would expire while queued
-# explainer:
-#   factory: order_agent.eval_llm.gemini_llm  # must be a service, not a classifier
-#   model: gemini-3.5-flash-lite
-#   max_concurrency: 1
-#   min_interval_s: 4.5
-#   max_retries: 3
-#   retry_base_s: 5
-# (same model + settings => eval and explainer share one limiter)
-#
-# Quota notes (read before using Gemini for the judge):
-# - The throttle only paces the JUDGE. The bot and the simulated persona/restaurant
-#   share the same Gemini free quota (15 requests/min per model). When bot, persona
-#   and judge all use gemini-3.5-flash-lite, a 4.5s judge gap alone uses ~13/min,
-#   so use a larger judge min_interval_s (8-10s) or put the judge on another model.
-# - Pipecat's explainer has a hard-coded 60s timeout that includes time queued in
-#   the shared limiter. Under load an explanation may time out and come back with
-#   no reason. That is acceptable: the pass/fail verdict still stands.
+  max_concurrency: 1
+  min_interval_s: 20
+  max_retries: 3
+  retry_base_s: 15

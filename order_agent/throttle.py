@@ -10,7 +10,8 @@ T = TypeVar("T")
 
 def is_rate_limit_error(exc: BaseException) -> bool:
     text = f"{type(exc).__name__} {exc}"
-    return "429" in text or "RESOURCE_EXHAUSTED" in text or "RateLimit" in text
+    markers = ("429", "RESOURCE_EXHAUSTED", "RateLimit", "rate_limit_exceeded", "Rate limit reached")
+    return any(m in text for m in markers)
 
 
 class Throttle:

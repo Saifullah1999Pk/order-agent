@@ -26,6 +26,10 @@ class ThrottledOpenAILLMService(OpenAILLMService):
         return await self._throttle.run(lambda: parent(*args, **kwargs))
 
 
+class ThrottledGroqLLMService(ThrottledOpenAILLMService, GroqLLMService):
+    """Groq service (reasoning_effort etc.) with the same throttled ``run_inference``."""
+
+
 def _shared_throttle(config: dict) -> Throttle:
     """One limiter per model and settings, so eval and explainer share the gap."""
     opts = {k: config[k] for k in THROTTLE_KEYS if k in config}
@@ -64,14 +68,25 @@ def gemini_native_llm(config: dict) -> GoogleLLMService:
 
 
 def groq_llm(config: dict) -> GroqLLMService:
-    """Groq (free tier) service for the simulated restaurant and the judge."""
+    """Groq (free tier) service for the simulated restaurant and the judge.
+
+    With any throttle key in ``config`` it is a throttled service (Groq's free tier caps
+    tokens per minute, and the judge sends the whole transcript with each question).
+    """
     key = load_settings().groq_api_key
     if not key:
         raise RuntimeError("GROQ_API_KEY is not set (put it in order-agent/.env)")
     settings = GroqLLMService.Settings(model=config.get("model", "openai/gpt-oss-120b"))
     if "reasoning_effort" in config:
         settings.reasoning_effort = config["reasoning_effort"]
+    if any(k in config for k in THROTTLE_KEYS):
+        return ThrottledGroqLLMService(throttle=_shared_throttle(config), api_key=key, settings=settings)
     return GroqLLMService(api_key=key, settings=settings)
+
+
+def groq_classifier(config: dict) -> LLMClassifier:
+    """Judge classifier on Groq; ``timeout_s`` (default 180) must outlast the throttle's queue."""
+    return LLMClassifier(llm=groq_llm(config), timeout=config.get("timeout_s", 180.0))
 
 
 def ollama_classifier(config: dict) -> LLMClassifier:
