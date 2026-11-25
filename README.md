@@ -55,11 +55,11 @@ Each test call involves three roles:
 
 | | |
 |---|---|
-| v1 suite (2026-11-23) | 8 of 11 scenarios passed within 3 attempts. **0 failures came from the agent breaking a rule.** |
+| v1 suite (2026-11-23) | 8 of 11 scenarios passed within 3 attempts. **0 failures came from the agent breaking a rule.** Later, a price check showed bots sometimes invented prices. Of those 8 passes, 4 were re-checked and still pass. 4 have no saved report and cannot be re-checked: happy_path and price_drop_optional (orders placed), and late_delivery and minimum_unreachable (no order placed). See [section 16](docs/results-v1.md). |
 | Since then | Fixed the simulated restaurant hanging up early and the agent's minimum-order handling. In the 2026-11-25 hybrid run ([evidence](evals/confirmation/hybrid-2026-11-25/README.md)), `minimum_reachable` and `staff_asks_details` passed on their first attempt, judged by the throttled Gemini judge (`evals/judge-gemini-throttled.yaml`) because the default Groq judge timed out on Groq's per-minute token cap. In the same run `happy_path` failed on the judge's conduct score (correct order, no rule violations) and `terse_staff` did not pass (a bot bug: it rewrote its order to match a wrong total the restaurant insisted on). |
 | Latency (end of speech to bot speaking) | Median 2.73 s, P90 3.64 s (n=28, bot on Groq, audio runs) |
 | Local LLM (Ollama, `qwen3:8b`) | Good as the simulated restaurant (2 wrong-total slips in 7 calls, never hung up early). Not reliable as the bot (it invented prices) or the judge. |
-| Unit tests | 240 passing |
+| Unit tests | 285 passing |
 
 Full write-up, with every number linked to its evidence: [docs/results-v1.md](docs/results-v1.md).
 
@@ -187,7 +187,7 @@ tests/                 unit tests
   - Gemini allows about 500 requests a day and 15 a minute. Groq caps tokens per minute and per day.
   - Running the simulated restaurant locally cut Gemini use by about 31% per test call (13.4 vs 19.6 requests).
 - **LLM judges are unreliable,** which is why the code checks decide pass or fail.
-- **Prices are now checked in two places.** The eval compares every price and fee in the report with the restaurant's menu in `evals/expected.yaml` (invented or off-menu items fail). At runtime the engine locks the first price it accepts for each item and the first non-zero fees, refuses later changes unless the bot flags a real correction (`price_corrected` / `corrected`), and tells the bot to ask the restaurant to itemise a total that does not match. The engine still cannot know a price is true: the first price the bot records is trusted.
+- **Prices are now checked in two places.** The eval compares every price and fee in the report with the restaurant's menu in `evals/expected.yaml` (invented or off-menu items fail). At runtime the engine locks the first price it accepts for each item and the first non-zero fees, refuses later changes unless the bot flags a real correction (`price_corrected` / `corrected`), and tells the bot to ask the restaurant to itemise a total that does not match. The engine still cannot know a price is true. It trusts the first price the bot records, and the correction flags are the bot's own claim. The eval's menu check on final prices is the backstop. A correction reprices the whole line, and a tax of 0 is not locked.
 - **Not tested yet:** holding ("one minute please"), silence, real accents and noise. Ingredient claims ("the biryani has beef") can't be verified by code.
 
 ## Next steps

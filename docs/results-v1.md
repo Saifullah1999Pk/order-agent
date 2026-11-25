@@ -415,3 +415,7 @@ Rescore of every saved report.json (25 files, all in `evals/confirmation/all-oll
 | minimum_reachable 20261124-182645 attempt 1 (ordered) | biryani 800 vs 900 |
 
 One more (terse_staff 20261123-185933 attempt 3, call_dropped) gains a price violation but already failed. Verified by unit tests only; no bot or API run yet, so how the engine guard changes real conversations is untested.
+
+Notes on scope:
+- happy_path 20261123-185933 attempt 3 was **not** one of the v1 passes. In v1 it already failed, on judge conduct 0.67 (section 2). It "passed the old checks" only in the sense of the deterministic report checks.
+- This rescore covers only the 25 saved report files, so it is a **lower bound**. The v1 passes for happy_path and price_drop_optional came from a re-run (20261123-192810) whose reports were not saved, so they cannot be re-checked against the menu. The v1 passes with saved reports still pass: sold_out_substitute, sold_out_no_substitute, price_over_budget and pushes_forbidden. late_delivery and minimum_unreachable (not_ordered, no order placed) have no saved reports either. Because bots demonstrably invented prices in the same period, the v1 headline of 8 of 11 is best read as "4 re-verified against the menu, plus 4 that cannot be re-checked (2 of them placed no order)".
