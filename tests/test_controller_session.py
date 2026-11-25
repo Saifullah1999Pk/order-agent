@@ -162,3 +162,97 @@ async def test_failed_write_leaves_no_report_so_a_later_call_retries(brief, tmp_
     assert c.report is None and c.report_path is None and not c.finished
     monkeypatch.setattr(session_module, "write_report", real)
     assert (await c.drop()).exists()
+
+
+def _spy(c, log):
+    real = c.finish
+
+    async def finish(outcome, reason):
+        log.append("finish")
+        return await real(outcome, reason)
+
+    c.finish = finish
+
+
+class OrderedHooks(FakeHooks):
+    """Records hangup together with whether the report file existed at that moment."""
+
+    def __init__(self, log, reports_dir):
+        super().__init__(log)
+        self._dir = reports_dir
+
+    async def hangup(self):
+        self.log.append("hangup")
+        self.log.append(("report_exists_at_hangup", bool(list(self._dir.glob("*.json")))))
+
+
+async def test_perform_dispatches_without_touching_hooks(brief, tmp_path):
+    log = []
+    c = _controller(brief, tmp_path, hooks=FakeHooks(log))
+    out = await c.perform("add_item", {"name": "chicken biryani", "quantity": 2, "unit_price_pkr": 900})
+    assert out.ok and out.run_llm and not out.ended
+    assert log == []
+    assert "Refused" in (await c.perform("nope", {})).message
+
+
+async def test_successful_end_call_replies_then_finishes_then_hangs_up(brief, tmp_path):
+    log = []
+    c = _controller(brief, tmp_path, hooks=OrderedHooks(log, tmp_path))
+    _spy(c, log)
+
+    async def reply(outcome):
+        log.append("reply")
+        assert outcome.ok and not outcome.run_llm and outcome.ended
+
+    out = await c.perform("end_call", _end_args(), reply=reply)
+    assert out.ok and out.ended and not out.run_llm
+    assert log == ["reply", "finish", "hangup", ("report_exists_at_hangup", True)]
+    assert c.report is not None
+
+
+async def test_reply_failure_does_not_skip_end_of_call_work(brief, tmp_path):
+    log = []
+    c = _controller(brief, tmp_path, hooks=OrderedHooks(log, tmp_path))
+    _spy(c, log)
+
+    async def reply(outcome):
+        raise RuntimeError("socket closed")
+
+    out = await c.perform("end_call", _end_args(), reply=reply)
+    assert out.ok
+    assert log[:2] == ["finish", "hangup"]
+
+
+async def test_finish_failure_still_hangs_up_and_does_not_escape(brief, tmp_path):
+    log = []
+    blocked = tmp_path / "not_a_dir"
+    blocked.write_text("x")
+    c = CallController(brief, reports_dir=blocked, now=NOW, hooks=FakeHooks(log))
+    out = await c.perform("end_call", _end_args())
+    assert out.ok and out.ended
+    assert log == [("hangup",)]
+    assert c.report_path is None
+
+
+async def test_refused_end_call_does_not_finish_or_hang_up(brief, tmp_path):
+    log = []
+    c = _controller(brief, tmp_path, hooks=FakeHooks(log))
+    # confirmed-order rule: ending as "ordered" before confirming is refused
+    out = await c.perform("end_call", _end_args("ordered", "bought"))
+    assert not out.ok and out.run_llm and not out.ended
+    assert log == [] and not c.finished
+
+
+async def test_end_call_with_hooks_none_writes_report(brief, tmp_path):
+    c = _controller(brief, tmp_path)
+    out = await c.perform("end_call", _end_args())
+    assert out.ok and out.ended
+    assert c.finished and len(_json_files(tmp_path)) == 1
+
+
+async def test_end_call_after_late_attach_hangs_up_through_new_hooks(brief, tmp_path):
+    c = _controller(brief, tmp_path)
+    log = []
+    c.attach_hooks(FakeHooks(log))
+    await c.perform("end_call", _end_args())
+    assert log == [("hangup",)]

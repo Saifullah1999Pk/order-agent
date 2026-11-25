@@ -5,16 +5,18 @@ do (inject a developer message, hang up). No Pipecat or web-framework imports he
 """
 
 import asyncio
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Literal, Protocol
 
+from loguru import logger
+
 from order_agent.controller.nudge import NUDGE_DELAY_SECS, NUDGE_TEXT
 from order_agent.controller.prompt import build_system_prompt
 from order_agent.controller.toolspecs import TOOL_SPECS, ToolSpec
-from order_agent.controller.tools import ToolOutcome
+from order_agent.controller.tools import ToolDispatcher, ToolOutcome
 from order_agent.model.brief import OrderBrief
 from order_agent.model.report import CallReport, TranscriptLine, build_report, write_report
 from order_agent.model.rules import OrderSession
@@ -62,6 +64,7 @@ class CallController:
         self._nudge_delay_secs = nudge_delay_secs
         self._sleep = sleep
         self._lock = asyncio.Lock()
+        self._dispatcher = ToolDispatcher(self.session)
 
     @property
     def instructions(self) -> str:
@@ -104,3 +107,41 @@ class CallController:
         if self.session.state == "confirmed":
             reason += f" after the order was confirmed (total Rs {self.session.quoted_total_pkr:f})"
         return await self.finish("call_dropped", reason)
+
+    async def perform(
+        self,
+        tool: str,
+        arguments: Mapping | None,
+        reply: Callable[[ToolOutcome], Awaitable[None]] | None = None,
+    ) -> ToolOutcome:
+        """Run one tool call. Never raises. A successful end_call also ends the call.
+
+        Order on a successful end_call: reply to the LLM, write the report, hang up. Each step is
+        attempted even if the one before failed (the failure is logged).
+        """
+        outcome = await self._dispatcher.dispatch(tool, arguments)
+        if tool == "end_call" and outcome.ended:
+            await self._end_call(outcome, arguments or {}, reply)
+        return outcome
+
+    async def _end_call(
+        self,
+        outcome: ToolOutcome,
+        arguments: Mapping,
+        reply: Callable[[ToolOutcome], Awaitable[None]] | None,
+    ) -> None:
+        if reply is not None:
+            try:
+                await reply(outcome)
+            except Exception:
+                logger.exception("Could not send the end_call result; ending the call anyway")
+        try:
+            path = await self.finish(arguments["outcome"], arguments["reason"])
+            logger.info(f"Report written: {path}")
+        except Exception:
+            logger.exception("Could not write the report; the call will still end")
+        if self._hooks is not None:
+            try:
+                await self._hooks.hangup()
+            except Exception:
+                logger.exception("Hangup failed")
