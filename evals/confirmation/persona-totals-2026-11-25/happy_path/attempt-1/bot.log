@@ -18,7 +18,7 @@ INFO:     Uvicorn running on http://localhost:7860 (Press CTRL+C to quit)
    → Disabled transports: daily (install pipecat-ai[daily]), livekit (install pipecat-ai[livekit]), moq (install pipecat-ai[moq]), sip (install pipecat-ai[sip])
    → Allowed origins: all (no restriction)
 
-Looking for dist directory at: c:\Users\Saif\Voice-Agent\order-agent\.venv\Lib\site-packages\pipecat_ai_prebuilt\client\dist
+Looking for dist directory at: <repo>\.venv\Lib\site-packages\pipecat_ai_prebuilt\client\dist
 INFO:     127.0.0.1:63595 - "GET /client/ HTTP/1.1" 200 OK
 INFO:     ::1:63602 - "WebSocket /ws?skip_tts=true" [accepted]
 INFO:     connection open
@@ -58,7 +58,7 @@ How to run the call:
 Speaking style: this is a phone call, so keep every turn short, one or two sentences, natural and polite. Use no lists or markdown. Say numbers the way people say them aloud.[0m
 [32m2026-11-25 15:25:24.441[0m | [34m[1mDEBUG   [0m | [36mpipecat.audio.vad.silero[0m:[36m__init__[0m:[36m169[0m - [34m[1mLoading Silero VAD model...[0m
 [32m2026-11-25 15:25:24.496[0m | [34m[1mDEBUG   [0m | [36mpipecat.audio.vad.silero[0m:[36m__init__[0m:[36m194[0m - [34m[1mLoaded Silero VAD[0m
-[32m2026-11-25 15:25:24.499[0m | [34m[1mDEBUG   [0m | [36mpipecat.audio.turn.smart_turn.local_smart_turn_v3[0m:[36m__init__[0m:[36m69[0m - [34m[1mLoading Local Smart Turn v3.x model from c:\Users\Saif\Voice-Agent\order-agent\.venv\Lib\site-packages\pipecat\audio\turn\smart_turn\data\smart-turn-v3.2-cpu.onnx...[0m
+[32m2026-11-25 15:25:24.499[0m | [34m[1mDEBUG   [0m | [36mpipecat.audio.turn.smart_turn.local_smart_turn_v3[0m:[36m__init__[0m:[36m69[0m - [34m[1mLoading Local Smart Turn v3.x model from <repo>\.venv\Lib\site-packages\pipecat\audio\turn\smart_turn\data\smart-turn-v3.2-cpu.onnx...[0m
 [32m2026-11-25 15:25:24.552[0m | [34m[1mDEBUG   [0m | [36mpipecat.audio.turn.smart_turn.local_smart_turn_v3[0m:[36m__init__[0m:[36m79[0m - [34m[1mLoaded Local Smart Turn v3.x[0m
 [32m2026-11-25 15:25:24.552[0m | [34m[1mDEBUG   [0m | [36mpipecat.processors.frame_processor[0m:[36mlink[0m:[36m705[0m - [34m[1mLinking Pipeline#0::Source -> EvalFastAPIWebsocketInputTransport#0[0m
 [32m2026-11-25 15:25:24.552[0m | [34m[1mDEBUG   [0m | [36mpipecat.processors.frame_processor[0m:[36mlink[0m:[36m705[0m - [34m[1mLinking EvalFastAPIWebsocketInputTransport#0 -> WhisperSTTService#0[0m
@@ -311,7 +311,7 @@ Speaking style: this is a phone call, so keep every turn short, one or two sente
 [32m2026-11-25 15:25:52.635[0m | [34m[1mDEBUG   [0m | [36mpipecat.services.google.llm[0m:[36m_process_context[0m:[36m724[0m - [34m[1mFunction call: end_call:call_8379301610181308086[0m
 [32m2026-11-25 15:25:52.637[0m | [34m[1mDEBUG   [0m | [36mpipecat.processors.metrics.frame_processor_metrics[0m:[36mstart_llm_usage_metrics[0m:[36m337[0m - [34m[1mGoogleLLMService#0 prompt tokens: 2423, completion tokens: 28[0m
 [32m2026-11-25 15:25:52.638[0m | [34m[1mDEBUG   [0m | [36mpipecat.services.llm_service[0m:[36m_run_function_call[0m:[36m2194[0m - [34m[1mGoogleLLMService#0 Calling function [end_call:call_8379301610181308086] with arguments {'outcome': 'ordered', 'reason': 'Order successfully confirmed and within budget.'}[0m
-[32m2026-11-25 15:25:52.639[0m | [1mINFO    [0m | [36morder_agent.call[0m:[36mon_end[0m:[36m178[0m - [1mReport written: C:\Users\Saif\Voice-Agent\order-agent\evals\results\20261125-152516\happy_path\attempt-1\20261125-152522.json[0m
+[32m2026-11-25 15:25:52.639[0m | [1mINFO    [0m | [36morder_agent.call[0m:[36mon_end[0m:[36m178[0m - [1mReport written: <repo>\evals\results\20261125-152516\happy_path\attempt-1\20261125-152522.json[0m
 [32m2026-11-25 15:25:52.640[0m | [34m[1mDEBUG   [0m | [36mpipecat.processors.aggregators.llm_response_universal[0m:[36m_handle_function_calls_started[0m:[36m2304[0m - [34m[1mLLMAssistantAggregator#0 FunctionCallsStartedFrame: ['end_call:call_8379301610181308086'][0m
 [32m2026-11-25 15:25:52.642[0m | [1mINFO    [0m | [36m__main__[0m:[36mon_assistant_turn[0m:[36m208[0m - [1mTranscript agent: [0m
 [32m2026-11-25 15:25:52.642[0m | [34m[1mDEBUG   [0m | [36mpipecat.processors.aggregators.llm_response_universal[0m:[36m_handle_function_call_in_progress[0m:[36m2309[0m - [34m[1mLLMAssistantAggregator#0 FunctionCallInProgressFrame: [end_call:call_8379301610181308086][0m

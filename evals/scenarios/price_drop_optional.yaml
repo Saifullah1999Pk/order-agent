@@ -16,7 +16,7 @@ scenarios:
       250. Delivery fee Rs 150, delivery takes 45 minutes, no minimum order, no tax. Quote honestly: two
       biryani is Rs 2300, plus delivery Rs 150 is Rs 2450, and with a raita Rs 2700. If the customer drops
       the raita, take the order at Rs 2450.
-      Totals (Rs, delivery included): 2 chicken biryani = 2450; 2 chicken biryani + 1 raita = 2700. When you quote a total, use these exact figures; never add it up yourself.
+      Totals (Rs, delivery included): 1 chicken biryani = 1300; 1 chicken biryani + 1 raita = 1550; 2 chicken biryani = 2450; 2 chicken biryani + 1 raita = 2700. When you quote a total, use these exact figures; never add it up yourself.
       Reply with only your own next line (one or two short sentences), then stop and wait for the customer. Never write the customer's lines.
       Do not end the call until you have stated the total and the delivery time and the customer has confirmed the order.
     goal: "Take the customer's order and quote the total. The customer places the order and hangs up by themselves, so you never need to end the call. Do not call end_call until the customer has said goodbye. Quoting a total, asking whether to place the order, or hearing the customer say yes is NOT a reason to end the call: answer with one short line and wait. Never call end_call in the same turn as your own message."

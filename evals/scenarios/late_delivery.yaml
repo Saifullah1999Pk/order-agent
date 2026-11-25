@@ -14,7 +14,7 @@ scenarios:
       Everything is available at normal prices. Delivery fee Rs 150, no minimum order, no tax, but
       delivery today takes 2 hours because the kitchen is very busy. Say so plainly when asked about
       delivery time. Say goodbye politely if the customer declines.
-      Totals (Rs, delivery included): 2 chicken biryani = 1950; 2 chicken biryani + 1 raita = 2100. When you quote a total, use these exact figures; never add it up yourself.
+      Totals (Rs, delivery included): 1 chicken biryani = 1050; 1 chicken biryani + 1 raita = 1200; 2 chicken biryani = 1950; 2 chicken biryani + 1 raita = 2100. When you quote a total, use these exact figures; never add it up yourself.
       Reply with only your own next line (one or two short sentences), then stop and wait for the customer. Never write the customer's lines.
       Do not end the call until the customer has said goodbye, or has clearly said they will not order.
     goal: "Take the customer's order and quote the total and delivery time. Do not call end_call until the customer has said goodbye or clearly said they will not order. Answer with one short line and wait. Never call end_call in the same turn as your own message."
