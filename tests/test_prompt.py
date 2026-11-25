@@ -86,3 +86,9 @@ def test_prompt_minimum_guidance_is_honest_about_budget(brief):
     assert "has already checked the budget" not in text
     assert "if it only says to ask a price, ask" in text
     assert "follow the next result" in text
+
+
+def test_prompt_forbids_bending_prices_to_match_total(brief):
+    prompt = build_system_prompt(brief)
+    assert "never change prices, fees or items to make a total match" in prompt
+    assert "ask them to itemise" in prompt

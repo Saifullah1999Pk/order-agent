@@ -448,3 +448,72 @@ def test_harness_status_with_report_checks_violations_first():
     assert harness_status_with_report("quota_error", dropped, exp) == "quota_error"
     assert harness_status_with_report("quota_error", None, exp) == "quota_error"
     assert harness_status_with_report("error", dropped, exp) == "error"
+
+
+# -- price check against the restaurant's stated menu (Layer 1) --------------------------
+
+MENU = {"chicken biryani": 900, "chicken karahi": 1400, "chicken pulao": 800, "raita": 150}
+FEES = {"delivery": 150, "tax": 0}
+
+
+def priced(**over) -> Expected:
+    return happy(menu_pkr=MENU, fees_pkr=FEES, **over)
+
+
+def test_expected_menu_keys_are_optional():
+    assert happy().menu_pkr is None and happy().fees_pkr is None
+
+
+def test_correct_prices_pass_menu_check():
+    assert check_report(make_report(), priced()) == []
+
+
+def test_menu_matches_names_like_the_engine():
+    items = [item("Chicken Biryanis", "2", "900")]
+    assert check_report(make_report(items=items), priced()) == []
+
+
+def test_invented_price_fails():
+    items = [item("chicken biryani", "2", "1350")]
+    violations = check_report(make_report(items=items, total="2850", quoted="2850"), priced())
+    assert "price for chicken biryani was 1350, menu says 900" in violations
+
+
+def test_invented_fee_and_tax_fail():
+    r = make_report(delivery_fee_pkr=Decimal("200"), tax_pkr=Decimal("500"), total="2500", quoted="2500")
+    violations = check_report(r, priced())
+    assert "delivery fee was 200, menu says 150" in violations
+    assert "tax was 500, menu says 0" in violations
+
+
+def test_item_not_on_menu_fails():
+    items = [item("chicken biryani", "2", "900"), item("mutton karahi", "1", "1800", line="x")]
+    violations = check_report(make_report(items=items, total="3750", quoted="3750"), priced())
+    assert any("mutton karahi" in v and "not on the menu" in v for v in violations)
+
+
+def test_no_menu_keys_skips_price_check():
+    items = [item("chicken biryani", "2", "1350")]
+    r = make_report(items=items, total="2850", quoted="2850")
+    assert not any("menu" in v for v in check_report(r, happy()))
+
+
+def test_unrecorded_fees_on_an_unordered_call_are_not_flagged():
+    r = make_report(outcome="not_ordered", quoted=None, total="0", items=[], delivery_fee_pkr=Decimal("0"))
+    assert not any("menu says" in v for v in check_report(r, priced(outcome="not_ordered", must_include=[])))
+
+
+def test_terse_staff_bent_cart_fails_with_clear_violations():
+    # Hybrid 2026-11-25 terse_staff: the bot matched the restaurant's wrong 1350 by re-adding a
+    # biryani at 1350 and setting the delivery fee to 0.
+    items = [item("chicken biryani", "1", "1350")]
+    r = make_report(items=items, total="1350", quoted="1350", delivery_fee_pkr=Decimal("0"))
+    violations = check_report(r, priced())
+    assert "price for chicken biryani was 1350, menu says 900" in violations
+    assert "delivery fee was 0, menu says 150" in violations
+
+
+def test_every_committed_scenario_has_menu_and_fees():
+    for name, exp in load_expected().items():
+        assert exp.menu_pkr, name
+        assert exp.fees_pkr and set(exp.fees_pkr) == {"delivery", "tax"}, name
