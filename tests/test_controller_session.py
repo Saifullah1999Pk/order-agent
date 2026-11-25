@@ -503,3 +503,20 @@ async def test_attach_hooks_after_finish_is_accepted_and_inert(brief, tmp_path):
     c.llm_turn_ended("")
     await _settle()
     assert fake.log == []
+
+
+async def test_callstate_shim(brief, tmp_path):
+    from order_agent.call import CallState, make_on_end
+    from order_agent.config import Settings
+
+    settings = Settings(google_api_key="test-key", reports_dir=tmp_path)
+    state = CallState(brief, settings, NOW)
+    assert isinstance(state, CallController)
+    assert state.settings is settings
+    assert state.started_at == NOW and state.transcript == []
+    assert state.on_disconnect.__func__ is CallController.drop or state.on_disconnect == state.drop
+    state.add_line("agent", "hi")
+    path = await state.on_disconnect()
+    assert path == state.report_path and path.parent == tmp_path
+    assert await state.finish("not_ordered", "again") == path
+    assert callable(make_on_end)

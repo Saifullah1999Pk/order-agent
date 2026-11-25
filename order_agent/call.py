@@ -3,17 +3,15 @@
 No Pipecat imports here.
 """
 
-import asyncio
 from collections.abc import Awaitable, Callable
 from datetime import datetime
 from pathlib import Path
-from typing import Literal
 
 from loguru import logger
 
 from order_agent.brief import OrderBrief
 from order_agent.config import Settings
-from order_agent.report import TranscriptLine, build_report, write_report
+from order_agent.report import write_report
 from order_agent.controller.nudge import (  # noqa: F401 - re-exported
     MAX_NUDGES,
     NUDGE_DELAY_SECS,
@@ -22,7 +20,7 @@ from order_agent.controller.nudge import (  # noqa: F401 - re-exported
     NudgeTracker,
     should_nudge,
 )
-from order_agent.rules import OrderSession
+from order_agent.controller.session import CallController
 
 
 def llm_http_options() -> dict:
@@ -37,34 +35,18 @@ def llm_http_options() -> dict:
     }
 
 
-class CallState:
+class CallState(CallController):
+    """Compatibility shim for the old Settings-based constructor; the logic lives in CallController."""
+
     def __init__(self, brief: OrderBrief, settings: Settings, now: datetime):
+        super().__init__(brief, reports_dir=settings.reports_dir, now=now)
         self.settings = settings
-        self.session = OrderSession(brief, now)
-        self.transcript: list[TranscriptLine] = []
-        self.started_at = now
-        self.report_path: Path | None = None
-        self._lock = asyncio.Lock()
 
-    def add_line(self, role: Literal["agent", "restaurant"], text: str) -> None:
-        self.transcript.append(TranscriptLine(role=role, text=text, at=datetime.now()))
+    on_disconnect = CallController.drop
 
-    async def finish(self, outcome: Literal["ordered", "not_ordered", "call_dropped"], reason: str) -> Path:
-        """Write the report once; later calls (even concurrent ones) return the same path."""
-        async with self._lock:
-            if self.report_path is None:
-                report = build_report(
-                    self.session, outcome, reason, self.transcript, self.started_at, datetime.now()
-                )
-                self.report_path = write_report(report, self.settings.reports_dir)
-            return self.report_path
-
-    async def on_disconnect(self) -> Path:
-        """The call ended; write a call_dropped report unless one already exists."""
-        reason = "call ended without end_call"
-        if self.session.state == "confirmed":
-            reason += f" after the order was confirmed (total Rs {self.session.quoted_total_pkr:f})"
-        return await self.finish("call_dropped", reason)
+    def _write_report(self, report) -> Path:
+        # Resolved through this module so tests that patch call.write_report keep working.
+        return write_report(report, self.reports_dir)
 
 
 def make_on_end(
