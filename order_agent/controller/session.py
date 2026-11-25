@@ -16,7 +16,7 @@ from order_agent.controller.prompt import build_system_prompt
 from order_agent.controller.toolspecs import TOOL_SPECS, ToolSpec
 from order_agent.controller.tools import ToolOutcome
 from order_agent.model.brief import OrderBrief
-from order_agent.model.report import CallReport, TranscriptLine
+from order_agent.model.report import CallReport, TranscriptLine, build_report, write_report
 from order_agent.model.rules import OrderSession
 
 __all__ = ["CallController", "CallHooks", "NudgeDecision", "ToolOutcome"]
@@ -61,6 +61,7 @@ class CallController:
         self._opening_wait_secs = opening_wait_secs
         self._nudge_delay_secs = nudge_delay_secs
         self._sleep = sleep
+        self._lock = asyncio.Lock()
 
     @property
     def instructions(self) -> str:
@@ -81,3 +82,25 @@ class CallController:
         if self._hooks is not None:
             raise RuntimeError("hooks are already attached")
         self._hooks = hooks
+
+    @property
+    def finished(self) -> bool:
+        return self.report_path is not None
+
+    async def finish(self, outcome: Literal["ordered", "not_ordered", "call_dropped"], reason: str) -> Path:
+        """Write the report once; later calls (even concurrent ones) return the same path."""
+        async with self._lock:
+            if self.report_path is None:
+                report = build_report(
+                    self.session, outcome, reason, self.transcript, self.started_at, datetime.now()
+                )
+                self.report_path = write_report(report, self.reports_dir)
+                self.report = report
+            return self.report_path
+
+    async def drop(self) -> Path:
+        """The call ended; write a call_dropped report unless one already exists."""
+        reason = "call ended without end_call"
+        if self.session.state == "confirmed":
+            reason += f" after the order was confirmed (total Rs {self.session.quoted_total_pkr:f})"
+        return await self.finish("call_dropped", reason)

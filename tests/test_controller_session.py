@@ -96,3 +96,69 @@ def test_attach_hooks_when_constructed_with_hooks_raises(brief, tmp_path):
     c = _controller(brief, tmp_path, hooks=FakeHooks())
     with pytest.raises(RuntimeError):
         c.attach_hooks(FakeHooks())
+
+
+def _json_files(tmp_path):
+    return list(tmp_path.glob("*.json"))
+
+
+async def test_finish_writes_once(brief, tmp_path):
+    c = _controller(brief, tmp_path)
+    assert c.report is None and not c.finished
+    first = await c.finish("not_ordered", "x")
+    second = await c.finish("not_ordered", "y")
+    assert first == second == c.report_path
+    assert len(_json_files(tmp_path)) == 1
+    assert c.report is not None and c.report.reason == "x" and c.finished
+
+
+async def test_finish_is_safe_when_called_concurrently(brief, tmp_path):
+    c = _controller(brief, tmp_path)
+    paths = await asyncio.gather(c.finish("not_ordered", "a"), c.drop(), c.finish("not_ordered", "b"))
+    assert len(set(paths)) == 1
+    assert len(_json_files(tmp_path)) == 1
+
+
+async def test_drop_writes_dropped_report(brief, tmp_path):
+    c = _controller(brief, tmp_path)
+    data = json.loads((await c.drop()).read_text(encoding="utf-8"))
+    assert data["outcome"] == "call_dropped"
+    assert data["reason"] == "call ended without end_call"
+
+
+async def test_drop_after_finish_keeps_outcome(brief, tmp_path):
+    c = _controller(brief, tmp_path)
+    await c.finish("not_ordered", "x")
+    data = json.loads((await c.drop()).read_text(encoding="utf-8"))
+    assert data["outcome"] == "not_ordered"
+    assert len(_json_files(tmp_path)) == 1
+
+
+async def test_drop_after_confirm_mentions_confirmed_order_and_total(brief, tmp_path):
+    c = _controller(brief, tmp_path)
+    assert c.session.add_item("chicken biryani", 2, Decimal("900")).ok
+    assert c.session.set_fees(Decimal("150"), Decimal("0")).ok
+    assert c.session.confirm_order(Decimal("1950"), 45).ok
+    data = json.loads((await c.drop()).read_text(encoding="utf-8"))
+    assert data["reason"] == "call ended without end_call after the order was confirmed (total Rs 1950)"
+
+
+async def test_add_line_lands_in_report(brief, tmp_path):
+    c = _controller(brief, tmp_path)
+    c.add_line("restaurant", "Hello")
+    c.add_line("agent", "Hi, I'd like to order.")
+    data = json.loads((await c.finish("not_ordered", "x")).read_text(encoding="utf-8"))
+    assert [t["role"] for t in data["transcript"]] == ["restaurant", "agent"]
+
+
+async def test_failed_write_leaves_no_report_so_a_later_call_retries(brief, tmp_path, monkeypatch):
+    from order_agent.controller import session as session_module
+
+    c = _controller(brief, tmp_path)
+    real = session_module.write_report
+    monkeypatch.setattr(session_module, "write_report", lambda *a, **k: (_ for _ in ()).throw(OSError("full")))
+    with pytest.raises(OSError):
+        await c.finish("not_ordered", "x")
+    assert c.report is None and c.report_path is None and not c.finished
+    monkeypatch.setattr(session_module, "write_report", real)
+    assert (await c.drop()).exists()
