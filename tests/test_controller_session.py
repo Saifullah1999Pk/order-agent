@@ -531,3 +531,21 @@ def test_package_exports_public_api():
     assert pkg.CallHooks is CallHooks
     assert pkg.NudgeDecision is NudgeDecision
     assert pkg.ToolOutcome is ToolOutcome
+
+
+async def test_drop_cancels_pending_nudge_and_opening_even_if_the_report_write_fails(brief, tmp_path, monkeypatch):
+    """Parity with bot.py's disconnect handler, which cancelled the timers before writing the report."""
+    from order_agent.controller import session as session_module
+
+    gate = Gate()
+    log = []
+    c = _controller(brief, tmp_path, hooks=FakeHooks(log), sleep=gate)
+    c.channel_opened()
+    c.llm_turn_ended("")
+    await _settle()
+    monkeypatch.setattr(session_module, "write_report", lambda *a, **k: (_ for _ in ()).throw(OSError("full")))
+    with pytest.raises(OSError):
+        await c.drop()
+    gate.event.set()
+    await _settle()
+    assert log == []

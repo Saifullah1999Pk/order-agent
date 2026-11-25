@@ -110,6 +110,8 @@ class CallController:
 
     async def drop(self) -> Path:
         """The call ended; write a call_dropped report unless one already exists."""
+        self._nudge_scheduler.cancel()  # before the write, even if it fails: nothing fires into a dead call
+        self._opening.cancel()
         reason = "call ended without end_call"
         if self.session.state == "confirmed":
             reason += f" after the order was confirmed (total Rs {self.session.quoted_total_pkr:f})"
