@@ -52,7 +52,7 @@ boundary test), no new domain behaviour.
 | I Headless MVC | PASS | PASS | This feature implements it and adds the enforcing test (FR-009). |
 | II LLM talks, code decides | PASS | PASS | All validation stays in `model/rules.py`. The controller only converts arguments (same refusal text) and forwards. The HTTP head sends explicit actions and cannot bypass the rules engine. Money stays `Decimal`. |
 | III Test-first | PASS | PASS | Each migration step starts RED (new test) then GREEN. Existing tests are not weakened. The only test edits are import-path or constructor changes in steps 5 and 7, listed with reasons (research.md R9). A parity test runs the old and new tool handlers on one argument matrix before the old one is deleted. |
-| IV Evidence | PASS | PASS | SC-004 needs a live `happy_path` run after step 5. README numbers are untouched apart from the layout section. `--rescore` is re-run on committed evidence in step 7 to show classification is unchanged. |
+| IV Evidence | PASS | PASS | SC-004 needs a live `happy_path` run after step 5, compared with the committed baseline `evals/confirmation/unpriced-items-2026-11-25/` run 3 (pass), on the deterministic checks only. README numbers are untouched apart from the layout section. `--rescore` is re-run on committed evidence in step 7 to show classification is unchanged. |
 | V Free, safe, honest | PASS | PASS | FastAPI/uvicorn are already installed. The HTTP head is local-only (127.0.0.1), synthetic briefs, no auth claimed. The evidence scrub rule applies to anything committed. |
 
 Result: **no violations**. Complexity Tracking is empty.
@@ -78,7 +78,7 @@ checked-out git branch is `feat/headless-mvc`. Work and commits stay on `feat/he
 | `llm_factory.py` | Head (voice) | `heads/voice/llm_factory.py` | Pipecat services |
 | `bot.py` | Head (voice) | `heads/voice/pipeline.py`; root `bot.py` stays as a thin entry shim | |
 | `config.py` | App config | stays `order_agent/config.py` | `Settings`, `load_settings`, `pick_model`; imported by heads, eval tooling and entry points only, never by Model or Controller |
-| `eval_config.py`, `eval_llm.py`, `suite.py`, `throttle.py`, `preflight.py` | Eval tooling | `evaltools/` | may import Model; never Controller or Heads. `suite.py` already imports only brief, matching, report |
+| `eval_config.py`, `eval_llm.py`, `suite.py`, `throttle.py`, `preflight.py` | Eval tooling | `evaltools/` (`order_agent/eval_llm.py` stays as a re-export compat module, see below) | may import Model; never Controller or Heads. `suite.py` already imports only brief, matching, report |
 | `run_suite.py`, root `bot.py` | Entry points | unchanged location | imports updated |
 
 ### Exactly what must move out of `bot.py` and `tools.py`
@@ -113,18 +113,20 @@ order_agent/
     brief.py  matching.py  rules.py  report.py
   controller/                   # Layer 2: conversation logic. stdlib + loguru + model
     prompt.py    (build_system_prompt, moved from order_agent/prompt.py)
-    session.py   (CallController, CallHooks, ToolOutcome, NudgeDecision)
+    session.py   (CallController, CallHooks, NudgeDecision; re-exports ToolOutcome)
     nudge.py     (should_nudge, NudgeTracker, NudgeScheduler, NUDGE_TEXT, MAX_NUDGES)
-    tools.py     (ToolDispatcher: arguments -> OrderSession call -> result)
+    tools.py     (ToolDispatcher: arguments -> OrderSession call -> result; defines ToolOutcome)
     toolspecs.py (ToolSpec data for the 7 tools; no Pipecat)
   heads/                        # Layer 3: channel adapters, thin
-    voice/      pipeline.py  tools.py  llm_factory.py  probe.py
+    voice/      pipeline.py  tools.py  llm_factory.py  probe.py  hooks.py  bridge.py
     http_api/   app.py  schemas.py  store.py  __main__.py
+  eval_llm.py                   # compat module: re-exports the factories (YAML configs name this path)
   evaltools/                    # test tooling, not a product layer
     eval_config.py  eval_llm.py  suite.py  throttle.py  preflight.py
 bot.py                          # entry shim: `bot`, `main` from heads.voice.pipeline
 run_suite.py                    # unchanged behaviour; imports from evaltools
 tests/
+  architecture.py               # boundary-check helper (imported as `architecture`, see research R8)
   test_architecture.py          # boundary check
   test_controller_*.py, test_http_head.py (new)
 ```
@@ -135,7 +137,8 @@ Dependencies point inward only: `heads -> controller -> model`. `evaltools -> mo
 ## Controller API (summary; full signatures in [contracts/controller-api.md](contracts/controller-api.md))
 
 `CallController(brief, *, reports_dir, now=None, hooks=None)`; `instructions`; `opening_text`;
-`tool_specs()`; `await perform(tool, arguments, reply=None) -> ToolOutcome`; `add_line(role, text)`;
+`tool_specs()`; `attach_hooks(hooks)` (late binding for heads whose channel objects need the controller
+first, such as the voice head); `await perform(tool, arguments, reply=None) -> ToolOutcome`; `add_line(role, text)`;
 event methods `restaurant_spoke(text)`, `llm_turn_started()`, `function_calls_started()`,
 `llm_turn_ended(content, interrupted) -> NudgeDecision`; `channel_opened()` (starts the opening
 timer); `await finish(outcome, reason)`; `await drop()`; `report`, `report_path`, `state`,
@@ -172,8 +175,11 @@ no `pipecat`, web or LLM module at runtime.
 `ORDER_REPORTS_DIR`. The root `bot.py` keeps exposing `bot()` (Pipecat runner discovery) and `main()`,
 so spawning is unchanged. Reports keep the same `CallReport` schema, so `--rescore` (which reads
 committed report JSON through `CallReport` and `suite.py`) is unaffected. Scenario YAML, judge and
-simulator configs are untouched; only Python import paths inside `run_suite.py` and tests change, in
-step 7.
+simulator configs are untouched. The seven `evals/judge*.yaml` / `simulator-*.yaml` files name factories as
+`order_agent.eval_llm.<factory>`, so `order_agent/eval_llm.py` stays as a compatibility module that
+re-exports every factory from `order_agent/evaltools/eval_llm.py`; a test loads each factory path named in
+those YAMLs. The boundary check allows exactly this one compat module (re-exports only). Only Python import
+paths inside `run_suite.py` and tests change, in step 7.
 
 ## Migration path (8 steps, each commit green)
 
@@ -181,11 +187,11 @@ step 7.
 |---|---|---|---|
 | 1 | Boundary test (model rules) and move `brief matching rules report` to `model/` | `test_architecture` (packages exist, rule checker) | old paths re-export from `model.*` |
 | 2 | Add `controller/toolspecs.py` and `controller/tools.py` (`ToolDispatcher`), additive | dispatcher tests mirroring `test_tools.py` cases | none (old `tools.py` untouched) |
-| 3 | Add `controller/nudge.py`, move `prompt.py` to `controller/prompt.py`, add `CallController`; `call.py` becomes a shim (`CallState` subclass, same constructor) and `prompt.py` re-exports | controller lifecycle, nudge, drop, opening tests; boundary rule covers `controller/prompt.py` | `call.py`, `prompt.py` |
+| 3 | Add `controller/nudge.py`, move `prompt.py` to `controller/prompt.py`, add `CallController` (with `attach_hooks`); `call.py` becomes a shim (`CallState` subclass, same constructor) and `prompt.py` re-exports | controller lifecycle, nudge, drop, opening tests; boundary rule covers `controller/prompt.py` | `call.py`, `prompt.py` |
 | 4 | Add `heads/voice/tools.py` (`build_tools(controller)`) plus a parity test running old `tools.build_tools` and the new one on one argument matrix | parity test | old `tools.py` still used by `bot.py` |
 | 5 | Move the `bot.py` body to `heads/voice/pipeline.py` using the controller; root `bot.py` becomes an entry shim; move `llm_factory.py` and `llm_http_options`; migrate `test_tools`, `test_tool_registration`, `test_llm_factory` to the new API; delete old `tools.py` | fake-hooks event-forwarding tests (restaurant spoke, empty-turn nudge, end_call ordering) | root `bot.py` entry shim only |
 | 6 | HTTP head, additive | scripted `happy_path`, isolation, error codes, import-graph tests | none |
-| 7 | Move eval tooling to `evaltools/`; update `run_suite.py` and test imports; delete remaining shims; tighten the boundary test to the full layer map | tightened `test_architecture` | none |
+| 7 | Move eval tooling to `evaltools/`; update `run_suite.py` and test imports; delete remaining shims except the `eval_llm.py` compat module; tighten the boundary test to the full layer map | tightened `test_architecture` | `eval_llm.py` compat module only |
 | 8 | README architecture section, diagram, layout, "how to add a head" | n/a (docs) | none |
 
 **Riskiest step: 5** (voice pipeline). It is the only step where real-time ordering matters and unit

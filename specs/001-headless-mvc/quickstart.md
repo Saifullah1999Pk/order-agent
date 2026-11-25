@@ -51,7 +51,9 @@ stay silent for 3 s, orders, confirms, ends, and a report appears in `reports/`.
 ```bash
 PYTHONIOENCODING=utf-8 uv run python run_suite.py --only happy_path
 ```
-Expect: pass within the usual attempts using the default setup. Record the result in the PR (evidence
+Expect: no worse on the deterministic checks (outcome, budget, prices, forbidden items, required items)
+than the committed baseline `evals/confirmation/unpriced-items-2026-11-25/` run 3 (`happy_path`: pass).
+Needs the user's go-ahead (API quota). Record the result in the PR (evidence
 scrubbed of keys, account ids and local paths first). Quota or simulator failures are not bot failures
 (Constitution IV).
 

@@ -54,7 +54,7 @@ Idempotent: if the call already ended, returns the existing report. `404` unknow
 { "report": { ...CallReport JSON, same fields as a voice-call report... },
   "summary": "The call ended with the order placed (ordered): ...", "report_path": "reports/20261123-193000.json" }
 ```
-`report_path` is relative to the server's reports dir. `409 report_not_ready` while the call is live;
+`report_path` is relative to the server's reports dir (never an absolute local path). `409 report_not_ready` while the call is live;
 `404` unknown.
 
 ### `DELETE /sessions/{id}`

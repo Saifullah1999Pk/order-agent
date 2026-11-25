@@ -16,6 +16,7 @@ TOOL_SPECS: tuple[ToolSpec, ...]   # add_item, set_price, remove_item, set_fees,
                                    # set_minimum_order, confirm_order, end_call
 
 # order_agent/controller/session.py
+# ToolOutcome is defined in controller/tools.py and re-exported here
 @dataclass(frozen=True)
 class ToolOutcome:
     ok: bool
@@ -46,6 +47,7 @@ class CallController:
     @property
     def opening_text(self) -> str: ...        # "Nobody has spoken yet. Open the call: ..."
     def tool_specs(self) -> tuple[ToolSpec, ...]: ...
+    def attach_hooks(self, hooks: CallHooks) -> None: ...   # late binding; RuntimeError if hooks already set
     def channel_opened(self) -> None: ...     # start opening timer (no-op if hooks is None)
 
     # --- tool actions
@@ -73,6 +75,11 @@ class CallController:
 ```
 
 ## Behaviour rules (all preserved from today)
+
+0. Construction order in the voice head: the controller is created first (`hooks=None`), tools are built
+   from it, then the context, worker and LLM are created, then `controller.attach_hooks(PipecatHooks(context,
+   worker, llm))` is called before the transport can connect. Nudges, opening and hangup are inert until
+   hooks are attached. `attach_hooks` may be called once; a second call raises `RuntimeError`.
 
 1. `perform` never raises. Unknown tool name returns `ToolOutcome(False, "Refused: unknown tool 'x'.")`.
    Bad or missing arguments return the same `Refused: ...` strings as `tools.py` today (for example

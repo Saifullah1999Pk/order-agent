@@ -25,7 +25,7 @@ Frozen dataclass: `name: str`, `description: str`, `properties: dict` (JSON-sche
 `required: list[str]`. Seven instances, copied verbatim from today's `FunctionSchema`s. Validation: names
 are unique and match the dispatcher's handler table (a test asserts both sets are equal).
 
-### `ToolOutcome` (`controller/session.py`)
+### `ToolOutcome` (defined in `controller/tools.py`, re-exported from `controller/session.py`)
 Frozen dataclass: `ok: bool`, `message: str`, `run_llm: bool = True`, `ended: bool = False`.
 `as_payload()` returns `{"ok": ok, "message": message}`, the exact dict the LLM receives today.
 `run_llm` is False only for a successful `end_call`. `ended` is True when the call has ended.
@@ -72,9 +72,21 @@ whole numbers, optional flags).
 
 ## New (HTTP head, `heads/http_api`)
 
-Pydantic request/response models (see `contracts/http-api.md`): `StartSession`, `SessionInfo`,
-`ActionRequest`, `ActionResult`, `TranscriptRequest`, `EndRequest`, `ReportResponse`, `ErrorBody`.
-`SessionStore`: `dict[str, CallController]` with `create`, `get`, `delete`, `count`. Session id is a
+Pydantic request/response models (full shapes in `contracts/http-api.md`):
+
+| Model.field | Constraint |
+|---|---|
+| `StartSession.brief` / `StartSession.brief_name` | exactly one of the two is present; `brief` validates as `OrderBrief` |
+| `StartSession.brief_name` | matches `^[A-Za-z0-9_-]+$` (no path separators) |
+| `StartSession.call_time` | optional datetime |
+| `ActionRequest.tool` | one of the seven `ToolSpec.name` values |
+| `ActionRequest.arguments` | JSON object |
+| `TranscriptRequest.role` | `agent` or `restaurant` |
+| `TranscriptRequest.text` | non-blank |
+| `ReportResponse.report_path` | path relative to the server's reports dir (never absolute) |
+
+Other models: `SessionInfo`, `ActionResult`, `EndRequest`, `ErrorBody`.
+`SessionStore`: `dict[str, CallController]` with `create`, `get`, `delete`, `count`; `SessionStore.max_sessions` defaults to 100. Session id is a
 random uuid4 hex string and carries no meaning.
 
 ## Relationships

@@ -110,6 +110,7 @@ suite.py, run_suite.py, tests/) and `uv.lock`. No NEEDS CLARIFICATION remains.
 - **Why ast not grep**: grep misses `from x import y` aliases and lazy imports inside functions (the
   codebase uses a lazy `from google import genai` in `bot.py` today). `ast.walk` finds imports at any depth.
   Relative imports are resolved using the file's package path, so `from . import x` cannot dodge the rule.
+- **Test helper import**: `tests/` has no `__init__.py` and pytest's default import mode puts `tests/` on `sys.path`, so the helper `tests/architecture.py` is imported as `architecture`. No `tests/__init__.py` is added (it would change how `conftest.py` is imported). Subprocess checks run `python -I`, which needs the project installed in the venv; `uv run` installs it editable (build-system is set), so this holds.
 - **Self-test**: `violations(source: str, layer: str) -> list[str]` is a pure function; tests feed it a
   bad snippet per layer and assert it reports it (proves SC-002), then run it over the real tree.
 - **Runtime check**: one subprocess test imports `order_agent.model` then `order_agent.controller` and
@@ -125,11 +126,15 @@ messages and in `tasks.md`:
 |---|---|---|
 | `test_tools.py`, `test_tool_registration.py`, `test_llm_factory.py` | build tools through `heads.voice.tools.build_tools(controller)`; the `Harness` constructs a `CallController` | `build_tools(session, on_end)` is replaced by a controller-based API. Same calls, same expected results |
 | `test_prompt.py` | none in step 3 (shim); import from `order_agent.controller.prompt` in step 7 | module moved to the Controller (instructions are about how the LLM is spoken to, not domain rules) |
-| `test_call.py` | none in step 3 (shim keeps `CallState(brief, settings, now)`); in step 7 import from `order_agent.controller` | module moved |
+| `test_call.py` (the two `make_on_end` tests, around lines 90 and 104) | ported in step 5 to `CallController.perform("end_call")` before `make_on_end` is deleted: same assertions (report written, pipeline end still pushed when the write fails), new call path | `make_on_end` is replaced by the controller's end-of-call sequence |
+| `test_call.py` (rest) | none in step 3 (shim keeps `CallState(brief, settings, now)`); in step 7 import from `order_agent.controller` | module moved |
 | `test_brief/matching/rules_*/report.py` | none in step 1 (shims); import path updated in step 7 | module moved |
-| `test_suite.py`, `test_eval_config.py`, `test_eval_llm.py`, `test_preflight.py`, `test_throttle.py`, `test_persona_totals.py` | import path updated in step 7 | eval tooling moved to `evaltools/` |
+| `test_suite.py`, `test_eval_config.py`, `test_eval_llm.py` (imports the new `evaltools` path; `order_agent.eval_llm` stays importable), `test_preflight.py`, `test_throttle.py`, `test_persona_totals.py` | import path updated in step 7 | eval tooling moved to `evaltools/` |
 
 ## R10. Eval suite and rescore compatibility
+
+- The judge and simulator YAMLs name factories by dotted path (`order_agent.eval_llm.groq_classifier`, `gemini_llm`, `gemini_native_llm`, `ollama_classifier`, `groq_llm`, ...). Decision: keep `order_agent/eval_llm.py` as a re-export compat module so the YAMLs, README and `evals/CONFIRMATION.md` stay valid. Rejected: editing the YAMLs and docs, which breaks users' own copies of those configs (FR-010).
+- SC-004 baseline: `evals/confirmation/unpriced-items-2026-11-25/` run 3 (`happy_path`: pass). No new pre-change live run is made (saves quota); T033 compares on deterministic checks only (Constitution IV).
 
 - `run_suite.py` only needs `bot.py --port` to start a Pipecat runner serving `/api/offer` on the eval
   transport. The root `bot.py` keeps `bot` and `main` exported, so Pipecat runner discovery and the

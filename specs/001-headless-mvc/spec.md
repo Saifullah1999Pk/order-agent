@@ -154,8 +154,10 @@ branch and confirm the check fails. Remove it and confirm the check passes.
 - **SC-003**: A complete scripted `happy_path`-equivalent order succeeds through the HTTP head with no
   speech models or Pipecat pipeline loaded, and yields a report with the same fields as a voice-call
   report.
-- **SC-004**: A live `happy_path` eval with the default setup passes within the usual attempts after
-  the restructure, matching pre-restructure behaviour.
+- **SC-004**: A live `happy_path` eval with the default setup, run after the restructure, is no worse on
+  the deterministic checks (outcome, budget, prices, forbidden items, required items) than the committed
+  baseline `evals/confirmation/unpriced-items-2026-11-25/` run 3 (`happy_path`: pass). Judge-only
+  (soft quality) differences, quota failures and simulator failures do not count against it.
 - **SC-005**: The voice head contains zero business-rule logic. Every rule decision is made by
   Model/Controller code, confirmed in the review checklist.
 - **SC-006**: A newcomer can identify the layer of every top-level module from the README

@@ -14,6 +14,12 @@ Each rule lists forbidden import prefixes (matched on dotted module names, so `p
 | `evaltools/` | `pipecat` (eval classes), `yaml`, `dotenv`, `loguru` | `model`, `config`, `evaltools` | `order_agent.controller`, `order_agent.heads` |
 
 Rules the table encodes:
+- No head may import `order_agent.model.rules` or `order_agent.model.matching` (SC-005: the rules engine is
+  reached only through the Controller). Heads may import `model.brief` (to load a brief) and
+  `model.report` (to read or summarise a report).
+- One compat module is allowed outside the layers: `order_agent/eval_llm.py`, which may contain only
+  re-export imports from `order_agent.evaltools.eval_llm` (a test checks this with `ast`). All other
+  flat modules besides `__init__.py` and `config.py` fail the classification test once step 7 is done.
 - `controller/prompt.py` (instructions for the LLM) lives in the Controller; the Model holds domain and
   rules only (`brief`, `matching`, `rules`, `report`).
 - Dependencies point inward only: `heads -> controller -> model`. No inner layer imports an outer one.
@@ -44,7 +50,8 @@ Tests:
    outer layer) each yield at least one violation; a clean snippet yields none. This is the SC-002
    proof that the check fails on a violation.
 3. `test_every_module_is_classified`: every `*.py` under `order_agent/` is in a layer directory, is
-   `order_agent/__init__.py`, or is `order_agent/config.py`. A new top-level module fails the test until
+   `order_agent/__init__.py`, is `order_agent/config.py`, or is the allowed compat module
+   `order_agent/eval_llm.py` (re-exports only). A new top-level module fails the test until
    someone assigns it a layer (this keeps SC-006 true).
 4. `test_runtime_import_graph` (subprocess, `python -I -c`): import `order_agent.model`, then
    `order_agent.controller`; assert none of `pipecat`, `fastapi`, `starlette`, `uvicorn`, `google`,
