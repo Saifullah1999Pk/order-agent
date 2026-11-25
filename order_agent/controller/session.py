@@ -75,3 +75,9 @@ class CallController:
 
     def add_line(self, role: Literal["agent", "restaurant"], text: str) -> None:
         self.transcript.append(TranscriptLine(role=role, text=text, at=datetime.now()))
+
+    def attach_hooks(self, hooks: CallHooks) -> None:
+        """Late binding: the voice head builds the controller before the objects its hooks need."""
+        if self._hooks is not None:
+            raise RuntimeError("hooks are already attached")
+        self._hooks = hooks

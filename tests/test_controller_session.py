@@ -57,3 +57,42 @@ def test_nudge_decision_defaults():
 
 def test_tool_outcome_is_reexported():
     assert ToolOutcome is ToolsToolOutcome
+
+
+class FakeHooks:
+    def __init__(self, log=None):
+        self.log = log if log is not None else []
+
+    async def inject(self, text):
+        self.log.append(("inject", text))
+
+    async def hangup(self):
+        self.log.append(("hangup",))
+
+
+async def _no_sleep(_secs):
+    return None
+
+
+def _end_args(outcome="not_ordered", reason="done"):
+    return {"outcome": outcome, "reason": reason}
+
+
+async def test_attach_hooks_twice_raises(brief, tmp_path):
+    c = _controller(brief, tmp_path)
+    c.attach_hooks(FakeHooks())
+    with pytest.raises(RuntimeError):
+        c.attach_hooks(FakeHooks())
+
+
+def test_attach_hooks_stores_hooks(brief, tmp_path):
+    c = _controller(brief, tmp_path)
+    fake = FakeHooks()
+    c.attach_hooks(fake)
+    assert c._hooks is fake
+
+
+def test_attach_hooks_when_constructed_with_hooks_raises(brief, tmp_path):
+    c = _controller(brief, tmp_path, hooks=FakeHooks())
+    with pytest.raises(RuntimeError):
+        c.attach_hooks(FakeHooks())
