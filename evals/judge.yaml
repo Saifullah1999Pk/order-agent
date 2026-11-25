@@ -1,26 +1,32 @@
 # Default judge: Groq openai/gpt-oss-20b, throttled for the free tier.
-# Why: Pipecat's judge fires ~7 classifier questions at once (plus explainer calls),
-# each carrying the whole transcript (~2-3k tokens). Groq's free tier allows 8000
-# tokens/minute per model, so un-throttled calls hit the cap and time out.
-# The throttle runs one call at a time, >= 20 s apart (~3 questions/min ~ 8000 TPM),
-# and retries rate-limit errors with backoff (15 s, 30 s, 60 s).
-# Consequence: a full judgement takes a few minutes per call. timeout_s is long
-# because queue wait counts toward Pipecat's 10 s classifier timeout.
-# Eval and explainer have the same model + settings, so they share one limiter.
+# Why: Pipecat's judge fires ~7 classifier questions at once (1 goal question + 1 per
+# bot turn), each carrying the whole transcript (~2.5-3.4k tokens in, plus a JSON
+# answer out). Groq's free tier allows 8000 tokens/minute per model, so un-throttled
+# calls hit the cap and time out.
+# The throttle runs one call at a time, >= 30 s apart (~2 questions/min), and retries
+# rate-limit errors with backoff (15 s, 30 s, 60 s); long transcripts rely on that retry.
+# Consequence: a full judgement takes ~2-5 minutes per call. timeout_s is long
+# because queue wait counts toward Pipecat's 10 s classifier timeout (at 30 s spacing,
+# 600 s covers ~20 questions).
+# Only the `eval:` block is read by Pipecat 1.17.0. Its explainer is the classifier's
+# own LLM, so the explainer shares this throttled service and its limiter.
+# The explainer's own timeout is a fixed 60 s that includes queue wait, so an
+# explanation can occasionally come back empty; the verdict still stands.
 eval:
   factory: order_agent.eval_llm.groq_classifier  # LLMClassifier with timeout_s
   model: openai/gpt-oss-20b
   reasoning_effort: low
   max_concurrency: 1
-  min_interval_s: 20
+  min_interval_s: 30
   max_retries: 3
   retry_base_s: 15
-  timeout_s: 300
+  timeout_s: 600
+# explainer: ignored by Pipecat 1.17.0 (kept for documentation only)
 explainer:
-  factory: order_agent.eval_llm.groq_llm  # must be a service, not a classifier
+  factory: order_agent.eval_llm.groq_llm
   model: openai/gpt-oss-20b
   reasoning_effort: low
   max_concurrency: 1
-  min_interval_s: 20
+  min_interval_s: 30
   max_retries: 3
   retry_base_s: 15

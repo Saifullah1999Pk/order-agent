@@ -89,22 +89,19 @@ def test_default_ollama_persona_keeps_reasoning_effort_none():
 
 
 def test_committed_default_judge_is_throttled_groq(monkeypatch):
-    import yaml
+    from pipecat.services.groq.llm import GroqLLMService
 
     from order_agent.eval_llm import ThrottledOpenAILLMService
 
     monkeypatch.setenv("GROQ_API_KEY", "groq-test")
     monkeypatch.setenv("GOOGLE_API_KEY", "test-key")
-    j = apply_eval_configs(load(), None, None).judge  # Pipecat passes the eval block through
+    j = apply_eval_configs(load(), None, None).judge  # Pipecat reads only the eval block
     assert j["factory"] == "order_agent.eval_llm.groq_classifier"
     assert j["model"] == "openai/gpt-oss-20b"
-    assert (j["max_concurrency"], j["min_interval_s"], j["max_retries"], j["retry_base_s"]) == (1, 20, 3, 15)
-    assert j["timeout_s"] >= 300
+    assert (j["max_concurrency"], j["min_interval_s"], j["max_retries"], j["retry_base_s"]) == (1, 30, 3, 15)
+    assert j["timeout_s"] == 600
     clf = classifier_from_config(j, where="judge.eval")
-    assert clf._timeout >= 300
-    assert isinstance(clf._llm, ThrottledOpenAILLMService)
-    # the explainer block uses the same limiter, so the two never run in parallel
-    ex = yaml.safe_load((ROOT / "evals" / "judge.yaml").read_text(encoding="utf-8"))["explainer"]
-    assert ex["factory"] == "order_agent.eval_llm.groq_llm"
-    exp = llm_service_from_config(ex, where="judge.explainer")
-    assert clf._llm._throttle is exp._throttle
+    assert clf._timeout == 600
+    # Pipecat's judge uses classifier.llm as the explainer, so it shares this throttled service
+    assert isinstance(clf.llm, ThrottledOpenAILLMService)
+    assert isinstance(clf.llm, GroqLLMService)

@@ -132,7 +132,7 @@ Useful options:
 | `--rescore evals/results/<run>` | Re-classifies a saved run. Makes no new calls. |
 | `--simulator FILE` / `--judge FILE` | Swaps the restaurant or judge model for one run. Files are checked before any bot starts. |
 
-The default judge (`evals/judge.yaml`) is throttled for Groq's free 8000 tokens/minute cap: the judge asks ~7 questions per call, each carrying the whole transcript, so they are sent one at a time, 20 s apart, with 429 retries. A full judgement therefore takes a few minutes per call. `evals/judge-gemini-throttled.yaml` is a rate-limited Gemini alternative.
+The default judge (`evals/judge.yaml`) is throttled for Groq's free 8000 tokens/minute cap: the judge asks ~7 questions per call, each carrying the whole transcript, so they are sent one at a time, 30 s apart, with 429 retries. A full judgement therefore takes ~2-5 minutes per call. An explanation can occasionally come back empty (Pipecat's 60 s explainer timeout includes queue wait); the verdict still stands. `evals/judge-gemini-throttled.yaml` is a rate-limited Gemini alternative.
 
 Fully local run (bot, restaurant and judge all on Ollama):
 
