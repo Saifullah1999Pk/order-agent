@@ -133,3 +133,65 @@ async def test_confirm_order_valid_matches_session(dispatcher, brief):
     outcome = await dispatcher.dispatch("confirm_order", {"quoted_total_pkr": 1800, "delivery_minutes": 30})
     expected = twin.confirm_order(Decimal("1800"), 30)
     assert (outcome.ok, outcome.message) == (expected.ok, expected.message)
+
+
+async def test_end_call_success_stops_llm_and_marks_ended(dispatcher):
+    outcome = await dispatcher.dispatch("end_call", {"outcome": "not_ordered", "reason": "sold out"})
+    assert outcome.ok is True
+    assert outcome.run_llm is False and outcome.ended is True
+
+
+async def test_end_call_refused_keeps_llm_running(dispatcher):
+    outcome = await dispatcher.dispatch("end_call", {"outcome": "ordered", "reason": "done"})
+    assert outcome.ok is False
+    assert outcome.run_llm is True and outcome.ended is False
+
+
+async def test_end_call_blank_reason_refused(dispatcher):
+    outcome = await dispatcher.dispatch("end_call", {"outcome": "not_ordered", "reason": " "})
+    assert outcome.message == "Refused: Missing or invalid 'reason': it must be non-empty text."
+    assert outcome.run_llm is True and outcome.ended is False
+
+
+@pytest.mark.parametrize("bad", ["not a dict", 5, ["a"]])
+@pytest.mark.parametrize(
+    "tool",
+    ["add_item", "set_price", "remove_item", "set_fees", "set_minimum_order", "confirm_order", "end_call"],
+)
+async def test_non_dict_arguments_get_one_refusal(dispatcher, session, tool, bad):
+    outcome = await dispatcher.dispatch(tool, bad)
+    assert outcome.ok is False
+    assert outcome.message.startswith("Refused: could not read the arguments (")
+    assert session.items == []
+
+
+async def test_none_arguments_refused_without_raising(dispatcher):
+    for tool in ("add_item", "end_call"):
+        outcome = await dispatcher.dispatch(tool, None)
+        assert outcome.ok is False and outcome.message.startswith("Refused:")
+
+
+async def test_unknown_tool_refused(dispatcher):
+    outcome = await dispatcher.dispatch("launch_missiles", {})
+    assert outcome.ok is False and outcome.message.startswith("Refused:")
+    assert "launch_missiles" in outcome.message
+
+
+async def test_session_exception_becomes_refusal(dispatcher, session, monkeypatch):
+    def boom(*a, **k):
+        raise RuntimeError("kaboom")
+
+    monkeypatch.setattr(session, "add_item", boom)
+    outcome = await ToolDispatcher(session).dispatch("add_item", {"name": "x", "quantity": 1})
+    assert outcome.ok is False
+    assert outcome.message == "Refused: internal error (kaboom). Try again or end the call."
+
+
+async def test_end_call_session_exception_becomes_refusal(session, monkeypatch):
+    def boom(*a, **k):
+        raise RuntimeError("kaboom")
+
+    monkeypatch.setattr(session, "end", boom)
+    outcome = await ToolDispatcher(session).dispatch("end_call", {"outcome": "not_ordered", "reason": "x"})
+    assert outcome.ok is False and outcome.run_llm is True and outcome.ended is False
+    assert outcome.message == "Refused: internal error (kaboom)."

@@ -9,6 +9,8 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 
+from loguru import logger
+
 from order_agent.model.rules import OrderSession
 
 
@@ -108,10 +110,44 @@ class ToolDispatcher:
         }
 
     async def dispatch(self, tool: str, arguments: Mapping | None) -> ToolOutcome:
-        convert, act = self._handlers[tool]
+        """Never raises: every failure becomes exactly one ``ok=False`` outcome."""
+        if tool == "end_call":
+            return self._end_call(arguments)
+        handler = self._handlers.get(tool)
+        if handler is None:
+            return ToolOutcome(ok=False, message=f"Refused: unknown tool {tool!r}.")
+        convert, act = handler
         try:
             args = convert(arguments or {})
         except _BadArgument as exc:
             return _refusal(exc)
-        result = act(*args)
-        return ToolOutcome(ok=result.ok, message=result.message)
+        except Exception as exc:  # noqa: BLE001 - e.g. arguments that are not a dict
+            logger.exception("tool argument conversion failed")
+            return ToolOutcome(ok=False, message=f"Refused: could not read the arguments ({exc}).")
+        try:
+            result = act(*args)
+            return ToolOutcome(ok=result.ok, message=result.message)
+        except Exception as exc:  # noqa: BLE001 - the LLM must always get an answer
+            logger.exception("tool handler failed")
+            return ToolOutcome(ok=False, message=f"Refused: internal error ({exc}). Try again or end the call.")
+
+    def _end_call(self, arguments: Mapping | None) -> ToolOutcome:
+        """Only converts and asks the session; end-of-call work belongs to CallController."""
+        try:
+            arguments = arguments or {}
+            args = (_text(arguments, "outcome"), _text(arguments, "reason"))
+        except _BadArgument as exc:
+            return _refusal(exc)
+        except Exception as exc:  # noqa: BLE001 - e.g. arguments that are not a dict
+            logger.exception("end_call argument conversion failed")
+            return ToolOutcome(ok=False, message=f"Refused: could not read the arguments ({exc}).")
+        try:
+            result = self.session.end(*args)
+        except Exception as exc:  # noqa: BLE001
+            logger.exception("end_call failed")
+            return ToolOutcome(ok=False, message=f"Refused: internal error ({exc}).")
+        # A successful end must not trigger another inference (a second goodbye racing the
+        # pipeline end). A refusal still lets the LLM respond so it can adapt.
+        if result.ok:
+            return ToolOutcome(ok=True, message=result.message, run_llm=False, ended=True)
+        return ToolOutcome(ok=False, message=result.message)
