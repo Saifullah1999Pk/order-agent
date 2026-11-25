@@ -15,6 +15,7 @@ scenarios:
       order of Rs 2200 on the food (before delivery fee). Mention the minimum when the customer asks about
       it or when the food total is below it. Two biryani alone is Rs 1800. Accept the order as soon as the
       food total is at least Rs 2200.
+      Totals (Rs, delivery included): 2 chicken biryani = 1950; 2 chicken biryani + 1 raita = 2100; 2 chicken biryani + 2 raita = 2250; 2 chicken biryani + 3 raita = 2400; 1 chicken biryani + 1 chicken karahi = 2450. When you quote a total, use these exact figures; never add it up yourself.
       Reply with only your own next line (one or two short sentences), then stop and wait for the customer. Never write the customer's lines.
       Do not end the call until you have stated the total and the delivery time and the customer has confirmed the order.
     goal: "Take the customer's order, meet the minimum order, quote the total. The customer places the order and hangs up by themselves, so you never need to end the call. Do not call end_call until the customer has said goodbye. Quoting a total, asking whether to place the order, or hearing the customer say yes is NOT a reason to end the call: answer with one short line and wait. Never call end_call in the same turn as your own message."

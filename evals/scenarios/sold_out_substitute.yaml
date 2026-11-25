@@ -15,6 +15,7 @@ scenarios:
       customer asks for a substitute, offer chicken karahi at Rs 1100 first. Delivery fee Rs 150, delivery
       takes 45 minutes, no minimum order, no tax. Take the order, quote the total including delivery, and
       say delivery takes 45 minutes.
+      Totals (Rs, delivery included): 2 chicken karahi = 2350; 2 chicken karahi + 1 raita = 2500; 2 chicken pulao = 1750; 2 chicken pulao + 1 raita = 1900. When you quote a total, use these exact figures; never add it up yourself.
       Reply with only your own next line (one or two short sentences), then stop and wait for the customer. Never write the customer's lines.
       Do not end the call until you have stated the total and the delivery time and the customer has confirmed the order.
     goal: "Take the customer's order (the biryani is sold out, so offer the karahi), quote the total. The customer places the order and hangs up by themselves, so you never need to end the call. Do not call end_call until the customer has said goodbye. Quoting a total, asking whether to place the order, or hearing the customer say yes is NOT a reason to end the call: answer with one short line and wait. Never call end_call in the same turn as your own message."

@@ -15,6 +15,7 @@ scenarios:
       biryani; raita is available. Prices are higher today: chicken biryani is Rs 1300 each. Delivery fee
       Rs 150, delivery takes 45 minutes, no minimum order, no tax. Two biryani is Rs 2600, so Rs 2750 with
       delivery. You cannot lower the price. Say goodbye politely if the customer declines.
+      Totals (Rs, delivery included): 1 chicken biryani = 1450; 2 chicken biryani = 2750; 2 chicken biryani + 1 raita = 2900. When you quote a total, use these exact figures; never add it up yourself.
       Reply with only your own next line (one or two short sentences), then stop and wait for the customer. Never write the customer's lines.
       Do not end the call until the customer has said goodbye, or has clearly said they will not order.
     goal: "Take the customer's order and quote the total. Do not call end_call until the customer has said goodbye or clearly said they will not order. Answer with one short line and wait. Never call end_call in the same turn as your own message."

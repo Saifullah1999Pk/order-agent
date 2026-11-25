@@ -140,6 +140,18 @@ Fully local run (bot, restaurant and judge all on Ollama):
 ORDER_AGENT_LLM_PROVIDER=ollama PYTHONIOENCODING=utf-8 uv run python run_suite.py --only happy_path --judge evals/judge-ollama.yaml
 ```
 
+Each attempt gets one status:
+
+| Status | Meaning |
+|---|---|
+| `pass` | Judge passed and every deterministic check passed. |
+| `fail` | A check or the judge failed (budget, forbidden item, wrong prices, bent cart, wrong outcome, ...). |
+| `quota_error` | A rate limit or overload stopped the run; not a bot failure. |
+| `restaurant_error` | The simulated restaurant quoted a total that does not match the cart, the bot refused it, kept the menu prices and did not bend the cart (no `price_corrected`/`corrected`). Not a bot failure; retried within `--attempts`, and a scenario with only `restaurant_error`/`quota_error` attempts is reported as such, never as pass or fail. `summary.md` notes "restaurant quoted a wrong total (X vs Y); bot correctly declined". |
+| `error` | Harness problem (bot not ready, crash, ...). |
+
+Each persona also carries a precomputed "Totals" line (checked against `evals/expected.yaml` by `tests/test_persona_totals.py`) so the restaurant model quotes the right totals instead of adding them up.
+
 Results go to `evals/results/<timestamp>/`, which is gitignored. `summary.md` holds the per-attempt status. Run summaries kept as evidence are committed under `evals/confirmation/`.
 
 ### Swap the agent's LLM

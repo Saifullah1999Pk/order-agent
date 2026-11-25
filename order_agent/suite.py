@@ -20,7 +20,7 @@ from order_agent.brief import OrderBrief, load_brief
 from order_agent.matching import normalise
 from order_agent.report import CallReport
 
-Status = Literal["pass", "fail", "quota_error", "error"]
+Status = Literal["pass", "fail", "quota_error", "restaurant_error", "error"]
 
 # Quota / overload signs. The status codes and the upper-case Google names are matched
 # case-sensitively so a judge reason like "item unavailable" is not mistaken for quota.
@@ -297,6 +297,48 @@ def stop_process(
     return None
 
 
+_QUOTE_MISMATCH = re.compile(r"the restaurant quoted (\d+(?:\.\d+)?) PKR but the cart total is (\d+(?:\.\d+)?) PKR")
+# Violations that mean the bot's cart does not match the menu (prices, fees, unknown items).
+_PRICE_VIOLATION = re.compile(r"^(?:price for |item '.*' is not on the menu|delivery fee was |tax was )")
+
+
+def _wrong_quote(report: CallReport) -> tuple[str, str] | None:
+    """(quoted, cart total) of the first refused confirm_order whose quote differed from the cart."""
+    for event in report.tool_events:
+        if event.get("tool") == "confirm_order" and event.get("ok") is False:
+            m = _QUOTE_MISMATCH.search(str(event.get("message", "")))
+            if m and Decimal(m.group(1)) != Decimal(m.group(2)):
+                return m.group(1), m.group(2)
+    return None
+
+
+def _bent_cart(report: CallReport) -> bool:
+    return any(
+        e.get("tool") in ("add_item", "set_fees") and (e.get("args") or {}).get("price_corrected" if e["tool"] == "add_item" else "corrected")
+        for e in report.tool_events
+    )
+
+
+def settle_status(status: Status, report: CallReport, checked: CheckOutcome, expected: Expected) -> tuple[Status, list[str]]:
+    """Reclassify a failing attempt as restaurant_error when the simulated restaurant, not the bot,
+    caused it: a confirm_order was refused because the restaurant's quoted total differed from the
+    cart total, the cart matches the menu, the bot never bent it (no corrected flags, no price
+    violations), no order was confirmed, and the only violations are consequences of there being no
+    order. Returns the new status and the notes (a note says the bot declined correctly)."""
+    notes = list(checked.notes)
+    if status != "fail":
+        return status, notes
+    wrong = _wrong_quote(report)
+    if wrong is None or report.quoted_total_pkr is not None or _bent_cart(report):
+        return status, notes
+    if not any(v.startswith("outcome is ") for v in checked.violations):
+        return status, notes
+    if any(not _DROP_CONSEQUENCE.match(v) for v in checked.violations):  # budget, forbidden item, price violations, ...
+        return status, notes
+    notes.append(f"restaurant quoted a wrong total ({wrong[0]} vs {wrong[1]}); bot correctly declined")
+    return "restaurant_error", notes
+
+
 def final_status(judge_passed: bool | None, violations: list[str]) -> Literal["pass", "fail"]:
     """Pass only if the judge passed AND there are no violations (violations override the judge)."""
     return "pass" if judge_passed and not violations else "fail"
@@ -334,6 +376,8 @@ def scenario_outcome(attempts: list[ScenarioResult], max_attempts: int) -> tuple
     statuses = {a.status for a in attempts}
     if "fail" in statuses:
         status: Status = "fail"
+    elif statuses <= {"quota_error", "restaurant_error"} and "restaurant_error" in statuses:
+        status = "restaurant_error"
     elif statuses == {"quota_error"}:
         status = "quota_error"
     elif "error" in statuses:
@@ -410,8 +454,8 @@ def rescore_attempt(attempt_dir: Path, name: str, attempt: int, expected: Expect
         return ScenarioResult(name, status, judge_passed, ["no call report was written"], None, requests, attempt, [])
     report = CallReport.model_validate_json(reports[-1].read_text(encoding="utf-8"))
     checked = check_report_full(report, expected)
-    notes = list(checked.notes)
     status = final_status(judge_passed, checked.violations)
+    status, notes = settle_status(status, report, checked, expected)
     if downgrade_for_bot_quota(status, checked.violations, report.outcome, bot_log, report.quoted_total_pkr):
         notes.append("bot LLM hit 429/503 (see bot.log) and the call did not complete: recorded as quota_error")
         status = "quota_error"

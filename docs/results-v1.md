@@ -436,3 +436,22 @@ Four scenarios, 1 attempt each, committed defaults (Gemini gemini-3.5-flash-lite
 | sold_out_no_substitute | pass | not_ordered, item sold out |
 
 The price lock refused only wrong totals (3 refusals, all quoted totals that did not match the correct cart); no refusal on a legitimate order, no `price_corrected`/`corrected` misuse, no price violation in any report. The two fails come from the simulated restaurant's arithmetic, not the bot. Judge took 2-5.5 min per call with no timeouts and no 429s; one Groq 400 on the explainer was retried. One attempt per scenario, so this shows the pieces work together, not a pass rate.
+
+## 19. Persona totals and the restaurant_error status (2026-11-25)
+
+Section 18 showed the two fails came from the simulated restaurant's arithmetic (Rs 1250 for a Rs 2100 cart; 1950 with the delivery fee forgotten), with the bot behaving correctly. Two changes so the suite measures the bot:
+
+1. **Totals in every persona.** Each of the 11 personas now has a line `Totals (Rs, delivery included): 2 chicken biryani = 1950; 2 chicken biryani + 1 raita = 2100; ... When you quote a total, use these exact figures; never add it up yourself.` `tests/test_persona_totals.py` recomputes every figure from `menu_pkr`/`fees_pkr` in `evals/expected.yaml` (format documented at the top of the test), which also pins the persona menu values to expected.yaml.
+2. **`restaurant_error` status** (`order_agent/suite.py`, `settle_status`; also applied by `--rescore`). An attempt that would be `fail` becomes `restaurant_error` when: a `confirm_order` was refused because the quoted total differed from the cart total; no order was confirmed; there is no price/fee violation and no `price_corrected`/`corrected` flag; and the only violations are consequences of there being no order (outcome, must-include, food subtotal). Budget, forbidden-item and price violations, and a bent cart, always stay `fail`. It is retried like `quota_error`; a scenario with only `restaurant_error`/`quota_error` attempts is reported as `restaurant_error` (or `quota_error`), never as pass or fail. The summary note reads "restaurant quoted a wrong total (X vs Y); bot correctly declined".
+
+**Rescore of the section 18 short check** (`evals/results/20261125-145529`): happy_path (1250 vs 2100) and terse_staff (1950 vs 2100) both re-classify as `restaurant_error`; the two passes are unchanged.
+
+**Live check** (`--only happy_path,terse_staff --attempts 2 --sleep 30`, committed defaults; evidence in `evals/confirmation/persona-totals-2026-11-25/`):
+
+| Scenario | Attempt | Persona total | Status | Note |
+|---|---|---|---|---|
+| happy_path | 1 | correct (2100) | pass | order confirmed |
+| terse_staff | 1 | correct (1950 for 2 biryani + delivery) | fail | bot's own error: it added the biryani at 975 and set delivery to 0 to make the cart match, then the lock refused; price violation |
+| terse_staff | 2 | correct (2100) | fail | bot's own error: it recorded raita at 300 and delivery at 0 so the cart matched 2100, and confirmed; two price violations |
+
+With correct totals the restaurant no longer causes the fail, which exposes a real bot weakness: with the terse persona the bot sometimes invents prices to reconcile a total (the engine's price lock cannot catch a wrong first price). No `restaurant_error` occurred live, because the persona did not misquote. Two attempts show that the persona quoted the right total every time (3 of 3 quotes); they are not a pass rate.

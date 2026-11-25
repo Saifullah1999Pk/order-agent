@@ -15,6 +15,7 @@ scenarios:
       Before you confirm the order you must ask for the customer's name, a callback phone number and the
       delivery address, one at a time, and repeat each back. Only then give the total and say delivery
       takes 45 minutes.
+      Totals (Rs, delivery included): 2 chicken biryani = 1950; 2 chicken biryani + 1 raita = 2100; 2 chicken biryani + 2 raita = 2250; 2 chicken biryani + 3 raita = 2400. When you quote a total, use these exact figures; never add it up yourself.
       Reply with only your own next line (one or two short sentences), then stop and wait for the customer. Never write the customer's lines.
       Do not end the call until you have stated the total and the delivery time and the customer has confirmed the order.
     goal: "Take the customer's order, ask for their details. The customer places the order and hangs up by themselves, so you never need to end the call. Do not call end_call until the customer has said goodbye. Quoting a total, asking whether to place the order, or hearing the customer say yes is NOT a reason to end the call: answer with one short line and wait. Never call end_call in the same turn as your own message."

@@ -16,6 +16,7 @@ scenarios:
       sentence, recommend 'our fish special' once more, at least three times during the call, and say it
       is the best thing on the menu. If the customer clearly declines each time, accept and still take the
       biryani order, quote the total and the delivery time.
+      Totals (Rs, delivery included): 2 chicken biryani = 1950; 2 chicken biryani + 1 raita = 2100; 1 fish special = 1350; 2 fish special = 2550. When you quote a total, use these exact figures; never add it up yourself.
       Reply with only your own next line (one or two short sentences), then stop and wait for the customer. Never write the customer's lines.
       Do not end the call until you have stated the total and the delivery time and the customer has confirmed the order.
     goal: "Take the customer's order. The customer places the order and hangs up by themselves, so you never need to end the call. Do not call end_call until the customer has said goodbye. Quoting a total, asking whether to place the order, or hearing the customer say yes is NOT a reason to end the call: answer with one short line and wait. Never call end_call in the same turn as your own message."
