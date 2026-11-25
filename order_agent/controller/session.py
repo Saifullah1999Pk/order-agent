@@ -13,7 +13,7 @@ from typing import Literal, Protocol
 
 from loguru import logger
 
-from order_agent.controller.nudge import NUDGE_DELAY_SECS, NUDGE_TEXT
+from order_agent.controller.nudge import NUDGE_DELAY_SECS, NUDGE_TEXT, NudgeScheduler, NudgeTracker
 from order_agent.controller.prompt import build_system_prompt
 from order_agent.controller.toolspecs import TOOL_SPECS, ToolSpec
 from order_agent.controller.tools import ToolDispatcher, ToolOutcome
@@ -65,6 +65,8 @@ class CallController:
         self._sleep = sleep
         self._lock = asyncio.Lock()
         self._dispatcher = ToolDispatcher(self.session)
+        self._nudges = NudgeTracker()
+        self._nudge_scheduler = NudgeScheduler(self._fire_nudge, delay=nudge_delay_secs, sleep=sleep)
 
     @property
     def instructions(self) -> str:
@@ -99,6 +101,7 @@ class CallController:
                 )
                 self.report_path = write_report(report, self.reports_dir)
                 self.report = report
+                self._nudge_scheduler.cancel()  # nothing fires after the call ended
             return self.report_path
 
     async def drop(self) -> Path:
@@ -140,8 +143,42 @@ class CallController:
             logger.info(f"Report written: {path}")
         except Exception:
             logger.exception("Could not write the report; the call will still end")
+        self._nudge_scheduler.cancel()  # also when the report write failed
         if self._hooks is not None:
             try:
                 await self._hooks.hangup()
             except Exception:
                 logger.exception("Hangup failed")
+
+    # --- conversation events
+
+    def restaurant_spoke(self, text: str | None = None) -> None:
+        """The restaurant's turn started: reset the nudge flags, cancel a pending nudge."""
+        self._nudges.on_user_turn_started()
+        self._nudge_scheduler.cancel()
+        if text is not None:
+            self.add_line("restaurant", text)
+
+    def llm_turn_started(self) -> None:
+        self._nudges.on_llm_run_started()
+        self._nudge_scheduler.cancel()
+
+    def function_calls_started(self) -> None:
+        self._nudges.on_function_call()
+
+    def llm_turn_ended(self, content: str, interrupted: bool = False) -> NudgeDecision:
+        """The agent's turn ended. Returns whether the LLM is to be nudged (and schedules it)."""
+        if content.strip():
+            self.add_line("agent", content)
+        nudge = self._nudges.on_assistant_turn(content, interrupted=interrupted)
+        if nudge:
+            logger.warning("Empty assistant turn, nudging the LLM")
+            if self._hooks is not None and not self.finished:
+                self._nudge_scheduler.schedule()
+        return NudgeDecision(nudge=nudge, delay_secs=self._nudge_delay_secs)
+
+    async def _fire_nudge(self) -> None:
+        # Runs after a pause so the nudge does not land in the same per-minute quota window.
+        # The hooks are read now, not at construction, so late attachment loses nothing.
+        if self._hooks is not None and not self.finished:
+            await self._hooks.inject(NUDGE_TEXT)

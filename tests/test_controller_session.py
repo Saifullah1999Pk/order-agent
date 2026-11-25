@@ -256,3 +256,177 @@ async def test_end_call_after_late_attach_hangs_up_through_new_hooks(brief, tmp_
     c.attach_hooks(FakeHooks(log))
     await c.perform("end_call", _end_args())
     assert log == [("hangup",)]
+
+
+async def _settle():
+    for _ in range(10):
+        await asyncio.sleep(0)
+
+
+class Gate:
+    """A fake sleep that records its delays and blocks until released."""
+
+    def __init__(self):
+        self.delays = []
+        self.event = asyncio.Event()
+
+    async def __call__(self, secs):
+        self.delays.append(secs)
+        await self.event.wait()
+
+
+def _nudged(log):
+    return [e for e in log if e == ("inject", NUDGE_TEXT)]
+
+
+async def test_empty_turn_returns_decision_and_injects_nudge_once(brief, tmp_path):
+    log = []
+    c = _controller(brief, tmp_path, hooks=FakeHooks(log), sleep=_no_sleep)
+    decision = c.llm_turn_ended("")
+    assert decision == NudgeDecision(nudge=True)
+    await _settle()
+    assert log == [("inject", NUDGE_TEXT)]
+
+
+async def test_nudge_delay_comes_from_constructor(brief, tmp_path):
+    gate = Gate()
+    c = _controller(brief, tmp_path, hooks=FakeHooks(), sleep=gate, nudge_delay_secs=7.5)
+    decision = c.llm_turn_ended("")
+    await _settle()
+    assert decision.delay_secs == 7.5 and gate.delays == [7.5]
+
+
+async def test_function_call_turn_is_not_nudged(brief, tmp_path):
+    log = []
+    c = _controller(brief, tmp_path, hooks=FakeHooks(log), sleep=_no_sleep)
+    c.function_calls_started()
+    assert c.llm_turn_ended("").nudge is False
+    await _settle()
+    assert log == []
+
+
+async def test_non_blank_turn_is_not_nudged(brief, tmp_path):
+    log = []
+    c = _controller(brief, tmp_path, hooks=FakeHooks(log), sleep=_no_sleep)
+    assert c.llm_turn_ended("Okay.").nudge is False
+    await _settle()
+    assert log == []
+
+
+async def test_interrupted_turn_is_not_nudged(brief, tmp_path):
+    log = []
+    c = _controller(brief, tmp_path, hooks=FakeHooks(log), sleep=_no_sleep)
+    assert c.llm_turn_ended("", interrupted=True).nudge is False
+    await _settle()
+    assert log == []
+
+
+async def test_restaurant_turn_since_run_started_is_not_nudged(brief, tmp_path):
+    log = []
+    c = _controller(brief, tmp_path, hooks=FakeHooks(log), sleep=_no_sleep)
+    c.llm_turn_started()
+    c.restaurant_spoke()
+    assert c.llm_turn_ended("").nudge is False
+    await _settle()
+    assert log == []
+
+
+async def test_restaurant_spoke_cancels_pending_nudge_and_resets_counter(brief, tmp_path):
+    gate = Gate()
+    log = []
+    c = _controller(brief, tmp_path, hooks=FakeHooks(log), sleep=gate)
+    for _ in range(MAX_NUDGES):
+        assert c.llm_turn_ended("").nudge
+    assert c.llm_turn_ended("").nudge is False  # budget used up
+    await _settle()
+    c.restaurant_spoke()
+    gate.event.set()
+    await _settle()
+    assert log == []  # the pending nudge was cancelled
+    c.llm_turn_started()
+    assert c.llm_turn_ended("").nudge is True  # counter reset by the restaurant speaking
+
+
+async def test_llm_turn_started_cancels_pending_nudge(brief, tmp_path):
+    gate = Gate()
+    log = []
+    c = _controller(brief, tmp_path, hooks=FakeHooks(log), sleep=gate)
+    c.llm_turn_ended("")
+    await _settle()
+    c.llm_turn_started()
+    gate.event.set()
+    await _settle()
+    assert log == []
+
+
+async def test_at_most_max_nudges_in_a_row(brief, tmp_path):
+    log = []
+    c = _controller(brief, tmp_path, hooks=FakeHooks(log), sleep=_no_sleep)
+    results = []
+    for _ in range(3):
+        c.llm_turn_started()
+        results.append(c.llm_turn_ended("").nudge)
+        await _settle()
+    assert results == [True, True, False]
+    assert len(_nudged(log)) == 2
+
+
+async def test_agent_line_only_for_non_blank_content(brief, tmp_path):
+    c = _controller(brief, tmp_path)
+    c.llm_turn_ended("Hello there")
+    c.llm_turn_ended("  \n")
+    assert [(t.role, t.text) for t in c.transcript] == [("agent", "Hello there")]
+
+
+async def test_restaurant_line_only_when_text_given(brief, tmp_path):
+    c = _controller(brief, tmp_path)
+    c.restaurant_spoke("hi")
+    c.restaurant_spoke()
+    assert [(t.role, t.text) for t in c.transcript] == [("restaurant", "hi")]
+
+
+async def test_no_nudge_fires_after_finish(brief, tmp_path):
+    gate = Gate()
+    log = []
+    c = _controller(brief, tmp_path, hooks=FakeHooks(log), sleep=gate)
+    c.llm_turn_ended("")
+    await _settle()
+    await c.finish("not_ordered", "x")
+    gate.event.set()
+    await _settle()
+    assert log == []
+    c.llm_turn_ended("")  # and none is scheduled afterwards
+    await _settle()
+    assert log == []
+
+
+async def test_end_call_cancels_pending_nudge_before_hangup(brief, tmp_path):
+    gate = Gate()
+    log = []
+    c = _controller(brief, tmp_path, hooks=FakeHooks(log), sleep=gate)
+    c.llm_turn_ended("")
+    await _settle()
+    await c.perform("end_call", _end_args())
+    gate.event.set()
+    await _settle()
+    assert log == [("hangup",)]
+
+
+async def test_hooks_none_never_schedules_anything(brief, tmp_path):
+    gate = Gate()
+    c = _controller(brief, tmp_path, sleep=gate)
+    assert c.llm_turn_ended("").nudge is True
+    await _settle()
+    assert gate.delays == []
+
+
+async def test_nudge_goes_through_hooks_attached_later(brief, tmp_path):
+    log = []
+    c = _controller(brief, tmp_path, sleep=_no_sleep)
+    c.llm_turn_ended("")  # no hooks yet: nothing scheduled
+    await _settle()
+    c.attach_hooks(FakeHooks(log))
+    c.llm_turn_started()
+    c.llm_turn_ended("")
+    await _settle()
+    assert log == [("inject", NUDGE_TEXT)]
