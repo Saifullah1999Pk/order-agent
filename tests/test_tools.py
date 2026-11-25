@@ -128,3 +128,32 @@ async def test_non_dict_arguments_get_exactly_one_refusal(h, tool, bad):
     assert results[0]["ok"] is False
     assert h.session.items == []
     assert h.ended == []
+
+
+async def test_add_item_price_corrected_flag_reaches_session(h):
+    await h.call("add_item", name="chicken biryani", quantity=1, unit_price_pkr=900)
+    refused = await h.call("add_item", name="chicken biryani", quantity=1, unit_price_pkr=950)
+    assert refused["ok"] is False and "price_corrected=true" in refused["message"]
+    ok = await h.call("add_item", name="chicken biryani", quantity=1, unit_price_pkr=950, price_corrected=True)
+    assert ok["ok"] is True
+    assert h.session.events[-1].args["price_corrected"] is True
+
+
+async def test_set_fees_corrected_flag_reaches_session(h):
+    await h.call("set_fees", delivery_fee_pkr=150, tax_pkr=0)
+    assert (await h.call("set_fees", delivery_fee_pkr=0, tax_pkr=0))["ok"] is False
+    assert (await h.call("set_fees", delivery_fee_pkr=200, tax_pkr=0, corrected=True))["ok"] is True
+
+
+async def test_correction_flag_must_be_boolean(h):
+    result = await h.call("add_item", name="chicken biryani", quantity=1, unit_price_pkr=900, price_corrected="maybe")
+    assert result["ok"] is False
+    assert h.session.events == []
+
+
+def test_correction_flags_are_in_the_schemas(h):
+    props = {t.name: t.properties for t in h.tools.standard_tools}
+    assert props["add_item"]["price_corrected"]["type"] == "boolean"
+    assert props["set_fees"]["corrected"]["type"] == "boolean"
+    required = {t.name: t.required for t in h.tools.standard_tools}
+    assert "price_corrected" not in required["add_item"] and "corrected" not in required["set_fees"]

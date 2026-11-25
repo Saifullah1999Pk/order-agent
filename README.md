@@ -187,15 +187,14 @@ tests/                 unit tests
   - Gemini allows about 500 requests a day and 15 a minute. Groq caps tokens per minute and per day.
   - Running the simulated restaurant locally cut Gemini use by about 31% per test call (13.4 vs 19.6 requests).
 - **LLM judges are unreliable,** which is why the code checks decide pass or fail.
-- **The agent can still be pushed by a restaurant that insists on a wrong total.** The engine trusts the unit prices the agent reports. A price check against each scenario's real menu is the next fix.
+- **Prices are now checked in two places.** The eval compares every price and fee in the report with the restaurant's menu in `evals/expected.yaml` (invented or off-menu items fail). At runtime the engine locks the first price it accepts for each item and the first non-zero fees, refuses later changes unless the bot flags a real correction (`price_corrected` / `corrected`), and tells the bot to ask the restaurant to itemise a total that does not match. The engine still cannot know a price is true: the first price the bot records is trusted.
 - **Not tested yet:** holding ("one minute please"), silence, real accents and noise. Ingredient claims ("the biryani has beef") can't be verified by code.
 
 ## Next steps
 
-1. Price check against each scenario's menu, so made-up or inflated prices are caught.
-2. Rate-limit the Groq judge (the existing throttle supports Gemini; extend it to Groq), so the default judge works without using Gemini quota.
-3. Urdu and Urdu–English (code-switched) conversation.
-4. Use the same pattern (LLM talks, code decides) in other domains.
+1. Rate-limit the Groq judge (the existing throttle supports Gemini; extend it to Groq), so the default judge works without using Gemini quota.
+2. Urdu and Urdu–English (code-switched) conversation.
+3. Use the same pattern (LLM talks, code decides) in other domains.
 
 ## License
 

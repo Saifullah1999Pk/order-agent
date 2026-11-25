@@ -398,3 +398,20 @@ Evidence: `evals/confirmation/hybrid-2026-11-25/` (README.md has the per-attempt
 Why the attempt counts differ: `happy_path` ran 1 attempt because that run was started with a single attempt (its summary shows 0/1), so it is not a pass@3 failure. `terse_staff` has 3 attempts across 2 runs: the first run recorded 1 attempt (`quota_error`, a judge HTTP 503), and a second run made 2 more (1 fail, 1 `quota_error`). `minimum_reachable`, `staff_asks_details` and `sold_out_no_substitute` stop at the first pass, so they ran 1 attempt.
 
 Persona (7 calls): 0 same-turn hang-ups, 0 lines written for the customer, stayed in role. Gemini requests per call (bot only): 13.4 on average, against 19.6 had the persona also used Gemini, so about 31% fewer, not half. n = 7 calls, one run each; small sample.
+
+## 16. Price check: eval menu check and engine price lock (2026-11-25)
+
+Closes the gap seen in sections 13 and 15: the bot invented prices (all-Ollama) and, with the hybrid `terse_staff` run, bent its cart (removed items, fee set to 0, biryani re-added at Rs 1350) to match a wrong total.
+
+- **Eval layer.** `evals/expected.yaml` now holds each scenario's menu (`menu_pkr`) and fees (`fees_pkr`) as its persona states them. `check_report_full` fails a report whose unit price differs from the menu ("price for chicken biryani was 1350, menu says 900"), whose item is not on the menu, or whose delivery fee or tax differs (a call that never recorded fees is not flagged unless it confirmed an order).
+- **Engine layer.** The first price accepted for an item is locked for the whole call, including after `remove_item`; the first non-zero delivery fee or tax is locked too. A change is refused unless the bot passes `price_corrected=true` (add_item) or `corrected=true` (set_fees), which is recorded in the tool event. A `confirm_order` total mismatch now tells the bot to ask the restaurant to itemise rather than edit the cart. The prompt says the same.
+
+Rescore of every saved report.json (25 files, all in `evals/confirmation/all-ollama/judge-gemma4-evidence/`; the hybrid reports were not saved) with the old checks against the new ones. These passed the old checks and now fail:
+
+| Saved attempt | New violations |
+|---|---|
+| happy_path 20261123-185933 attempt 3 (ordered) | biryani 975 vs 900; delivery fee 0 vs 150 |
+| happy_path 20261124-182423 attempt 1 (ordered) | biryani 925 vs 900; raita 125 vs 150 |
+| minimum_reachable 20261124-182645 attempt 1 (ordered) | biryani 800 vs 900 |
+
+One more (terse_staff 20261123-185933 attempt 3, call_dropped) gains a price violation but already failed. Verified by unit tests only; no bot or API run yet, so how the engine guard changes real conversations is untested.

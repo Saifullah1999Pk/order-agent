@@ -40,6 +40,18 @@ def _money(arguments: dict, key: str) -> Decimal:
     return number
 
 
+def _flag(arguments: dict, key: str) -> bool:
+    """An optional true/false argument; absent means false."""
+    value = arguments.get(key)
+    if value is None:
+        return False
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str) and value.strip().lower() in ("true", "false"):
+        return value.strip().lower() == "true"
+    raise _BadArgument(f"'{key}' must be true or false.")
+
+
 def _whole(arguments: dict, key: str) -> int:
     """A whole number. An integral float such as 2.0 is accepted; 2.5 is not."""
     value = arguments.get(key)
@@ -106,12 +118,12 @@ def build_tools(
                 logger.exception("on_end failed")
 
     add_item = handler(
-        lambda a: (_text(a, "name"), _whole(a, "quantity"), _money(a, "unit_price_pkr")),
+        lambda a: (_text(a, "name"), _whole(a, "quantity"), _money(a, "unit_price_pkr"), _flag(a, "price_corrected")),
         session.add_item,
     )
     remove_item = handler(lambda a: (_text(a, "name"),), session.remove_item)
     set_fees = handler(
-        lambda a: (_money(a, "delivery_fee_pkr"), _money(a, "tax_pkr")), session.set_fees
+        lambda a: (_money(a, "delivery_fee_pkr"), _money(a, "tax_pkr"), _flag(a, "corrected")), session.set_fees
     )
     set_minimum = handler(lambda a: (_money(a, "minimum_pkr"),), session.set_minimum_order)
     confirm = handler(
@@ -128,6 +140,7 @@ def build_tools(
                     "name": {"type": "string", "description": "Item name as the restaurant said it."},
                     "quantity": {"type": "integer", "description": "How many to add."},
                     "unit_price_pkr": {"type": "number", "description": "Price of one unit in PKR, as a number."},
+                    "price_corrected": {"type": "boolean", "description": "Only true if the restaurant clearly said this item's price changed from what they said before. Never use it to make a total match."},
                 },
                 required=["name", "quantity", "unit_price_pkr"],
                 handler=add_item,
@@ -145,6 +158,7 @@ def build_tools(
                 properties={
                     "delivery_fee_pkr": {"type": "number", "description": "Delivery fee in PKR."},
                     "tax_pkr": {"type": "number", "description": "Tax in PKR."},
+                    "corrected": {"type": "boolean", "description": "Only true if the restaurant clearly said a fee changed from what they said before. Never use it to make a total match."},
                 },
                 required=["delivery_fee_pkr", "tax_pkr"],
                 handler=set_fees,
