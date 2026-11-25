@@ -1,0 +1,97 @@
+[
+  {
+    "role": "assistant",
+    "content": "Hello, I would like to place a delivery order, please."
+  },
+  {
+    "role": "user",
+    "content": "Sure, what would you like to order?"
+  },
+  {
+    "role": "assistant",
+    "content": "I would like to order two chicken biryanis and one raita for delivery. Are those available, and what are the prices?"
+  },
+  {
+    "role": "user",
+    "content": "Yes, we have two chicken biryanis and one raita available. The total for your order is Rs 2100, and delivery will take 45 minutes."
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "quantity": 2,
+      "name": "chicken biryani"
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "quantity": 1,
+      "name": "raita"
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Is there any delivery fee, tax, or minimum order? Also, could we please have it less spicy if possible?"
+  },
+  {
+    "role": "user",
+    "content": "No, there is no delivery fee, tax, or minimum order. We can make it less spicy for you."
+  },
+  {
+    "role": "tool_call",
+    "name": "set_fees",
+    "arguments": {
+      "tax_pkr": 0,
+      "delivery_fee_pkr": 0
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "That is great, thank you. Could you please let me know the delivery fee, tax, and any minimum order details?"
+  },
+  {
+    "role": "user",
+    "content": "The delivery fee is Rs 150, there is no tax, and there is no minimum order."
+  },
+  {
+    "role": "tool_call",
+    "name": "set_fees",
+    "arguments": {
+      "delivery_fee_pkr": 150,
+      "tax_pkr": 0,
+      "corrected": true
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Could you please tell me the delivery fee, tax, and if there is any minimum order? Also, what is the total and delivery time?"
+  },
+  {
+    "role": "user",
+    "content": "The delivery fee is Rs 150, there is no tax, and there is no minimum order. The total for your order is Rs 2100, and delivery will take 45 minutes."
+  },
+  {
+    "role": "tool_call",
+    "name": "confirm_order",
+    "arguments": {
+      "quoted_total_pkr": 2100,
+      "delivery_minutes": 45
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "end_call",
+    "arguments": {
+      "reason": "Order confirmed successfully within budget and brief.",
+      "outcome": "ordered"
+    },
+    "cancelled": false
+  }
+]

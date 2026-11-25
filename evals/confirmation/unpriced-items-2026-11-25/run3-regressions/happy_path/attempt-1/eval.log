@@ -1,0 +1,126 @@
+   0.000  [ --]  run: simulation 'happy_path/happy_path' -> ws://localhost:7860/ws
+   0.000  [ --]  user  -> modality: text | persona: ollama/qwen3:8b | max_turns: 12 | max_duration_s: 240 | max_silence_s: 30
+   0.000  [ --]  judge -> modality: text | eval: factory:order_agent.eval_llm.groq_classifier
+   0.000  [ --]  goal  -> Take the customer's order, quote the total and delivery time. The customer places the order and hangs up by themselves, so you never need to end the call. Do not call end_call until the customer has said goodbye. Quoting a total, asking whether to place the order, or hearing the customer say yes is NOT a reason to end the call: answer with one short line and wait. Never call end_call in the same turn as your own message.
+   0.000  [ --]  connected
+   2.953  [ --]  handshake: ok (bot-ready)
+   2.953  [ --]  persona: listening (up to 12 turn(s), 240s, 30s of silence)
+   2.953  [ --]  event: metrics  'ttfb, processing'
+   5.969  [ --]  event: llm_started
+   7.078  [ --]  event: metrics  'ttfb'
+   7.078  [ --]  event: metrics  'ttfat'
+   7.109  [ --]  event: metrics  'tokens'
+   7.109  [ --]  event: llm_response  'Hello, I would like to place a delivery order, please.'
+   9.797  [ --]  send: 'Sure, what would you like to order?' (persona, text)
+   9.797  [ --]  event: persona_turn  'Sure, what would you like to order?'
+   9.797  [ --]  event: bot_interrupted
+   9.812  [ --]  event: llm_started
+  18.141  [ --]  event: metrics  'ttfb'
+  18.141  [ --]  event: metrics  'ttfat'
+  18.234  [ --]  event: metrics  'tokens'
+  18.234  [ --]  event: llm_response  'I would like to order two chicken biryanis and one raita for delivery. Are those available, and what are the prices?'
+  19.719  [ --]  send: 'Yes, we have two chicken biryanis and one raita available. The total for your order is Rs 2100, and delivery will take 45 minutes.' (persona, text)
+  19.719  [ --]  event: persona_turn  'Yes, we have two chicken biryanis and one raita available. The total for your order is Rs 2100, and delivery will take 45 minutes.'
+  19.719  [ --]  event: bot_interrupted
+  19.719  [ --]  event: llm_started
+  26.391  [ --]  event: metrics  'ttfb'
+  26.391  [ --]  event: metrics  'ttfat'
+  26.391  [ --]  event: metrics  'tokens'
+  26.391  [ --]  event: llm_response
+  26.391  [ --]  event: function_call  'add_item'
+  26.391  [ --]  event: function_call_stopped  'add_item'
+  26.391  [ --]  event: function_call  'add_item'
+  26.391  [ --]  event: function_call_stopped  'add_item'
+  26.391  [ --]  event: llm_started
+  27.047  [ --]  event: metrics  'ttfb'
+  27.047  [ --]  event: metrics  'ttfat'
+  27.156  [ --]  event: metrics
+  27.156  [ --]  event: metrics  'characters'
+  27.203  [ --]  event: metrics  'tokens'
+  27.203  [ --]  event: llm_response  'Is there any delivery fee, tax, or minimum order? Also, could we please have it less spicy if possible?'
+  28.266  [ --]  event: metrics  'ttfb'
+  28.266  [ --]  event: metrics  'ttfa'
+  28.266  [ --]  event: metrics  'processing'
+  28.266  [ --]  event: metrics
+  28.266  [ --]  event: metrics  'characters'
+  28.266  [ --]  event: bot_started_speaking
+  28.437  [ --]  send: 'No, there is no delivery fee, tax, or minimum order. We can make it less spicy for you.' (persona, text)
+  28.437  [ --]  event: persona_turn  'No, there is no delivery fee, tax, or minimum order. We can make it less spicy for you.'
+  28.437  [ --]  event: bot_interrupted
+  28.437  [ --]  event: metrics  'processing'
+  28.437  [ --]  event: bot_stopped_speaking
+  28.500  [ --]  event: llm_started
+  29.578  [ --]  event: metrics  'ttfb'
+  29.578  [ --]  event: metrics  'ttfat'
+  29.578  [ --]  event: metrics  'tokens'
+  29.578  [ --]  event: llm_response
+  29.578  [ --]  event: function_call  'set_fees'
+  29.578  [ --]  event: function_call_stopped  'set_fees'
+  29.594  [ --]  event: llm_started
+  31.875  [ --]  event: metrics  'ttfb'
+  31.875  [ --]  event: metrics  'ttfat'
+  31.922  [ --]  event: metrics
+  31.922  [ --]  event: metrics  'characters'
+  32.016  [ --]  event: metrics  'tokens'
+  32.016  [ --]  event: llm_response  'That is great, thank you. Could you please let me know the delivery fee, tax, and any minimum order details?'
+  32.469  [ --]  event: metrics  'ttfb'
+  32.469  [ --]  event: metrics  'ttfa'
+  32.469  [ --]  event: metrics  'processing'
+  32.469  [ --]  event: metrics
+  32.469  [ --]  event: metrics  'characters'
+  32.469  [ --]  event: bot_started_speaking
+  33.187  [ --]  send: 'The delivery fee is Rs 150, there is no tax, and there is no minimum order.' (persona, text)
+  33.187  [ --]  event: persona_turn  'The delivery fee is Rs 150, there is no tax, and there is no minimum order.'
+  33.187  [ --]  event: bot_interrupted
+  33.187  [ --]  event: metrics  'processing'
+  33.187  [ --]  event: bot_stopped_speaking
+  33.266  [ --]  event: llm_started
+  33.953  [ --]  event: metrics  'ttfb'
+  33.953  [ --]  event: metrics  'ttfat'
+  33.953  [ --]  event: metrics  'tokens'
+  33.953  [ --]  event: llm_response
+  33.953  [ --]  event: function_call  'set_fees'
+  33.953  [ --]  event: function_call_stopped  'set_fees'
+  33.969  [ --]  event: llm_started
+  35.344  [ --]  event: metrics  'ttfb'
+  35.344  [ --]  event: metrics  'ttfat'
+  35.359  [ --]  event: metrics
+  35.359  [ --]  event: metrics  'characters'
+  35.453  [ --]  event: metrics  'tokens'
+  35.453  [ --]  event: llm_response  'Could you please tell me the delivery fee, tax, and if there is any minimum order? Also, what is the total and delivery time?'
+  36.969  [ --]  event: metrics  'ttfb'
+  36.969  [ --]  event: metrics  'ttfa'
+  36.969  [ --]  event: metrics  'processing'
+  36.969  [ --]  event: metrics
+  36.969  [ --]  event: metrics  'characters'
+  36.969  [ --]  event: bot_started_speaking
+  37.312  [ --]  send: 'The delivery fee is Rs 150, there is no tax, and there is no minimum order. The total for your order is Rs 2100, and delivery will take 45 minutes.' (persona, text)
+  37.312  [ --]  event: persona_turn  'The delivery fee is Rs 150, there is no tax, and there is no minimum order. The total for your order is Rs 2100, and delivery will take 45 minutes.'
+  37.312  [ --]  event: bot_interrupted
+  37.312  [ --]  event: metrics  'processing'
+  37.312  [ --]  event: bot_stopped_speaking
+  37.359  [ --]  event: llm_started
+  38.312  [ --]  event: metrics  'ttfb'
+  38.312  [ --]  event: metrics  'ttfat'
+  38.312  [ --]  event: metrics  'tokens'
+  38.312  [ --]  event: llm_response
+  38.312  [ --]  event: function_call  'confirm_order'
+  38.312  [ --]  event: function_call_stopped  'confirm_order'
+  38.312  [ --]  event: llm_started
+  45.328  [ --]  event: metrics  'ttfb'
+  45.328  [ --]  event: metrics  'ttfat'
+  45.328  [ --]  event: metrics  'tokens'
+  45.328  [ --]  event: llm_response
+  45.328  [ --]  event: function_call  'end_call'
+  45.328  [ --]  event: function_call_stopped  'end_call'
+  45.328  [ --]  event: bot_ended
+  45.328  [ --]  persona: ended by bot after 5 turn(s)
+  45.328  [ --]  judge: the bot's tool calls: add_item({"quantity": 2, "name": "chicken biryani"}); add_item({"quantity": 1, "name": "raita"}); set_fees({"tax_pkr": 0, "delivery_fee_pkr": 0}); set_fees({"delivery_fee_pkr": 150, "tax_pkr": 0, "corrected": true}); confirm_order({"quoted_total_pkr": 2100, "delivery_minutes": 45}); end_call({"reason": "Order confirmed successfully within budget and brief.", "outcome": "ordered"})
+ 195.766  [ --]  judge: turn 1 conduct yes: P(meets)=0.98, P(fails)=0.01, P(not_applicable)=0.01
+ 195.766  [ --]  judge: turn 2 conduct yes: P(meets)=0.95, P(fails)=0.04, P(not_applicable)=0.01
+ 195.766  [ --]  judge: turn 3 conduct yes: P(meets)=0.97, P(fails)=0.02, P(not_applicable)=0.01
+ 195.766  [ --]  judge: turn 4 conduct yes: P(meets)=0.99, P(fails)=0.01, P(not_applicable)=0.00
+ 195.766  [ --]  judge: turn 5 conduct yes: P(meets)=0.99, P(fails)=0.01, P(not_applicable)=0.00
+ 195.766  [ --]  judge: conduct = 1.00: all 5 turn(s)
+ 195.766  [ --]  judge: goal achieved: P(yes)=0.99
+ 195.766  [ --]  done: PASS (0 failure(s))

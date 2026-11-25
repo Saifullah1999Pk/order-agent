@@ -1,0 +1,140 @@
+[
+  {
+    "role": "assistant",
+    "content": "Hello, I would like to place a delivery order, please."
+  },
+  {
+    "role": "user",
+    "content": "Sure, what would you like to order?"
+  },
+  {
+    "role": "assistant",
+    "content": "I'd like two chicken biryanis and one raita, if you have them. Could you let me know the availability and prices, and also what your delivery fee, tax, and minimum order are?"
+  },
+  {
+    "role": "user",
+    "content": "We have two chicken biryanis and one raita available. The total for your order is Rs 2100, which is below our minimum order of Rs 2200. The delivery fee is Rs 150, and there is no tax. Would you like to add anything else to meet the minimum order?"
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "quantity": 2,
+      "name": "chicken biryani"
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "quantity": 1,
+      "name": "raita"
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "set_fees",
+    "arguments": {
+      "tax_pkr": 0,
+      "delivery_fee_pkr": 150
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "set_minimum_order",
+    "arguments": {
+      "minimum_pkr": 2200
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Since we need to meet the minimum order of twenty-two hundred rupees, could we add one more chicken biryani, please?"
+  },
+  {
+    "role": "user",
+    "content": "Sure, adding one more chicken biryani. Your total now is Rs 2250, including the delivery fee of Rs 150. Your order will be delivered in 45 minutes. Would you like to confirm your order?"
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "name": "chicken biryani",
+      "quantity": 1
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Could you please itemise the prices for the chicken biryanis and the raita?"
+  },
+  {
+    "role": "user",
+    "content": "Certainly. Two chicken biryanis at Rs 900 each, one raita at Rs 150. The delivery fee is Rs 150. Would you like to confirm your order?"
+  },
+  {
+    "role": "tool_call",
+    "name": "set_price",
+    "arguments": {
+      "name": "chicken biryani",
+      "unit_price_pkr": 900
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "set_price",
+    "arguments": {
+      "name": "raita",
+      "unit_price_pkr": 150
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Could you please add another raita so we meet the minimum order? And please make it less spicy if possible."
+  },
+  {
+    "role": "user",
+    "content": "Sure, adding another raita. Your total is now Rs 2400, including the delivery fee of Rs 150. Your order will be delivered in 45 minutes. Would you like to confirm your order?"
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "name": "raita",
+      "quantity": 1
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "quantity": 1,
+      "name": "raita"
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "confirm_order",
+    "arguments": {
+      "delivery_minutes": 45,
+      "quoted_total_pkr": 2400
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "end_call",
+    "arguments": {
+      "reason": "Order placed successfully within budget and minimum order.",
+      "outcome": "ordered"
+    },
+    "cancelled": false
+  }
+]

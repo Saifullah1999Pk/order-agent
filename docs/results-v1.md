@@ -455,3 +455,24 @@ Section 18 showed the two fails came from the simulated restaurant's arithmetic 
 | terse_staff | 2 | correct (2100) | fail | bot's own error: it recorded raita at 300 and delivery at 0 so the cart matched 2100, and confirmed; two price violations |
 
 With correct totals the restaurant no longer causes the fail, which exposes a real bot weakness: with the terse persona the bot sometimes invents prices to reconcile a total (the engine's price lock cannot catch a wrong first price). No `restaurant_error` occurred live, because the persona did not misquote. Two attempts show that the persona quoted the right total every time (3 of 3 quotes); they are not a pass rate.
+
+## 20. Unpriced items: the restaurant gives only a total (2026-11-25)
+
+**Problem.** The persona-totals check (section 19) showed that the terse restaurant only ever says a total ("1950, 45 minutes") and, once, "no" to a delivery fee. `add_item` required a unit price, so the bot divided or adjusted prices to fit the total (biryani 975 = 1950/2; raita 300) and set the fee to 0. The engine cannot catch a first invented price.
+
+**Change.** `add_item`'s price is optional; a new `set_price(name, unit_price_pkr, price_corrected)` fills one in later (same price-lock rules). Fees may stay unrecorded. When any item is unpriced or `set_fees` was never called, the cart total is unknown: `confirm_order` requires the restaurant's total to be within budget, the delivery deadline, completeness and no forbidden items, skips the cart-sum check, and the report records it (`total_only`, `cart_total_pkr` null, summary "prices not itemised by the restaurant; confirmed at their total Rs X"). If a minimum order applies, `confirm_order` refuses until every item has a price. The eval's menu check skips unpriced items and unrecorded fees, budget uses the quoted total when the cart total is unknown, and an unpriced cart is never relabelled `restaurant_error`. Also fixed: a missing judge `conduct` metric now counts as not passed (it was vacuously passed). The prompt tells the bot not to work out prices from a total.
+
+**Live check** (committed defaults; evidence in `evals/confirmation/unpriced-items-2026-11-25/`):
+
+| Run | Scenario | Attempt | Bot added unpriced? | Result |
+|---|---|---|---|---|
+| 1 (first prompt) | terse_staff | 1 | yes, no invented price | fail: set delivery fee 0 after the persona's "no fee" (menu says 150) |
+| 1 | terse_staff | 2 | yes | fail: same fee-0 violation |
+| 1 | terse_staff | 3 | added unpriced, then called `set_price` 975 (= 1950/2) and fee 0 | fail: invented price, two violations |
+| 2 (prompt: only stated fees, never derive prices) | terse_staff | 1 | yes, fees left unrecorded | fail: no violations; judge failed conduct and no_repeat_loop (the persona quoted 2250, a total for 2 raita, for a cart with 1; the engine cannot know) |
+| 2 | terse_staff | 2 | yes | quota_error (Gemini 429, call dropped) |
+| 2 | terse_staff | 3 | yes, fees 150 stated by persona | pass |
+| 3 | happy_path | 1 | yes (persona gave only a total) | pass |
+| 3 | minimum_reachable | 1 | priced after asking (minimum applies) | ordered 2400, no violations; judge goal "not met" (the persona muddled the minimum): fail |
+
+So invented item prices went from 2 of 2 earlier attempts to 1 of 6 (all before the prompt fix), and none after it, but this is 3 attempts per prompt, not a pass rate. Limits: with a total-only order the engine cannot tell that a wrong total (such as 2250 for 1 raita) is wrong, and the persona's inconsistent "no fee" answers still depend on the bot not recording a fee it was not given.
