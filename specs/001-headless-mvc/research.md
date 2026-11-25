@@ -124,8 +124,9 @@ messages and in `tasks.md`:
 | Test file | Change | Reason |
 |---|---|---|
 | `test_tools.py`, `test_tool_registration.py`, `test_llm_factory.py` | build tools through `heads.voice.tools.build_tools(controller)`; the `Harness` constructs a `CallController` | `build_tools(session, on_end)` is replaced by a controller-based API. Same calls, same expected results |
+| `test_prompt.py` | none in step 3 (shim); import from `order_agent.controller.prompt` in step 7 | module moved to the Controller (instructions are about how the LLM is spoken to, not domain rules) |
 | `test_call.py` | none in step 3 (shim keeps `CallState(brief, settings, now)`); in step 7 import from `order_agent.controller` | module moved |
-| `test_brief/matching/rules_*/report/prompt.py` | none in step 1 (shims); import path updated in step 7 | module moved |
+| `test_brief/matching/rules_*/report.py` | none in step 1 (shims); import path updated in step 7 | module moved |
 | `test_suite.py`, `test_eval_config.py`, `test_eval_llm.py`, `test_preflight.py`, `test_throttle.py`, `test_persona_totals.py` | import path updated in step 7 | eval tooling moved to `evaltools/` |
 
 ## R10. Eval suite and rescore compatibility

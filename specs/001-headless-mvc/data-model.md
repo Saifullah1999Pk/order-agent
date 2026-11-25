@@ -15,6 +15,11 @@ owns each.
 
 ## New or re-homed (Controller layer)
 
+### Instructions (`controller/prompt.py`)
+`build_system_prompt(brief: OrderBrief) -> str`, moved unchanged from `order_agent/prompt.py`. It is
+the text that tells the LLM who it is and how to run the call, so it belongs to the Controller, not the
+Model (the Model holds the domain and its rules only). It reads `OrderBrief` and nothing else.
+
 ### `ToolSpec` (`controller/toolspecs.py`)
 Frozen dataclass: `name: str`, `description: str`, `properties: dict` (JSON-schema property map),
 `required: list[str]`. Seven instances, copied verbatim from today's `FunctionSchema`s. Validation: names

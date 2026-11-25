@@ -42,7 +42,7 @@ class CallController:
 
     # --- start
     @property
-    def instructions(self) -> str: ...        # build_system_prompt(brief)
+    def instructions(self) -> str: ...        # build_system_prompt(brief), in controller/prompt.py
     @property
     def opening_text(self) -> str: ...        # "Nobody has spoken yet. Open the call: ..."
     def tool_specs(self) -> tuple[ToolSpec, ...]: ...

@@ -14,6 +14,8 @@ Each rule lists forbidden import prefixes (matched on dotted module names, so `p
 | `evaltools/` | `pipecat` (eval classes), `yaml`, `dotenv`, `loguru` | `model`, `config`, `evaltools` | `order_agent.controller`, `order_agent.heads` |
 
 Rules the table encodes:
+- `controller/prompt.py` (instructions for the LLM) lives in the Controller; the Model holds domain and
+  rules only (`brief`, `matching`, `rules`, `report`).
 - Dependencies point inward only: `heads -> controller -> model`. No inner layer imports an outer one.
 - `loguru` is allowed in the Controller (logging only) and forbidden in the Model (pure domain).
 - `order_agent.config` (API keys, provider selection) is never importable from Model or Controller.

@@ -6,8 +6,8 @@
 
 ## Summary
 
-Restructure `order_agent` into Model, Controller and Heads. The Model (brief, matching, rules, report,
-prompt) is already pure and only moves. The real work is extracting the *controller logic* that today
+Restructure `order_agent` into Model, Controller and Heads. The Model (brief, matching, rules, report)
+is already pure and only moves. Prompt building moves to the Controller (how the LLM is spoken to). The real work is extracting the *controller logic* that today
 lives inside `bot.py` (call lifecycle, opening, nudge decisions, transcript capture) and `tools.py`
 (tool-argument conversion, refusals, end-of-call sequencing, tool definitions) into a new
 channel-independent `CallController`. The Pipecat pipeline becomes the thin voice head. A second head,
@@ -68,7 +68,7 @@ checked-out git branch is `feat/headless-mvc`. Work and commits stay on `feat/he
 | `matching.py` | Model | `model/matching.py` | pure |
 | `rules.py` | Model | `model/rules.py` | pure, 421 lines, untouched |
 | `report.py` | Model | `model/report.py` | `build_report`, `summarise`, `write_report` (stdlib file write, accepted as model persistence) |
-| `prompt.py` | Model | `model/prompt.py` | pure text built from the brief |
+| `prompt.py` | Controller | `controller/prompt.py` | instructions for the LLM built from the brief; a conversation concern, not a domain rule |
 | `call.py`: `should_nudge`, `NudgeTracker`, `NUDGE_TEXT`, `MAX_NUDGES` | Controller | `controller/nudge.py` | pure |
 | `call.py`: `NudgeScheduler` | Controller | `controller/nudge.py` | stdlib asyncio only |
 | `call.py`: `CallState`, `make_on_end` | Controller | `controller/session.py` as `CallController` | takes `reports_dir`, not `Settings` |
@@ -109,9 +109,10 @@ model probe and model choice, and the `ORDER_CALL_TIME` override of the brief.
 order_agent/
   __init__.py
   config.py                     # app settings (heads, eval tooling, entry points only)
-  model/                        # Layer 1: pure domain. stdlib + pydantic + yaml only
-    brief.py  matching.py  rules.py  report.py  prompt.py
+  model/                        # Layer 1: pure domain + rules. stdlib + pydantic + yaml only
+    brief.py  matching.py  rules.py  report.py
   controller/                   # Layer 2: conversation logic. stdlib + loguru + model
+    prompt.py    (build_system_prompt, moved from order_agent/prompt.py)
     session.py   (CallController, CallHooks, ToolOutcome, NudgeDecision)
     nudge.py     (should_nudge, NudgeTracker, NudgeScheduler, NUDGE_TEXT, MAX_NUDGES)
     tools.py     (ToolDispatcher: arguments -> OrderSession call -> result)
@@ -178,9 +179,9 @@ step 7.
 
 | # | Step | RED test first | Shims left |
 |---|---|---|---|
-| 1 | Boundary test (model rules) and move `brief matching rules report prompt` to `model/` | `test_architecture` (packages exist, rule checker) | old paths re-export from `model.*` |
+| 1 | Boundary test (model rules) and move `brief matching rules report` to `model/` | `test_architecture` (packages exist, rule checker) | old paths re-export from `model.*` |
 | 2 | Add `controller/toolspecs.py` and `controller/tools.py` (`ToolDispatcher`), additive | dispatcher tests mirroring `test_tools.py` cases | none (old `tools.py` untouched) |
-| 3 | Add `controller/nudge.py` and `CallController`; `call.py` becomes a shim (`CallState` subclass, same constructor) | controller lifecycle, nudge, drop, opening tests | `call.py` |
+| 3 | Add `controller/nudge.py`, move `prompt.py` to `controller/prompt.py`, add `CallController`; `call.py` becomes a shim (`CallState` subclass, same constructor) and `prompt.py` re-exports | controller lifecycle, nudge, drop, opening tests; boundary rule covers `controller/prompt.py` | `call.py`, `prompt.py` |
 | 4 | Add `heads/voice/tools.py` (`build_tools(controller)`) plus a parity test running old `tools.build_tools` and the new one on one argument matrix | parity test | old `tools.py` still used by `bot.py` |
 | 5 | Move the `bot.py` body to `heads/voice/pipeline.py` using the controller; root `bot.py` becomes an entry shim; move `llm_factory.py` and `llm_http_options`; migrate `test_tools`, `test_tool_registration`, `test_llm_factory` to the new API; delete old `tools.py` | fake-hooks event-forwarding tests (restaurant spoke, empty-turn nudge, end_call ordering) | root `bot.py` entry shim only |
 | 6 | HTTP head, additive | scripted `happy_path`, isolation, error codes, import-graph tests | none |
