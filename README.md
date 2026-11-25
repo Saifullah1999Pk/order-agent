@@ -47,7 +47,7 @@ Each test call involves three roles:
 |---|---|---|
 | The agent (bot) | Gemini `gemini-3.5-flash-lite` | Cloud, free tier |
 | Simulated restaurant staff | `qwen3:8b` via Ollama | Your machine (GPU) |
-| Judge (scores the call) | Groq `openai/gpt-oss-20b` | Cloud, free tier |
+| Judge (scores the call) | Groq `openai/gpt-oss-20b`, throttled (one call at a time, 20 s apart) | Cloud, free tier |
 
 **Code checks override the judge.** After every call, deterministic checks on the agent's report decide the hard rules: outcome, budget, forbidden items, required items and minimum order. Of the four judge setups we tested, none agreed with these checks more than about 56% of the time. The judge is trusted only for soft qualities such as politeness. Each scenario gets up to 3 attempts (pass@3), and every attempt is recorded.
 
@@ -132,7 +132,7 @@ Useful options:
 | `--rescore evals/results/<run>` | Re-classifies a saved run. Makes no new calls. |
 | `--simulator FILE` / `--judge FILE` | Swaps the restaurant or judge model for one run. Files are checked before any bot starts. |
 
-`evals/judge-gemini-throttled.yaml` is a rate-limited Gemini judge. Use it if the Groq judge hits its per-minute token cap.
+The default judge (`evals/judge.yaml`) is throttled for Groq's free 8000 tokens/minute cap: the judge asks ~7 questions per call, each carrying the whole transcript, so they are sent one at a time, 20 s apart, with 429 retries. A full judgement therefore takes a few minutes per call. `evals/judge-gemini-throttled.yaml` is a rate-limited Gemini alternative.
 
 Fully local run (bot, restaurant and judge all on Ollama):
 
@@ -192,7 +192,7 @@ tests/                 unit tests
 
 ## Next steps
 
-1. Rate-limit the Groq judge (the existing throttle supports Gemini; extend it to Groq), so the default judge works without using Gemini quota.
+1. ~~Rate-limit the Groq judge~~ Done: the default judge is throttled (see Running the eval).
 2. Urdu and Urdu–English (code-switched) conversation.
 3. Use the same pattern (LLM talks, code decides) in other domains.
 
