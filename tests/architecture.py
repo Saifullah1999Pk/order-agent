@@ -1,0 +1,56 @@
+"""Import-boundary checker used by test_architecture.py. Stdlib only."""
+import ast
+import sys
+
+_THIRD_PARTY_BANNED = (
+    "pipecat", "google", "openai", "groq", "ollama", "anthropic", "fastapi", "starlette",
+    "uvicorn", "aiohttp", "httpx", "requests", "websockets", "loguru", "dotenv",
+)
+
+LAYERS = {
+    "model": {
+        "third_party": {"pydantic", "yaml"},
+        "internal": ("order_agent.model",),
+        "forbidden": _THIRD_PARTY_BANNED
+        + ("order_agent.controller", "order_agent.heads", "order_agent.evaltools", "order_agent.config"),
+    },
+}
+
+
+def imported_modules(source: str, package: str) -> set[str]:
+    """Dotted names imported anywhere in ``source`` (any depth); relative imports are
+    resolved against ``package``. ``from m import n`` yields both ``m`` and ``m.n``."""
+    found: set[str] = set()
+    for node in ast.walk(ast.parse(source)):
+        if isinstance(node, ast.Import):
+            found.update(alias.name for alias in node.names)
+        elif isinstance(node, ast.ImportFrom):
+            if node.level:
+                parts = package.split(".")
+                base = ".".join(parts[: len(parts) - (node.level - 1)])
+                module = f"{base}.{node.module}" if node.module else base
+            else:
+                module = node.module or ""
+            found.add(module)
+            found.update(f"{module}.{a.name}" for a in node.names if a.name != "*")
+    return found
+
+
+def _under(name: str, prefix: str) -> bool:
+    return name == prefix or name.startswith(prefix + ".")
+
+
+def violations(source: str, layer: str, package: str | None = None) -> list[str]:
+    rule = LAYERS[layer]
+    package = package or f"order_agent.{layer}"
+    bad = []
+    for name in sorted(imported_modules(source, package)):
+        top = name.split(".")[0]
+        if any(_under(name, p) for p in rule["forbidden"]):
+            bad.append(name)
+        elif top == "order_agent":
+            if name != "order_agent" and not any(_under(name, p) for p in rule["internal"]):
+                bad.append(name)
+        elif top not in sys.stdlib_module_names and top not in rule["third_party"]:
+            bad.append(name)
+    return bad
