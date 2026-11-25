@@ -1,0 +1,6 @@
+# Simulated restaurant (persona) on Groq, for visitors without Ollama. Select with:
+#   run_suite.py --simulator evals/simulator-groq.yaml
+# Needs GROQ_API_KEY (free tier). Caveat: in our tests it hung up early in 19 of 36 ordered-scenario calls,
+# so a failing scenario may be the persona's fault. Gemini (simulator-gemini.yaml) was more reliable.
+factory: order_agent.eval_llm.groq_llm
+model: openai/gpt-oss-120b

@@ -27,6 +27,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 from loguru import logger
 
+from order_agent.eval_config import apply_eval_configs, load_judge_config, load_simulator_config
+from order_agent.preflight import ollama_up, preflight_message
 from order_agent.report import CallReport
 from order_agent.suite import (
     Expected,
@@ -116,11 +118,12 @@ def newest_report(attempt_dir: Path) -> Path | None:
         time.sleep(0.5)
 
 
-async def run_eval(name: str, port: int, attempt_dir: Path, audio: bool):
+async def run_eval(name: str, port: int, attempt_dir: Path, audio: bool, simulator: str | None = None, judge: str | None = None):
     from pipecat.evals.scenario import EvalScenarioFile
     from pipecat.evals.session import EvalSession, EvalSessionParams
 
     scenario = list(EvalScenarioFile.load(ROOT / "evals" / "scenarios" / f"{name}.yaml"))[0]
+    scenario = apply_eval_configs(scenario, simulator, judge)
     record = str(attempt_dir / "audio.wav") if audio else None
     if audio:
         # Real audio mode: the simulated restaurant is spoken with Kokoro TTS and the bot's audio is
@@ -151,9 +154,9 @@ def judge_text(result) -> str:
     return "\n".join(lines)
 
 
-def run_attempt(name: str, attempt: int, expected: Expected, run_dir: Path, audio: bool) -> ScenarioResult:
+def run_attempt(name: str, attempt: int, expected: Expected, run_dir: Path, audio: bool, simulator: str | None = None, judge: str | None = None) -> ScenarioResult:
     stop_errors: list[str] = []
-    result = _run_attempt(name, attempt, expected, run_dir, audio, stop_errors)
+    result = _run_attempt(name, attempt, expected, run_dir, audio, stop_errors, simulator, judge)
     if stop_errors:
         result.notes.append(stop_errors[0])
         result.violations = result.violations + stop_errors
@@ -162,7 +165,8 @@ def run_attempt(name: str, attempt: int, expected: Expected, run_dir: Path, audi
 
 
 def _run_attempt(
-    name: str, attempt: int, expected: Expected, run_dir: Path, audio: bool, stop_errors: list[str]
+    name: str, attempt: int, expected: Expected, run_dir: Path, audio: bool, stop_errors: list[str],
+    simulator: str | None = None, judge: str | None = None,
 ) -> ScenarioResult:
     attempt_dir = run_dir / name / f"attempt-{attempt}"
     attempt_dir.mkdir(parents=True, exist_ok=True)
@@ -175,7 +179,7 @@ def _run_attempt(
         if not wait_ready(port, proc):
             return ScenarioResult(name, "error", None, ["bot did not become ready"], None, None, attempt, notes)
         try:
-            result = asyncio.run(run_eval(name, port, attempt_dir, audio))
+            result = asyncio.run(run_eval(name, port, attempt_dir, audio, simulator, judge))
         except Exception as exc:  # noqa: BLE001
             (attempt_dir / "exception.txt").write_text(repr(exc), encoding="utf-8")
             return ScenarioResult(name, classify_error(exc), None, [f"{type(exc).__name__}: {exc}"][:1], None, None, attempt, notes)
@@ -216,13 +220,20 @@ def _run_attempt(
     return ScenarioResult(name, status, result.passed, checked.violations, report_file, requests, attempt, notes)
 
 
-def main() -> int:
+def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
     parser.add_argument("--only", help="scenario name (comma-separated for several)")
     parser.add_argument("--audio", action="store_true", help="audio mode: the simulated restaurant speaks (Kokoro) and the bot is transcribed (Whisper)")
     parser.add_argument("--attempts", type=int, default=3)
     parser.add_argument("--sleep", type=float, default=20.0, help="seconds between attempts and scenarios")
+    parser.add_argument("--simulator", metavar="YAML", help="persona LLM config to use instead of evals/simulator.yaml (e.g. evals/simulator-gemini.yaml or evals/simulator-groq.yaml if you have no Ollama)")
+    parser.add_argument("--judge", metavar="YAML", help="judge config to use instead of evals/judge.yaml (e.g. evals/judge-ollama.yaml)")
     parser.add_argument("--rescore", metavar="RESULTS_DIR", help="re-classify the saved attempts of a results directory (no new runs) and rewrite its summary.md")
+    return parser
+
+
+def main() -> int:
+    parser = build_parser()
     args = parser.parse_args()
 
     os.chdir(ROOT)
@@ -243,6 +254,24 @@ def main() -> int:
     if unknown:
         parser.error(f"unknown scenario(s): {unknown}")
 
+    # Fail fast, before any bot starts: the config files must exist and parse, and Ollama must be up if used.
+    try:
+        if args.simulator:
+            load_simulator_config(args.simulator)
+        if args.judge:
+            load_judge_config(args.judge)
+        from pipecat.evals.scenario import EvalScenarioFile
+
+        for n in names:
+            sc = apply_eval_configs(
+                list(EvalScenarioFile.load(ROOT / "evals" / "scenarios" / f"{n}.yaml"))[0], args.simulator, args.judge
+            )
+            problem = preflight_message(sc.simulator or {}, sc.judge or {}, os.environ, ollama_up)
+            if problem:
+                parser.exit(2, f"error: {problem}\n")
+    except ValueError as exc:
+        parser.exit(2, f"error: {exc}\n")
+
     run_id = datetime.now().strftime("%Y%m%d-%H%M%S")
     run_dir = ROOT / "evals" / "results" / run_id
     run_dir.mkdir(parents=True)
@@ -252,7 +281,7 @@ def main() -> int:
         results[name] = []
         for attempt in range(1, args.attempts + 1):
             print(f"[{name}] attempt {attempt}/{args.attempts}", flush=True)
-            r = run_attempt(name, attempt, expectations[name], run_dir, args.audio)
+            r = run_attempt(name, attempt, expectations[name], run_dir, args.audio, args.simulator, args.judge)
             results[name].append(r)
             print(f"  -> {r.status} judge={r.judge_passed} violations={r.violations} notes={r.notes}", flush=True)
             (run_dir / "summary.md").write_text(render_summary(run_id, results, args.attempts), encoding="utf-8")

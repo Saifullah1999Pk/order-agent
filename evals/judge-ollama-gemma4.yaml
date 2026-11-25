@@ -1,0 +1,19 @@
+# All-local judge on Ollama gemma4:12b. Select with:
+#   run_suite.py --judge evals/judge-ollama-gemma4.yaml
+# Thinking is off via `reasoning_effort: none` (verified: 3 completion tokens for a sum, no reasoning field).
+# `endpoint` points at a dedicated Ollama on port 11435 (see evals/confirmation/all-ollama/judge-gemma4.md):
+# on this RX 6600 gemma4:12b (7 GB, 39 of 49 layers on the GPU) crashes the Vulkan runner ("device lost")
+# on any prompt over about 500 tokens when flash attention is on (OLLAMA_FLASH_ATTENTION=1, q8_0 KV), so
+# that server runs with OLLAMA_FLASH_ATTENTION=0 OLLAMA_KV_CACHE_TYPE=f16 OLLAMA_CONTEXT_LENGTH=8192
+# OLLAMA_NUM_PARALLEL=1. `num_ctx` cannot be passed per request on Ollama's /v1 route (ignored), so the
+# context comes from the server. The long timeout covers the sequential queue (about 30 s per question).
+eval:
+  factory: order_agent.eval_llm.ollama_classifier
+  model: gemma4:12b
+  endpoint: http://localhost:11435/v1
+  timeout_s: 1800
+explainer:
+  service: ollama
+  model: gemma4:12b
+  extra:
+    reasoning_effort: none

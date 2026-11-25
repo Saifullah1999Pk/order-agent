@@ -1,0 +1,76 @@
+{
+  "outcome": "call_dropped",
+  "reason": "call ended without end_call",
+  "items": [
+    {
+      "name": "chicken biryani",
+      "line_item": "chicken biryani",
+      "quantity": 2,
+      "unit_price_pkr": "900"
+    },
+    {
+      "name": "raita",
+      "line_item": "raita",
+      "quantity": 1,
+      "unit_price_pkr": "150"
+    }
+  ],
+  "delivery_fee_pkr": "150",
+  "tax_pkr": "0",
+  "cart_total_pkr": "2100",
+  "quoted_total_pkr": null,
+  "delivery_eta": null,
+  "tool_events": [
+    {
+      "tool": "add_item",
+      "args": {
+        "name": "chicken biryani",
+        "quantity": 2,
+        "unit_price_pkr": "900"
+      },
+      "ok": true,
+      "message": "Added 2 x chicken biryani at 900 PKR each. Cart total is now 1800 PKR.",
+      "at": "2026-11-24T12:52:05.820896"
+    },
+    {
+      "tool": "add_item",
+      "args": {
+        "name": "raita",
+        "quantity": 1,
+        "unit_price_pkr": "150"
+      },
+      "ok": true,
+      "message": "Added 1 x raita at 150 PKR each. Cart total is now 1950 PKR.",
+      "at": "2026-11-24T12:52:05.820896"
+    },
+    {
+      "tool": "set_fees",
+      "args": {
+        "delivery_fee_pkr": "150",
+        "tax_pkr": "0"
+      },
+      "ok": true,
+      "message": "Fees recorded: delivery 150 PKR, tax 0 PKR. Cart total is now 2100 PKR.",
+      "at": "2026-11-24T12:52:05.820896"
+    }
+  ],
+  "transcript": [
+    {
+      "role": "agent",
+      "text": "Hello, good afternoon. I'd like to place a delivery order, please.",
+      "at": "2026-11-24T12:52:11.079518"
+    },
+    {
+      "role": "agent",
+      "text": "I'd like two chicken biryanis, and possibly one raita if it fits. Could you let me know if they're available and what the prices are? Also, they could be less spicy if possible.",
+      "at": "2026-11-24T12:52:12.419175"
+    },
+    {
+      "role": "agent",
+      "text": "Sure. My name is Ali Raza, my callback number is zero three hundred, zero zero zero, zero zero zero, and the address is House twelve, Street four, F-seven/two, Islamabad. Please.",
+      "at": "2026-11-24T12:52:28.330596"
+    }
+  ],
+  "started_at": "2026-11-24T12:52:05.820896",
+  "ended_at": "2026-11-24T12:53:07.358578"
+}

@@ -1,0 +1,63 @@
+[
+  {
+    "role": "assistant",
+    "content": "Hello, I'd like to place a delivery order, please."
+  },
+  {
+    "role": "user",
+    "content": "Hello, welcome to Karachi Kitchen. What would you like to order today?"
+  },
+  {
+    "role": "assistant",
+    "content": "I would like two chicken biryani, please. It's for delivery. Can you tell me if that's available and what the price is? Also, do you have raita, and what's its price?"
+  },
+  {
+    "role": "user",
+    "content": "Yes, chicken biryani is available for nine hundred rupees each, and we also have raita for one hundred and fifty rupees."
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "unit_price_pkr": 900,
+      "quantity": 2,
+      "name": "chicken biryani"
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "quantity": 1,
+      "unit_price_pkr": 150,
+      "name": "raita"
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Great. So that's two chicken biryani and one raita. Can you tell me about the delivery fee, tax, and if there's a minimum order? Also, could the biryani be made less spicy, please?"
+  },
+  {
+    "role": "user",
+    "content": "We can make it less spicy. There is a delivery fee of one hundred and fifty rupees, no minimum order, and no tax."
+  },
+  {
+    "role": "tool_call",
+    "name": "set_fees",
+    "arguments": {
+      "tax_pkr": 0,
+      "delivery_fee_pkr": 150
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "set_minimum_order",
+    "arguments": {
+      "minimum_pkr": 0
+    },
+    "cancelled": false
+  }
+]

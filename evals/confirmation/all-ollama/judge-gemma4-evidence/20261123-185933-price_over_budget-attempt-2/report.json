@@ -1,0 +1,20 @@
+{
+  "outcome": "call_dropped",
+  "reason": "call ended without end_call",
+  "items": [],
+  "delivery_fee_pkr": "0",
+  "tax_pkr": "0",
+  "cart_total_pkr": "0",
+  "quoted_total_pkr": null,
+  "delivery_eta": null,
+  "tool_events": [],
+  "transcript": [
+    {
+      "role": "agent",
+      "text": "Hello, I would like to place a delivery order, please.",
+      "at": "2026-11-23T19:13:14.763935"
+    }
+  ],
+  "started_at": "2026-11-23T19:13:09.067797",
+  "ended_at": "2026-11-23T19:13:51.555278"
+}

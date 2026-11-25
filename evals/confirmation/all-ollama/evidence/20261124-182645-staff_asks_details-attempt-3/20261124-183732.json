@@ -1,0 +1,45 @@
+{
+  "outcome": "call_dropped",
+  "reason": "call ended without end_call",
+  "items": [],
+  "delivery_fee_pkr": "0",
+  "tax_pkr": "0",
+  "cart_total_pkr": "0",
+  "quoted_total_pkr": null,
+  "delivery_eta": null,
+  "tool_events": [],
+  "transcript": [
+    {
+      "role": "agent",
+      "text": "Hello, I'd like to place a delivery order.",
+      "at": "2026-11-24T18:37:39.261469"
+    },
+    {
+      "role": "agent",
+      "text": "My name is Ali Raza.",
+      "at": "2026-11-24T18:37:41.404631"
+    },
+    {
+      "role": "agent",
+      "text": "My callback number is 0300-0000000.",
+      "at": "2026-11-24T18:37:43.691693"
+    },
+    {
+      "role": "agent",
+      "text": "My callback number is 0300-0000000.",
+      "at": "2026-11-24T18:37:46.171214"
+    },
+    {
+      "role": "agent",
+      "text": "The delivery address is House 12, Street 4, F-7/2, Islamabad.",
+      "at": "2026-11-24T18:37:48.745298"
+    },
+    {
+      "role": "agent",
+      "text": "Yes, I would like to place the order.",
+      "at": "2026-11-24T18:37:52.043093"
+    }
+  ],
+  "started_at": "2026-11-24T18:37:32.989378",
+  "ended_at": "2026-11-24T18:38:07.363509"
+}

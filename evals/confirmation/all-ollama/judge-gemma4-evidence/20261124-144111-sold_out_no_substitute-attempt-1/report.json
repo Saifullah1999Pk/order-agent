@@ -1,0 +1,54 @@
+{
+  "outcome": "call_dropped",
+  "reason": "call ended without end_call",
+  "items": [
+    {
+      "name": "raita",
+      "line_item": "raita",
+      "quantity": 1,
+      "unit_price_pkr": "150"
+    }
+  ],
+  "delivery_fee_pkr": "0",
+  "tax_pkr": "0",
+  "cart_total_pkr": "150",
+  "quoted_total_pkr": null,
+  "delivery_eta": null,
+  "tool_events": [
+    {
+      "tool": "add_item",
+      "args": {
+        "name": "raita",
+        "quantity": 1,
+        "unit_price_pkr": "150"
+      },
+      "ok": true,
+      "message": "Added 1 x raita at 150 PKR each. Cart total is now 150 PKR.",
+      "at": "2026-11-24T14:46:14.734118"
+    }
+  ],
+  "transcript": [
+    {
+      "role": "agent",
+      "text": "Hello, I would like to place a delivery order, please.",
+      "at": "2026-11-24T14:46:20.852304"
+    },
+    {
+      "role": "agent",
+      "text": "I would like to order two chicken biryanis and one raita for delivery. Are they available, and how much do they cost?",
+      "at": "2026-11-24T14:46:22.753296"
+    },
+    {
+      "role": "agent",
+      "text": "Ah, chicken biryani is sold out. Do you have chicken karahi or chicken pulao instead?",
+      "at": "2026-11-24T14:46:24.197811"
+    },
+    {
+      "role": "agent",
+      "text": "Ah, I see. Since you don't have any chicken biryani, karahi, or pulao, and I cannot have seafood or beef, I won't be able to place an order today. Thank you anyway, goodbye!",
+      "at": "2026-11-24T14:46:28.766818"
+    }
+  ],
+  "started_at": "2026-11-24T14:46:14.734118",
+  "ended_at": "2026-11-24T14:46:34.238868"
+}

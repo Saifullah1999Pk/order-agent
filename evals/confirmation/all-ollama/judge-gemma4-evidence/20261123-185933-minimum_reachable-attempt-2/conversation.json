@@ -1,0 +1,54 @@
+[
+  {
+    "role": "assistant",
+    "content": "Hello, I would like to place a delivery order, please."
+  },
+  {
+    "role": "user",
+    "content": "Sure, what would you like to order?"
+  },
+  {
+    "role": "assistant",
+    "content": "I would like to order two chicken biryanis and one raita for delivery, if you have them. And could you please make them less spicy?"
+  },
+  {
+    "role": "user",
+    "content": "We can definitely make the biryanis less spicy. Your current food total is Rs\u202f1950, which is below our minimum order of Rs\u202f2200; would you like to add anything else?"
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "unit_price_pkr": 900,
+      "name": "chicken biryani",
+      "quantity": 2
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "unit_price_pkr": 150,
+      "quantity": 1,
+      "name": "raita"
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "set_minimum_order",
+    "arguments": {
+      "minimum_pkr": 2200
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Since I need to reach the minimum order, do you have any other dishes you could recommend?"
+  },
+  {
+    "role": "user",
+    "content": "How about adding a chicken karahi for Rs\u202f1400 or a chicken pulao for Rs\u202f800 to reach the minimum?We also have a chicken pulao for Rs\u202f800 if that works for you.Sure, what would you like to add?We\u2019ll just wait for the customer\u2019s choice.Would you like to add the chicken pulao for Rs\u202f800?We\u2019ll wait....Would you like to add the chicken pulao to meet the minimum order?...Please let me know if you\u2019d like to add the chicken pulao, and I\u2019ll confirm your total and delivery time.If I add the chicken pulao (Rs\u202f800), your food total becomes Rs\u202f2750, plus the Rs\u202f150 delivery fee, making Rs\u202f2900, and your order will arrive in about 45\u202fminutes. Shall I place the order?...Great, your order is confirmed for Rs\u202f2900 and will be delivered in about 45\u202fminutes. Thank you for ordering from Karachi Kitchen!"
+  }
+]

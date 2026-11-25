@@ -1,0 +1,2 @@
+goal: not met: The bot failed to fulfill the ordering goal because it did not add enough raita to meet the Rs 2200 minimum and thus could not produce the required total order.
+metric conduct: 1.0 passed=True

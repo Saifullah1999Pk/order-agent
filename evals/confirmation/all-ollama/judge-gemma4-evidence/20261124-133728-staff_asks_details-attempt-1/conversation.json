@@ -1,0 +1,18 @@
+[
+  {
+    "role": "assistant",
+    "content": "Hello, good morning. I'd like to place a delivery order, please."
+  },
+  {
+    "role": "user",
+    "content": "Sure, what would you like to order?"
+  },
+  {
+    "role": "assistant",
+    "content": "I'd like to order two chicken biryanis, and a raita if possible, for delivery. Also, if I could have them less spicy, that would be great. Could you let me know if they're available and what the prices are?"
+  },
+  {
+    "role": "user",
+    "content": "Yes, we have those items; two chicken biryanis at Rs\u202f900 each and a raita at Rs\u202f150, subtotal Rs\u202f1,950 plus Rs\u202f150 delivery. May I have your name, please?"
+  }
+]

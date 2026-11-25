@@ -11,6 +11,8 @@ refuse it. A suite of 11 simulated-restaurant scenarios checks it. A persona LLM
 judge LLM scores the call. Both run on Groq (`gpt-oss-120b` and `gpt-oss-20b`). Deterministic checks on the call
 report override the judge.
 
+(Later sections, 9 to 15, use different setups: other bot, restaurant and judge models. This 8 of 11 is the Gemini-bot, Groq-persona v1 run only.)
+
 **Result: 8 of 11 scenarios passed within 3 attempts. That is a partial result, and it falls short of the
 definition of done.** The 8 are the 6 that passed in the full text run, plus 2 (`happy_path`,
 `price_drop_optional`) that passed when I re-ran the 5 scenarios that had not passed. The other three
@@ -215,7 +217,7 @@ scenario's `not_ordered` outcome relies on that.
    daily caps are not shared).
 2. Make the persona reliable: a stricter output format (one line, hard-truncate after the first sentence) or a
    different free Groq model, so a failing scenario means a bot problem.
-3. Align with your Urdu POC: Urdu/English code-switching, free STT/TTS options to evaluate (so the stack is not
+3. Urdu and Urdu–English (code-switched) conversation: free STT/TTS options to evaluate (so the stack is not
    limited to English Whisper and Kokoro), and the business-profile inbound-agent shape (the same rules engine
    with a restaurant profile instead of a customer brief).
 4. Run the manual hold/silence check, then measure latency on 10 or more real audio turns.
@@ -364,3 +366,35 @@ Bot, persona `gemini-3.5-flash-lite`; judge Groq `gpt-oss-20b`; text mode. Summa
 |---|---|---|
 | minimum_reachable | **fail** (0/3 counted; 1 attempt placed the correct order, Rs 2400) | the other 2 were Gemini timeout/503; the one real attempt failed only on judge conduct 0.83 |
 | happy_path, sold_out_no_substitute | quota_error | Gemini daily quota exceeded; not rerun |
+
+## 13. All-local run on Ollama qwen3:8b (2026-11-24; bot, persona and judge all local)
+
+Evidence: `evals/confirmation/all-ollama/` (README.md has the per-attempt table). Text mode, RX 6600 8 GB, `OLLAMA_NUM_PARALLEL=3`, 4k context, q8 KV cache, thinking off (`reasoning_effort: none`). No cloud API, so no quota errors.
+
+| Scenario | Result | Notes |
+|---|---|---|
+| happy_path | **pass** (2 attempts, 1 pass) | both orders placed, but the bot invented unit prices (925/125, 1050/50); attempt 1 failed judge conduct 0.75 |
+| minimum_reachable | **fail** (0/3) | one order met the Rs 2200 minimum (judge disagreed), one looped on a total mismatch, one invented prices and fees and wrote a tool call as text |
+| staff_asks_details | **fail** (0/3) | the bot never called a tool or named an item; the judge said "goal met" twice when no order existed |
+
+Persona same-turn hang-ups: 0 of 8. Bot first token per turn: median 1.4 s (p90 3.3 s); call 20 to 45 s; judge 14 to 31 s. Judge and deterministic check disagreed in 5 of 8 attempts. Verdict: usable to run the harness with no limits, but qwen3:8b is clearly weaker than the Gemini bot (invented prices, tool-call mistakes) and is not a reliable judge.
+
+## 14. Local judge check: gemma4:12b (2026-11-24)
+
+Re-judging 25 saved conversations (`evals/confirmation/all-ollama/judge-gemma4.md`): gemma4:12b agreed with the deterministic check in 12 of 25 (9 false passes, 4 false fails; about 100 s per conversation), qwen3:8b in 14 of 25 (3 false passes, 8 false fails; 16 s), the original judges (Groq, Gemini, qwen3) in 13 of 25. Neither local model is a reliable judge; gemma4:12b also needs flash attention off on this GPU (it crashes the Vulkan runner on prompts over about 500 tokens otherwise) and a separate server with 8192 context.
+
+## 15. Hybrid setup: Gemini bot, local Ollama persona (2026-11-25)
+
+Evidence: `evals/confirmation/hybrid-2026-11-25/` (README.md has the per-attempt table). The simulated restaurant is now local `qwen3:8b` (default `evals/simulator.yaml`); the judge was throttled Gemini because Groq gpt-oss-20b timed out on the judge's parallel questions (8000 tokens/min cap).
+
+| Scenario | Result | Notes |
+|---|---|---|
+| minimum_reachable | **pass** (1/3) | ordered 2 biryani + 3 raita, Rs 2400 |
+| staff_asks_details | **pass** (1/3) | ordered Rs 1950 |
+| happy_path | fail (0/1) | order correct, no violation; judge conduct 0.875 (bot asked about the minimum order 3 times) |
+| sold_out_no_substitute | **pass** (1/1) | not_ordered |
+| terse_staff | fail (0/2 usable) | one attempt `quota_error` (judge HTTP 503) twice; one fail: the persona kept quoting a wrong total and the bot ended not_ordered after editing its order to match |
+
+Why the attempt counts differ: `happy_path` ran 1 attempt because that run was started with a single attempt (its summary shows 0/1), so it is not a pass@3 failure. `terse_staff` has 3 attempts across 2 runs: the first run recorded 1 attempt (`quota_error`, a judge HTTP 503), and a second run made 2 more (1 fail, 1 `quota_error`). `minimum_reachable`, `staff_asks_details` and `sold_out_no_substitute` stop at the first pass, so they ran 1 attempt.
+
+Persona (7 calls): 0 same-turn hang-ups, 0 lines written for the customer, stayed in role. Gemini requests per call (bot only): 13.4 on average, against 19.6 had the persona also used Gemini, so about 31% fewer, not half. n = 7 calls, one run each; small sample.

@@ -72,3 +72,18 @@ def groq_llm(config: dict) -> GroqLLMService:
     if "reasoning_effort" in config:
         settings.reasoning_effort = config["reasoning_effort"]
     return GroqLLMService(api_key=key, settings=settings)
+
+
+def ollama_classifier(config: dict) -> LLMClassifier:
+    """Local Ollama judge. Pipecat's default 10 s classifier timeout is shorter than the queue of the
+    judge's ~7 parallel questions on a small GPU, so it gets ``timeout_s`` (default 300)."""
+    from pipecat.services.ollama.llm import OLLamaLLMService
+
+    llm = OLLamaLLMService(
+        base_url=config.get("endpoint") or "http://localhost:11434/v1",
+        settings=OLLamaLLMService.Settings(
+            model=config.get("model", "qwen3:8b"),
+            extra=config.get("extra") or {"reasoning_effort": "none"},
+        ),
+    )
+    return LLMClassifier(llm=llm, timeout=config.get("timeout_s", 300.0))

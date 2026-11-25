@@ -1,0 +1,95 @@
+{
+  "outcome": "call_dropped",
+  "reason": "call ended without end_call",
+  "items": [],
+  "delivery_fee_pkr": "0",
+  "tax_pkr": "0",
+  "cart_total_pkr": "0",
+  "quoted_total_pkr": null,
+  "delivery_eta": null,
+  "tool_events": [],
+  "transcript": [
+    {
+      "role": "agent",
+      "text": "Hello, good evening. I'd like to place a delivery order, please.",
+      "at": "2026-11-24T13:07:24.709132"
+    },
+    {
+      "role": "restaurant",
+      "text": "Good evening.   Our fish special is the best thing on the menu.",
+      "at": "2026-11-24T13:07:39.483976"
+    },
+    {
+      "role": "restaurant",
+      "text": "Fried fish with rice. What would you like to order?",
+      "at": "2026-11-24T13:07:40.300522"
+    },
+    {
+      "role": "agent",
+      "text": "I'll pass on the fish. I'd like two chicken biryanis, please, and that's for delivery. Are those available, and what are the prices?",
+      "at": "2026-11-24T13:07:49.939898"
+    },
+    {
+      "role": "restaurant",
+      "text": "No problem.",
+      "at": "2026-11-24T13:07:56.025244"
+    },
+    {
+      "role": "restaurant",
+      "text": "Our fish special is still the best thing on the menu.   fried fish with rice. What would you like?   Great choice!",
+      "at": "2026-11-24T13:08:09.362690"
+    },
+    {
+      "role": "restaurant",
+      "text": "Two chicken biryani will be RS 1,800.   Plus the delivery fee of RS 150.   makes a total of RS-1950.",
+      "at": "2026-11-24T13:08:31.838822"
+    },
+    {
+      "role": "restaurant",
+      "text": "And it will arrive in about 45 minutes.  By the way, our fish special is still the best thing on the menu.  Shall I place the order for you?",
+      "at": "2026-11-24T13:08:32.714226"
+    },
+    {
+      "role": "agent",
+      "text": "Thanks. Before I confirm, is there any tax or a minimum order? And is there room for a raita within my twenty-five hundred rupee budget?",
+      "at": "2026-11-24T13:08:43.617494"
+    },
+    {
+      "role": "restaurant",
+      "text": "Certainly.",
+      "at": "2026-11-24T13:08:49.361409"
+    },
+    {
+      "role": "agent",
+      "text": "I see. So to confirm, no tax and no minimum order,",
+      "at": "2026-11-24T13:08:56.936225"
+    },
+    {
+      "role": "restaurant",
+      "text": "There's no tax and no minimum order.",
+      "at": "2026-11-24T13:09:06.485257"
+    },
+    {
+      "role": "agent",
+      "text": "Great, that fits my budget. One",
+      "at": "2026-11-24T13:09:12.447638"
+    },
+    {
+      "role": "restaurant",
+      "text": "Just to confirm...   You'd like two chicken biryani for a total of RS-1950.",
+      "at": "2026-11-24T13:09:40.728400"
+    },
+    {
+      "role": "restaurant",
+      "text": "Delivered in about 45 minutes, shall I place the order?",
+      "at": "2026-11-24T13:09:41.614133"
+    },
+    {
+      "role": "agent",
+      "text": "Yes",
+      "at": "2026-11-24T13:09:43.735573"
+    }
+  ],
+  "started_at": "2026-11-24T13:07:13.442826",
+  "ended_at": "2026-11-24T13:09:54.235662"
+}

@@ -1,0 +1,105 @@
+[
+  {
+    "role": "assistant",
+    "content": "Hello, I would like to place a delivery order, please."
+  },
+  {
+    "role": "user",
+    "content": "Welcome to Karachi Kitchen! What would you like to order today?"
+  },
+  {
+    "role": "assistant",
+    "content": "I would like to order two plates of chicken biryani and one raita for delivery, if you have them. Could you please let me know the availability and prices? And if possible, can the biryani be made less spicy?"
+  },
+  {
+    "role": "user",
+    "content": "Yes, chicken biryani and raita are both available, and we can make the biryani less spicy. The biryani is nine hundred rupees per plate and raita is one hundred fifty rupees."
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "quantity": 2,
+      "unit_price_pkr": 900,
+      "name": "chicken biryani"
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "unit_price_pkr": 150,
+      "name": "raita",
+      "quantity": 1
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Could you please tell me about the delivery fee, tax, and any minimum order requirement?"
+  },
+  {
+    "role": "user",
+    "content": "The delivery fee is one hundred fifty rupees, there is no tax, and we have no minimum order requirement. Shall I add those to your order?"
+  },
+  {
+    "role": "tool_call",
+    "name": "set_fees",
+    "arguments": {
+      "tax_pkr": 0,
+      "delivery_fee_pkr": 150
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "That sounds great, thank you. Could you please let me know what the total comes to, and what time it will be delivered by? My address is House 12, Street 4, F-7/2"
+  },
+  {
+    "role": "user",
+    "content": "Before we finalize, could I please get your name?"
+  },
+  {
+    "role": "assistant",
+    "content": "My name is Ali Raza. My delivery address is House 12, Street 4, F-7/2, Islamabad, and my callback number is 0300-0000000. Could you please let me know the total and how long delivery will take?"
+  },
+  {
+    "role": "user",
+    "content": "Got it, your name is Ali Raza. May I have your callback phone number please?"
+  },
+  {
+    "role": "assistant",
+    "content": "My callback number is 0300-0000000."
+  },
+  {
+    "role": "user",
+    "content": "Thanks, your callback number is 0300-0000000. And your delivery address is House 12, Street 4, F-7/2, Islamabad?"
+  },
+  {
+    "role": "assistant",
+    "content": "Yes, that is correct. What is the total and when can I expect it delivered?"
+  },
+  {
+    "role": "user",
+    "content": "Your total is two thousand one hundred rupees, and delivery will take forty-five minutes."
+  },
+  {
+    "role": "tool_call",
+    "name": "confirm_order",
+    "arguments": {
+      "delivery_minutes": 45,
+      "quoted_total_pkr": 2100
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "end_call",
+    "arguments": {
+      "reason": "Order placed successfully within budget and delivered by the requested time.",
+      "outcome": "ordered"
+    },
+    "cancelled": false
+  }
+]

@@ -112,3 +112,84 @@ def test_gemini_eval_factories_need_google_key(monkeypatch, tmp_path):
     for factory in (gemini_llm, gemini_native_llm):
         with pytest.raises(RuntimeError, match="GOOGLE_API_KEY"):
             factory({})
+
+
+# --- all-local Ollama bot ---
+
+def test_ollama_settings_defaults():
+    s = Settings()
+    assert s.ollama_model == "qwen3:8b"
+    assert s.ollama_base_url == "http://localhost:11434/v1"
+
+
+def test_load_settings_reads_ollama_env(monkeypatch):
+    monkeypatch.setattr("order_agent.config.load_dotenv", lambda *a, **k: None)
+    monkeypatch.setenv("ORDER_AGENT_LLM_PROVIDER", "ollama")
+    monkeypatch.setenv("ORDER_AGENT_OLLAMA_MODEL", "qwen3:4b")
+    monkeypatch.setenv("ORDER_AGENT_OLLAMA_URL", "http://example:1234/v1")
+    s = load_settings()
+    assert (s.llm_provider, s.ollama_model, s.ollama_base_url) == ("ollama", "qwen3:4b", "http://example:1234/v1")
+
+
+def test_ollama_builds_ollama_service_with_model_prompt_and_thinking_off():
+    from pipecat.services.ollama.llm import OLLamaLLMService
+
+    s = Settings(llm_provider="ollama", ollama_model="qwen3:8b", ollama_base_url="http://example:1234/v1")
+    llm = build_bot_llm(s, "be polite")  # no API key of any kind
+    assert isinstance(llm, OLLamaLLMService)
+    assert llm._settings.model == "qwen3:8b"
+    assert llm._settings.system_instruction == "be polite"
+    assert llm._settings.extra == {"reasoning_effort": "none"}
+    assert str(llm._client.base_url).startswith("http://example:1234/v1")
+
+
+def test_ollama_works_without_any_keys(monkeypatch):
+    _no_google(monkeypatch, None)
+    monkeypatch.delenv("GROQ_API_KEY", raising=False)
+    monkeypatch.setenv("ORDER_AGENT_LLM_PROVIDER", "ollama")
+    s = load_settings()
+    assert s.google_api_key is None and s.groq_api_key is None
+    build_bot_llm(s, "x")
+
+
+async def test_tool_registration_with_ollama_service(brief):
+    session = OrderSession(brief, datetime(2026, 11, 23, 19, 30))
+
+    async def on_end(outcome, reason):
+        pass
+
+    context = LLMContext(tools=build_tools(session, on_end))
+    llm = build_bot_llm(Settings(llm_provider="ollama"), "x")
+    llm._sync_registered_tool_handlers(context.tools)
+    assert NAMES <= set(llm._functions)
+
+    results = []
+
+    async def result_callback(result, properties=None):
+        results.append(result)
+
+    params = SimpleNamespace(
+        arguments={"name": "chicken biryani", "quantity": 2, "unit_price_pkr": 900},
+        result_callback=result_callback,
+    )
+    await llm._functions["add_item"].handler(params)
+    assert results[-1]["ok"] is True
+    assert session.items[0].quantity == 2
+
+
+def test_ollama_builds_local_service_with_thinking_off():
+    from pipecat.services.ollama.llm import OLLamaLLMService
+
+    s = Settings(llm_provider="ollama", ollama_model="qwen3:8b", ollama_base_url="http://box:1234/v1")
+    llm = build_bot_llm(s, "be polite")  # what bot.py calls for the ollama provider; no key, no network
+    assert isinstance(llm, OLLamaLLMService)
+    assert llm._settings.model == "qwen3:8b"
+    assert llm._settings.system_instruction == "be polite"
+    assert llm._settings.extra == {"reasoning_effort": "none"}
+
+
+def test_load_settings_reads_ollama_env(monkeypatch):
+    monkeypatch.setenv("ORDER_AGENT_LLM_PROVIDER", "ollama")
+    monkeypatch.setenv("ORDER_AGENT_OLLAMA_URL", "http://box:1234/v1")
+    s = load_settings()
+    assert (s.llm_provider, s.ollama_base_url) == ("ollama", "http://box:1234/v1")

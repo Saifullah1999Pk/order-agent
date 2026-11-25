@@ -1,0 +1,30 @@
+[
+  {
+    "role": "assistant",
+    "content": "Hello, I'd like to place a delivery order, please."
+  },
+  {
+    "role": "user",
+    "content": "Sure, what would you like to order?"
+  },
+  {
+    "role": "assistant",
+    "content": "I'd like two chicken baryonies, please, and a raita if you have one.  It's for delivery, and I could go for less spicy if possible.  Could you tell me if they are available and the prices?"
+  },
+  {
+    "role": "user",
+    "content": "Yes, both chicken biryani and raita are available. Each chicken biryani is Rs\u202f900, so two will be Rs\u202f1800, and raita is Rs\u202f150. We can make the biryani less spicy for you. Would you like to confirm this order?"
+  },
+  {
+    "role": "assistant",
+    "content": "Before I confirm, could you tell me the delivery fee, tax, and your minimum order altogether?"
+  },
+  {
+    "role": "user",
+    "content": "The delivery fee is Rs\u202f150, there is no tax, and there is no minimum order requirement. Would you like to go ahead and confirm your order?"
+  },
+  {
+    "role": "assistant",
+    "content": "Thanks."
+  }
+]

@@ -1,0 +1,59 @@
+[
+  {
+    "role": "assistant",
+    "content": "Hello, I would like to place a delivery order, please."
+  },
+  {
+    "role": "user",
+    "content": "Sure, may I have the items you'd like to order, please?"
+  },
+  {
+    "role": "assistant",
+    "content": "I would like to order two chicken biryanis and one raita for delivery, please. Are they available, and what are their prices?"
+  },
+  {
+    "role": "user",
+    "content": "Yes, both are available. Chicken biryani is Rs\u202f900 each and raita is Rs\u202f150, so your order comes to Rs\u202f2100 including the Rs\u202f150 delivery fee, and will arrive in about 45 minutes. Shall I place the order?"
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "quantity": 2,
+      "unit_price_pkr": 900,
+      "name": "chicken biryani"
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "unit_price_pkr": 150,
+      "name": "raita",
+      "quantity": 1
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "set_fees",
+    "arguments": {
+      "delivery_fee_pkr": 150,
+      "tax_pkr": 0
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Just to confirm, the total is two thousand one hundred rupees and it will be delivered in forty-five minutes?"
+  },
+  {
+    "role": "user",
+    "content": "Yes, that's correct. Could you please provide your delivery address?"
+  },
+  {
+    "role": "assistant",
+    "content": "My delivery address is House 12, Street 4, F-7/2, Islamabad, and my callback number is 0300-0000000. Could you also please make the food less spicy if possible?"
+  }
+]

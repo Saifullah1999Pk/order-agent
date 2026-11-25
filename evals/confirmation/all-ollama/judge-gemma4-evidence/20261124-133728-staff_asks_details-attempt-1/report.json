@@ -1,0 +1,25 @@
+{
+  "outcome": "call_dropped",
+  "reason": "call ended without end_call",
+  "items": [],
+  "delivery_fee_pkr": "0",
+  "tax_pkr": "0",
+  "cart_total_pkr": "0",
+  "quoted_total_pkr": null,
+  "delivery_eta": null,
+  "tool_events": [],
+  "transcript": [
+    {
+      "role": "agent",
+      "text": "Hello, good morning. I'd like to place a delivery order, please.",
+      "at": "2026-11-24T13:41:01.748864"
+    },
+    {
+      "role": "agent",
+      "text": "I'd like to order two chicken biryanis, and a raita if possible, for delivery. Also, if I could have them less spicy, that would be great. Could you let me know if they're available and what the prices are?",
+      "at": "2026-11-24T13:41:03.737590"
+    }
+  ],
+  "started_at": "2026-11-24T13:40:55.445465",
+  "ended_at": "2026-11-24T13:41:43.578191"
+}

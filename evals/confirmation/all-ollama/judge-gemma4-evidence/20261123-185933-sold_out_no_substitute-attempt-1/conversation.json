@@ -1,0 +1,14 @@
+[
+  {
+    "role": "assistant",
+    "content": "Hello, I would like to place a delivery order, please."
+  },
+  {
+    "role": "user",
+    "content": "I\u2019m sorry, our chicken biryani, karahi and pulao are sold out today; we do have prawn biryani for Rs\u202f1300 and raita for Rs\u202f150\u2014would you like to place an order?"
+  },
+  {
+    "role": "assistant",
+    "content": "Ah, I see. Since I cannot have seafood, do you have any other chicken dishes available?"
+  }
+]

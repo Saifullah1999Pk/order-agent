@@ -1,0 +1,48 @@
+[
+  {
+    "role": "assistant",
+    "content": "Hello! I would like to place a delivery order, please."
+  },
+  {
+    "role": "user",
+    "content": "what?"
+  },
+  {
+    "role": "assistant",
+    "content": "I would like to order two plates of chicken biryani for delivery, please. Do you have chicken biryani available, and how much is it?"
+  },
+  {
+    "role": "user",
+    "content": "Rs 1950, 45 minutes."
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "quantity": 2,
+      "unit_price_pkr": 975,
+      "name": "chicken biryani"
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Could you also tell me if there is any delivery fee, tax, or minimum order for delivery?"
+  },
+  {
+    "role": "user",
+    "content": "yes"
+  },
+  {
+    "role": "assistant",
+    "content": "Can you also tell me about the delivery fee, any tax, and if there is a minimum order amount?"
+  },
+  {
+    "role": "user",
+    "content": "what?yes"
+  },
+  {
+    "role": "assistant",
+    "content": "Could you please let me know what the delivery fee and tax are, and if you have a minimum order?"
+  }
+]

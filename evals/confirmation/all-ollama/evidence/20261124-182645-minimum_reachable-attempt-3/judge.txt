@@ -1,0 +1,2 @@
+goal: not met: The bot did not order enough raita to reach the Rs 2200 food minimum, resulting in a total below the Rs 2500 budget and not meeting the goal criteria for the order amount and total cost.
+metric conduct: 1.0 passed=True

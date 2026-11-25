@@ -1,0 +1,69 @@
+{
+  "outcome": "ordered",
+  "reason": "Order for 2 chicken biryanis confirmed at 1950 PKR, delivery in 45 minutes.",
+  "items": [
+    {
+      "name": "chicken biryani",
+      "line_item": "chicken biryani",
+      "quantity": 2,
+      "unit_price_pkr": "975"
+    }
+  ],
+  "delivery_fee_pkr": "0",
+  "tax_pkr": "0",
+  "cart_total_pkr": "1950",
+  "quoted_total_pkr": "1950",
+  "delivery_eta": "2026-11-23T20:15:00",
+  "tool_events": [
+    {
+      "tool": "add_item",
+      "args": {
+        "name": "chicken biryani",
+        "quantity": 2,
+        "unit_price_pkr": "975"
+      },
+      "ok": true,
+      "message": "Added 2 x chicken biryani at 975 PKR each. Cart total is now 1950 PKR.",
+      "at": "2026-11-23T19:02:42.461904"
+    },
+    {
+      "tool": "confirm_order",
+      "args": {
+        "quoted_total_pkr": "1950",
+        "delivery_minutes": 45
+      },
+      "ok": true,
+      "message": "Order confirmed at 1950 PKR, delivery by about 20:15. Thank the restaurant and call end_call with outcome 'ordered'.",
+      "at": "2026-11-23T19:02:42.461904"
+    },
+    {
+      "tool": "end",
+      "args": {
+        "outcome": "ordered",
+        "reason": "Order for 2 chicken biryanis confirmed at 1950 PKR, delivery in 45 minutes."
+      },
+      "ok": true,
+      "message": "Call ended as ordered: Order for 2 chicken biryanis confirmed at 1950 PKR, delivery in 45 minutes.",
+      "at": "2026-11-23T19:02:42.461904"
+    }
+  ],
+  "transcript": [
+    {
+      "role": "agent",
+      "text": "Hello, I would like to place a delivery order, please.",
+      "at": "2026-11-23T19:02:48.214439"
+    },
+    {
+      "role": "agent",
+      "text": "I would like to order two chicken biryanis. Also, do",
+      "at": "2026-11-23T19:03:10.240483"
+    },
+    {
+      "role": "agent",
+      "text": "Yes, my address is House 12, Street 4, F-7/2, Islamabad, and my callback number is 0300-0000000. Also, if possible, please make it less spicy.",
+      "at": "2026-11-23T19:03:13.375639"
+    }
+  ],
+  "started_at": "2026-11-23T19:02:42.461904",
+  "ended_at": "2026-11-23T19:03:19.375151"
+}

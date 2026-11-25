@@ -1,0 +1,6 @@
+# Simulated restaurant (persona) on Gemini, for visitors without Ollama. Select with:
+#   run_suite.py --simulator evals/simulator-gemini.yaml
+# Native Google service (the OpenAI-compatible route breaks the persona's end_call tool round trip).
+# Needs GOOGLE_API_KEY. It spends Gemini free-tier quota shared with the bot (about 31% more requests per call).
+factory: order_agent.eval_llm.gemini_native_llm
+model: gemini-3.5-flash-lite

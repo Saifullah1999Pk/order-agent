@@ -1,0 +1,106 @@
+{
+  "outcome": "ordered",
+  "reason": "Order placed successfully within budget and delivered by the requested time.",
+  "items": [
+    {
+      "name": "chicken biryani",
+      "line_item": "chicken biryani",
+      "quantity": 2,
+      "unit_price_pkr": "900"
+    },
+    {
+      "name": "raita",
+      "line_item": "raita",
+      "quantity": 1,
+      "unit_price_pkr": "150"
+    }
+  ],
+  "delivery_fee_pkr": "150",
+  "tax_pkr": "0",
+  "cart_total_pkr": "2100",
+  "quoted_total_pkr": "2100",
+  "delivery_eta": "2026-11-23T20:15:00",
+  "tool_events": [
+    {
+      "tool": "add_item",
+      "args": {
+        "name": "chicken biryani",
+        "quantity": 2,
+        "unit_price_pkr": "900"
+      },
+      "ok": true,
+      "message": "Added 2 x chicken biryani at 900 PKR each. Cart total is now 1800 PKR.",
+      "at": "2026-11-24T14:18:43.268258"
+    },
+    {
+      "tool": "add_item",
+      "args": {
+        "name": "raita",
+        "quantity": 1,
+        "unit_price_pkr": "150"
+      },
+      "ok": true,
+      "message": "Added 1 x raita at 150 PKR each. Cart total is now 1950 PKR.",
+      "at": "2026-11-24T14:18:43.268258"
+    },
+    {
+      "tool": "set_fees",
+      "args": {
+        "delivery_fee_pkr": "150",
+        "tax_pkr": "0"
+      },
+      "ok": true,
+      "message": "Fees recorded: delivery 150 PKR, tax 0 PKR. Cart total is now 2100 PKR.",
+      "at": "2026-11-24T14:18:43.268258"
+    },
+    {
+      "tool": "confirm_order",
+      "args": {
+        "quoted_total_pkr": "2100",
+        "delivery_minutes": 45
+      },
+      "ok": true,
+      "message": "Order confirmed at 2100 PKR, delivery by about 20:15. Thank the restaurant and call end_call with outcome 'ordered'.",
+      "at": "2026-11-24T14:18:43.268258"
+    },
+    {
+      "tool": "end",
+      "args": {
+        "outcome": "ordered",
+        "reason": "Order placed successfully within budget and delivered by the requested time."
+      },
+      "ok": true,
+      "message": "Call ended as ordered: Order placed successfully within budget and delivered by the requested time.",
+      "at": "2026-11-24T14:18:43.268258"
+    }
+  ],
+  "transcript": [
+    {
+      "role": "agent",
+      "text": "Hello, I would like to place a delivery order, please.",
+      "at": "2026-11-24T14:18:49.089040"
+    },
+    {
+      "role": "agent",
+      "text": "I would like to order two plates of chicken biryani and one raita for delivery, if you have them. Could you please let me know the availability and prices? And if possible, can the biryani be made less spicy?",
+      "at": "2026-11-24T14:18:51.181276"
+    },
+    {
+      "role": "agent",
+      "text": "My name is Ali Raza. My delivery address is House 12, Street 4, F-7/2, Islamabad, and my callback number is 0300-0000000. Could you please let me know the total and how long delivery will take?",
+      "at": "2026-11-24T14:18:58.394405"
+    },
+    {
+      "role": "agent",
+      "text": "My callback number is 0300-0000000.",
+      "at": "2026-11-24T14:19:00.128979"
+    },
+    {
+      "role": "agent",
+      "text": "Yes, that is correct. What is the total and when can I expect it delivered?",
+      "at": "2026-11-24T14:19:01.496318"
+    }
+  ],
+  "started_at": "2026-11-24T14:18:43.268258",
+  "ended_at": "2026-11-24T14:19:03.875051"
+}

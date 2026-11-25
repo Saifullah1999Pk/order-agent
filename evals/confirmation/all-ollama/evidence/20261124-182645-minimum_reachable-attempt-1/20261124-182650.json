@@ -1,0 +1,116 @@
+{
+  "outcome": "ordered",
+  "reason": "Order confirmed and delivered by 20:15.",
+  "items": [
+    {
+      "name": "chicken biryani",
+      "line_item": "chicken biryani",
+      "quantity": 2,
+      "unit_price_pkr": "800"
+    },
+    {
+      "name": "raita",
+      "line_item": "raita",
+      "quantity": 4,
+      "unit_price_pkr": "150"
+    }
+  ],
+  "delivery_fee_pkr": "150",
+  "tax_pkr": "0",
+  "cart_total_pkr": "2350",
+  "quoted_total_pkr": "2350",
+  "delivery_eta": "2026-11-23T20:15:00",
+  "tool_events": [
+    {
+      "tool": "add_item",
+      "args": {
+        "name": "chicken biryani",
+        "quantity": 2,
+        "unit_price_pkr": "800"
+      },
+      "ok": true,
+      "message": "Added 2 x chicken biryani at 800 PKR each. Cart total is now 1600 PKR.",
+      "at": "2026-11-24T18:26:50.244466"
+    },
+    {
+      "tool": "add_item",
+      "args": {
+        "name": "raita",
+        "quantity": 1,
+        "unit_price_pkr": "150"
+      },
+      "ok": true,
+      "message": "Added 1 x raita at 150 PKR each. Cart total is now 1750 PKR.",
+      "at": "2026-11-24T18:26:50.244466"
+    },
+    {
+      "tool": "set_fees",
+      "args": {
+        "delivery_fee_pkr": "150",
+        "tax_pkr": "0"
+      },
+      "ok": true,
+      "message": "Fees recorded: delivery 150 PKR, tax 0 PKR. Cart total is now 1900 PKR.",
+      "at": "2026-11-24T18:26:50.244466"
+    },
+    {
+      "tool": "set_minimum_order",
+      "args": {
+        "minimum_pkr": "2200"
+      },
+      "ok": true,
+      "message": "Minimum order recorded: 2200 PKR of food (before delivery fee and tax). Food subtotal is now 1750 PKR. The food is 1750 PKR, 450 PKR short of the 2200 PKR minimum: add 3 more raita (450 PKR) to reach it. The total would then be 2350 PKR, within your 2500 PKR budget.",
+      "at": "2026-11-24T18:26:50.244466"
+    },
+    {
+      "tool": "add_item",
+      "args": {
+        "name": "raita",
+        "quantity": 3,
+        "unit_price_pkr": "150"
+      },
+      "ok": true,
+      "message": "Added 3 x raita at 150 PKR each. Cart total is now 2350 PKR.",
+      "at": "2026-11-24T18:26:50.244466"
+    },
+    {
+      "tool": "confirm_order",
+      "args": {
+        "quoted_total_pkr": "2350",
+        "delivery_minutes": 45
+      },
+      "ok": true,
+      "message": "Order confirmed at 2350 PKR, delivery by about 20:15. Thank the restaurant and call end_call with outcome 'ordered'.",
+      "at": "2026-11-24T18:26:50.244466"
+    },
+    {
+      "tool": "end",
+      "args": {
+        "outcome": "ordered",
+        "reason": "Order confirmed and delivered by 20:15."
+      },
+      "ok": true,
+      "message": "Call ended as ordered: Order confirmed and delivered by 20:15.",
+      "at": "2026-11-24T18:26:50.244466"
+    }
+  ],
+  "transcript": [
+    {
+      "role": "agent",
+      "text": "Hello, I'd like to place a delivery order.",
+      "at": "2026-11-24T18:26:56.582217"
+    },
+    {
+      "role": "agent",
+      "text": "I want 2 chicken biryani, 1 raita if possible, and it should be less spicy. Can you confirm the availability and prices?",
+      "at": "2026-11-24T18:27:02.797762"
+    },
+    {
+      "role": "agent",
+      "text": "Yes, I'd like to proceed. The total is 2350 PKR, and the delivery time is 45 minutes. Please confirm the order.",
+      "at": "2026-11-24T18:27:28.169763"
+    }
+  ],
+  "started_at": "2026-11-24T18:26:50.244466",
+  "ended_at": "2026-11-24T18:27:35.138104"
+}

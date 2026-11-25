@@ -1,0 +1,2 @@
+goal: not met: The goal was not achieved because the bot cancelled the order in turn 6 after realizing the total exceeded its budget.
+metric conduct: 1.0 passed=True
