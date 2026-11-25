@@ -72,6 +72,11 @@ class OrderSession:
         """Food subtotal of the priced items (unpriced items add nothing: see _has_unpriced)."""
         return sum((i.quantity * i.unit_price_pkr for i in self.items if i.unit_price_pkr is not None), Decimal(0))
 
+    @property
+    def fees_set(self) -> bool:
+        """Whether set_fees has ever succeeded (otherwise the fee and tax are unknown, not 0)."""
+        return self._fees_set
+
     def _has_unpriced(self) -> bool:
         return any(i.unit_price_pkr is None for i in self.items)
 
@@ -92,7 +97,8 @@ class OrderSession:
         return sum(i.quantity for i in self.items if i.line_item == line_item)
 
     def _below_minimum(self) -> bool:
-        # With an unpriced item the food subtotal is unknown, so a shortfall cannot be judged.
+        # False while anything is unpriced: the shortfall cannot be judged then, and confirm_order
+        # enforces the minimum itself (it refuses until every item has a price).
         return self.minimum_order_pkr is not None and not self._has_unpriced() and self._items_total() < self.minimum_order_pkr
 
     def _minimum_hint(self) -> str:
@@ -344,7 +350,10 @@ class OrderSession:
         total_only = not self.cart_total_known()
         total = self.cart_total()
         if total_only:
-            # Nothing honest to sum: hold the restaurant's own total to the budget (and the deadline below).
+            # Nothing honest to sum: hold the restaurant's own total to the budget (and the deadline below),
+            # and it cannot be lower than what is already recorded.
+            if quoted < total:
+                return ToolResult(False, f"Refused: The restaurant's total (Rs {_fmt(quoted)}) is less than the prices already recorded (Rs {_fmt(total)}). Ask them to check the total.")
             if quoted > self.brief.budget_pkr:
                 return ToolResult(False, f"Refused: the restaurant's total of {_fmt(quoted)} PKR is over your budget of {_fmt(self.brief.budget_pkr)} PKR. Ask whether something can be cheaper; otherwise end the call as not_ordered.")
         elif quoted != total:

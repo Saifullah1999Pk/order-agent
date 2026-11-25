@@ -435,10 +435,10 @@ class ScenarioResult:
 
 
 def scenario_outcome(attempts: list[ScenarioResult], max_attempts: int) -> tuple[Status, str]:
-    """Overall status of a scenario and its label, e.g. "pass (2/3)" = passed on attempt 2 of 3."""
+    """Overall status of a scenario and its label, e.g. "pass (on attempt 2 of 3)"."""
     for a in attempts:
         if a.status == "pass":
-            return "pass", f"pass ({a.attempt}/{max_attempts})"
+            return "pass", f"pass (on attempt {a.attempt} of {max_attempts})"
     statuses = {a.status for a in attempts}
     if "fail" in statuses:
         status: Status = "fail"
@@ -450,7 +450,7 @@ def scenario_outcome(attempts: list[ScenarioResult], max_attempts: int) -> tuple
         status = "error"
     else:
         status = "quota_error"
-    return status, f"{status} (0/{len(attempts)})"
+    return status, f"{status} (no pass in {len(attempts)} attempt{'s' if len(attempts) != 1 else ''})"
 
 
 def _judge_text(value: bool | None) -> str:

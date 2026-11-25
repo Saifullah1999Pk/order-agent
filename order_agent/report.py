@@ -67,7 +67,7 @@ def build_report(
         cart_total_pkr=session.cart_total() if session.cart_total_known() else None,
         quoted_total_pkr=session.quoted_total_pkr,
         delivery_eta=session.delivery_eta,
-        fees_set=session._fees_set,
+        fees_set=session.fees_set,
         total_only=session.confirmed_at_total_only,
         tool_events=[_plain(dataclasses.asdict(e)) for e in session.events],
         transcript=transcript,

@@ -209,7 +209,7 @@ def res(name, attempt, status, judge=None, violations=None, requests=None, notes
 
 
 def test_scenario_outcome():
-    assert scenario_outcome([res("a", 1, "fail"), res("a", 2, "pass")], 3) == ("pass", "pass (2/3)")
+    assert scenario_outcome([res("a", 1, "fail"), res("a", 2, "pass")], 3) == ("pass", "pass (on attempt 2 of 3)")
     assert scenario_outcome([res("a", 1, "quota_error")] * 3, 3)[0] == "quota_error"
     assert scenario_outcome([res("a", 1, "quota_error"), res("a", 2, "fail")], 3)[0] == "fail"
     assert scenario_outcome([res("a", 1, "error")], 1)[0] == "error"
@@ -226,7 +226,7 @@ def test_render_summary_lists_every_attempt():
         },
         attempts=3,
     )
-    assert "pass (2/3)" in text
+    assert "pass (on attempt 2 of 3)" in text
     assert "total 2600 too high" in text
     assert "hung up first" in text
     assert "judge requests are not counted" in text.lower()
@@ -644,7 +644,7 @@ def test_persona_totals_reads_the_committed_totals_line():
 
 
 def test_scenario_outcome_restaurant_error():
-    assert scenario_outcome([res("a", 1, "restaurant_error")] * 2, 2) == ("restaurant_error", "restaurant_error (0/2)")
+    assert scenario_outcome([res("a", 1, "restaurant_error")] * 2, 2) == ("restaurant_error", "restaurant_error (no pass in 2 attempts)")
     assert scenario_outcome([res("a", 1, "restaurant_error"), res("a", 2, "quota_error")], 2)[0] == "restaurant_error"
     assert scenario_outcome([res("a", 1, "restaurant_error"), res("a", 2, "fail")], 2)[0] == "fail"
     assert scenario_outcome([res("a", 1, "restaurant_error"), res("a", 2, "pass")], 2)[0] == "pass"
@@ -654,7 +654,7 @@ def test_scenario_outcome_restaurant_error():
 def test_summary_shows_restaurant_error_distinctly():
     note = "restaurant quoted Rs 1250, which matches no valid order (correct for this cart: Rs 2100); bot declined"
     text = render_summary("r", {"a": [res("a", 1, "restaurant_error", False, [], 5, [note])]}, 1)
-    assert "| a | restaurant_error (0/1) |" in text
+    assert "| a | restaurant_error (no pass in 1 attempt) |" in text
     assert "| a | 1 | restaurant_error |" in text
 
 

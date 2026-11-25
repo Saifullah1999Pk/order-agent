@@ -168,3 +168,37 @@ def test_adding_unpriced_to_priced_item_keeps_price(brief):
     s.add_item("chicken biryani", 1, Decimal("900"))
     assert s.add_item("chicken biryani", 1, None).ok
     assert s.items[0].unit_price_pkr == Decimal("900") and s.items[0].quantity == 2
+
+
+def test_total_only_quote_below_known_partial_sum_refused(brief):
+    s = _s(brief)
+    s.add_item("chicken biryani", 2, Decimal("1000"))
+    s.add_item("raita", 1, None)
+    r = s.confirm_order(Decimal("1000"), 45)
+    assert not r.ok
+    assert "less than the prices already recorded (Rs 2000)" in r.message
+    assert "Rs 1000" in r.message
+    assert s.state == "open"
+
+
+def test_total_only_quote_at_or_above_partial_sum_ok(brief):
+    s = _s(brief)
+    s.add_item("chicken biryani", 2, Decimal("1000"))
+    s.add_item("raita", 1, None)
+    assert s.confirm_order(Decimal("2150"), 45).ok
+
+
+def test_total_only_quote_below_partial_sum_includes_set_fees(brief):
+    s = _s(brief)
+    s.add_item("chicken biryani", 2, Decimal("900"))
+    s.add_item("raita", 1, None)
+    s.set_fees(Decimal("150"), Decimal("0"))
+    assert not s.confirm_order(Decimal("1900"), 45).ok
+    assert s.confirm_order(Decimal("1950"), 45).ok
+
+
+def test_session_exposes_fees_set(brief):
+    s = _s(brief)
+    assert s.fees_set is False
+    s.set_fees(Decimal("0"), Decimal("0"))
+    assert s.fees_set is True
