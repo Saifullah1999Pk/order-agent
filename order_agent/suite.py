@@ -48,6 +48,10 @@ class Expected(BaseModel):
     must_include: list[str] = []
     must_exclude: list[str] = []
     min_food_subtotal_pkr: Decimal | None = None
+    # What the restaurant's persona says: unit price per orderable item, and the delivery fee / tax.
+    # Optional so older expected files still load; when absent the price check is skipped.
+    menu_pkr: dict[str, Decimal] | None = None
+    fees_pkr: dict[str, Decimal] | None = None
 
 
 def load_expected(path: str | Path = "evals/expected.yaml") -> dict[str, Expected]:
@@ -76,6 +80,36 @@ def _check_outcome(report: CallReport, expected: Expected, out: CheckOutcome) ->
             return
     detail = "an order was confirmed" if report.quoted_total_pkr is not None else "no order was confirmed"
     out.violations.append(f"outcome is {got} ({detail}), expected {want}")
+
+
+def _check_prices(report: CallReport, expected: Expected, out: CheckOutcome) -> None:
+    """Prices and fees in the report must be what the restaurant's menu says (fail-safe: any
+    unreadable value or unknown item is a violation)."""
+    if expected.menu_pkr is not None:
+        menu = {normalise(k): (k, v) for k, v in expected.menu_pkr.items()}
+        for entry in report.items:
+            name = str(entry.get("name", ""))
+            hit = menu.get(normalise(name))
+            if hit is None:
+                out.violations.append(f"item '{name}' is not on the menu")
+                continue
+            try:
+                got = Decimal(str(entry["unit_price_pkr"]))
+            except Exception:  # noqa: BLE001 - missing or unreadable price
+                out.violations.append(f"price for {name} could not be read")
+                continue
+            if got != hit[1]:
+                out.violations.append(f"price for {name} was {got:f}, menu says {hit[1]:f}")
+    if expected.fees_pkr is not None:
+        confirmed = report.quoted_total_pkr is not None
+        for key, label, got in (("delivery", "delivery fee", report.delivery_fee_pkr), ("tax", "tax", report.tax_pkr)):
+            want = expected.fees_pkr.get(key)
+            if want is None or got == want:
+                continue
+            # A call that never recorded fees leaves them at 0; only a confirmed order must have them right.
+            if got == 0 and not confirmed:
+                continue
+            out.violations.append(f"{label} was {got:f}, menu says {want:f}")
 
 
 def check_report_full(report: CallReport, expected: Expected, brief: OrderBrief | None = None) -> CheckOutcome:
@@ -114,6 +148,7 @@ def check_report_full(report: CallReport, expected: Expected, brief: OrderBrief 
             out.violations.append(
                 f"food subtotal {subtotal:f} is below the minimum {expected.min_food_subtotal_pkr:f}"
             )
+    _check_prices(report, expected, out)
     # De-duplicate (must_exclude and never can name the same word) keeping order.
     out.violations = list(dict.fromkeys(out.violations))
     return out

@@ -7,6 +7,8 @@ happy_path:
   max_total_pkr: 2500
   must_include: ["chicken biryani"]
   must_exclude: [seafood, fish, prawn, jhinga, beef]
+  menu_pkr: {chicken biryani: 900, chicken karahi: 1400, chicken pulao: 800, raita: 150}
+  fees_pkr: {delivery: 150, tax: 0}
 sold_out_substitute:
   brief: evals/briefs/sold_out_substitute.yaml
   call_time: "2026-11-23T19:30:00"
@@ -14,6 +16,8 @@ sold_out_substitute:
   max_total_pkr: 2500
   must_include: ["chicken karahi"]
   must_exclude: [seafood, fish, prawn, jhinga, beef]
+  menu_pkr: {chicken karahi: 1100, chicken pulao: 800, raita: 150}
+  fees_pkr: {delivery: 150, tax: 0}
 sold_out_no_substitute:
   brief: evals/briefs/sold_out_no_substitute.yaml
   call_time: "2026-11-23T19:30:00"
@@ -21,6 +25,8 @@ sold_out_no_substitute:
   max_total_pkr: 2500
   must_include: []
   must_exclude: [prawn]
+  menu_pkr: {raita: 150, prawn biryani: 1300}
+  fees_pkr: {delivery: 150, tax: 0}
 price_drop_optional:
   brief: evals/briefs/price_drop_optional.yaml
   call_time: "2026-11-23T19:30:00"
@@ -28,6 +34,8 @@ price_drop_optional:
   max_total_pkr: 2500
   must_include: ["chicken biryani"]
   must_exclude: [raita, seafood, fish, prawn, jhinga, beef]
+  menu_pkr: {chicken biryani: 1150, raita: 250}
+  fees_pkr: {delivery: 150, tax: 0}
 price_over_budget:
   brief: evals/briefs/price_over_budget.yaml
   call_time: "2026-11-23T19:30:00"
@@ -35,6 +43,8 @@ price_over_budget:
   max_total_pkr: 2500
   must_include: []
   must_exclude: []
+  menu_pkr: {chicken biryani: 1300, raita: 150}
+  fees_pkr: {delivery: 150, tax: 0}
 late_delivery:
   brief: evals/briefs/late_delivery.yaml
   call_time: "2026-11-23T19:30:00"
@@ -42,6 +52,8 @@ late_delivery:
   max_total_pkr: 2500
   must_include: []
   must_exclude: []
+  menu_pkr: {chicken biryani: 900, chicken karahi: 1400, chicken pulao: 800, raita: 150}
+  fees_pkr: {delivery: 150, tax: 0}
 minimum_reachable:
   brief: evals/briefs/minimum_reachable.yaml
   call_time: "2026-11-23T19:30:00"
@@ -50,6 +62,8 @@ minimum_reachable:
   min_food_subtotal_pkr: 2200
   must_include: ["chicken biryani", "raita"]
   must_exclude: [seafood, fish, prawn, jhinga, beef]
+  menu_pkr: {chicken biryani: 900, chicken karahi: 1400, chicken pulao: 800, raita: 150}
+  fees_pkr: {delivery: 150, tax: 0}
 minimum_unreachable:
   brief: evals/briefs/minimum_unreachable.yaml
   call_time: "2026-11-23T19:30:00"
@@ -57,6 +71,8 @@ minimum_unreachable:
   max_total_pkr: 2500
   must_include: []
   must_exclude: []
+  menu_pkr: {chicken biryani: 900, chicken karahi: 1400, chicken pulao: 800, raita: 150}
+  fees_pkr: {delivery: 150, tax: 0}
 staff_asks_details:
   brief: evals/briefs/staff_asks_details.yaml
   call_time: "2026-11-23T19:30:00"
@@ -64,6 +80,8 @@ staff_asks_details:
   max_total_pkr: 2500
   must_include: ["chicken biryani"]
   must_exclude: [seafood, fish, prawn, jhinga, beef]
+  menu_pkr: {chicken biryani: 900, chicken karahi: 1400, chicken pulao: 800, raita: 150}
+  fees_pkr: {delivery: 150, tax: 0}
 pushes_forbidden:
   brief: evals/briefs/pushes_forbidden.yaml
   call_time: "2026-11-23T19:30:00"
@@ -71,6 +89,8 @@ pushes_forbidden:
   max_total_pkr: 2500
   must_include: ["chicken biryani"]
   must_exclude: [seafood, fish, prawn, jhinga, beef]
+  menu_pkr: {chicken biryani: 900, chicken karahi: 1400, chicken pulao: 800, raita: 150, fish special: 1200}
+  fees_pkr: {delivery: 150, tax: 0}
 terse_staff:
   brief: evals/briefs/terse_staff.yaml
   call_time: "2026-11-23T19:30:00"
@@ -78,3 +98,5 @@ terse_staff:
   max_total_pkr: 2500
   must_include: ["chicken biryani"]
   must_exclude: [seafood, fish, prawn, jhinga, beef]
+  menu_pkr: {chicken biryani: 900, chicken karahi: 1400, chicken pulao: 800, raita: 150}
+  fees_pkr: {delivery: 150, tax: 0}
