@@ -380,3 +380,17 @@ Persona same-turn hang-ups: 0 of 8. Bot first token per turn: median 1.4 s (p90 
 ## 14. Local judge check: gemma4:12b (2026-11-24)
 
 Re-judging 25 saved conversations (`evals/confirmation/all-ollama/judge-gemma4.md`): gemma4:12b agreed with the deterministic check in 12 of 25 (9 false passes, 4 false fails; about 100 s per conversation), qwen3:8b in 14 of 25 (3 false passes, 8 false fails; 16 s), the original judges (Groq, Gemini, qwen3) in 13 of 25. Neither local model is a reliable judge; gemma4:12b also needs flash attention off on this GPU (it crashes the Vulkan runner on prompts over about 500 tokens otherwise) and a separate server with 8192 context.
+
+## 15. Hybrid setup: Gemini bot, local Ollama persona (2026-11-25)
+
+Evidence: `evals/confirmation/hybrid-2026-11-25/` (README.md has the per-attempt table). The simulated restaurant is now local `qwen3:8b` (default `evals/simulator.yaml`); the judge was throttled Gemini because Groq gpt-oss-20b timed out on the judge's parallel questions (8000 tokens/min cap).
+
+| Scenario | Result | Notes |
+|---|---|---|
+| minimum_reachable | **pass** (1/3) | ordered 2 biryani + 3 raita, Rs 2400 |
+| staff_asks_details | **pass** (1/3) | ordered Rs 1950 |
+| happy_path | fail (0/1) | order correct, no violation; judge conduct 0.875 (bot asked about the minimum order 3 times) |
+| sold_out_no_substitute | **pass** (1/1) | not_ordered |
+| terse_staff | fail (0/2 usable) | one attempt `quota_error` (judge HTTP 503) twice; one fail: the persona kept quoting a wrong total and the bot ended not_ordered after editing its order to match |
+
+Persona (7 calls): 0 same-turn hang-ups, 0 lines written for the customer, stayed in role. Gemini requests per call (bot only): 13.4 on average, against 19.6 had the persona also used Gemini, so about 31% fewer, not half. n = 7 calls, one run each; small sample.

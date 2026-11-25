@@ -1,0 +1,17 @@
+# Throttled Gemini judge for sessions where Groq gpt-oss-20b's 8000 tokens/min cap makes the judge's ~7 parallel
+# questions time out (Pipecat's default 10 s). Select with: run_suite.py --judge evals/judge-gemini-throttled.yaml
+eval:
+  factory: order_agent.eval_llm.gemini_classifier
+  model: gemini-3.5-flash-lite
+  max_concurrency: 1
+  min_interval_s: 9
+  max_retries: 3
+  retry_base_s: 5
+  timeout_s: 180
+explainer:
+  factory: order_agent.eval_llm.gemini_llm
+  model: gemini-3.5-flash-lite
+  max_concurrency: 1
+  min_interval_s: 9
+  max_retries: 3
+  retry_base_s: 5
