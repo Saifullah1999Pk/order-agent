@@ -11,6 +11,8 @@ refuse it. A suite of 11 simulated-restaurant scenarios checks it. A persona LLM
 judge LLM scores the call. Both run on Groq (`gpt-oss-120b` and `gpt-oss-20b`). Deterministic checks on the call
 report override the judge.
 
+(Later sections, 9 to 15, use different setups: other bot, restaurant and judge models. This 8 of 11 is the Gemini-bot, Groq-persona v1 run only.)
+
 **Result: 8 of 11 scenarios passed within 3 attempts. That is a partial result, and it falls short of the
 definition of done.** The 8 are the 6 that passed in the full text run, plus 2 (`happy_path`,
 `price_drop_optional`) that passed when I re-ran the 5 scenarios that had not passed. The other three
@@ -215,7 +217,7 @@ scenario's `not_ordered` outcome relies on that.
    daily caps are not shared).
 2. Make the persona reliable: a stricter output format (one line, hard-truncate after the first sentence) or a
    different free Groq model, so a failing scenario means a bot problem.
-3. Align with your Urdu POC: Urdu/English code-switching, free STT/TTS options to evaluate (so the stack is not
+3. Urdu and Urdu–English (code-switched) conversation: free STT/TTS options to evaluate (so the stack is not
    limited to English Whisper and Kokoro), and the business-profile inbound-agent shape (the same rules engine
    with a restaurant profile instead of a customer brief).
 4. Run the manual hold/silence check, then measure latency on 10 or more real audio turns.
@@ -392,5 +394,7 @@ Evidence: `evals/confirmation/hybrid-2026-11-25/` (README.md has the per-attempt
 | happy_path | fail (0/1) | order correct, no violation; judge conduct 0.875 (bot asked about the minimum order 3 times) |
 | sold_out_no_substitute | **pass** (1/1) | not_ordered |
 | terse_staff | fail (0/2 usable) | one attempt `quota_error` (judge HTTP 503) twice; one fail: the persona kept quoting a wrong total and the bot ended not_ordered after editing its order to match |
+
+Why the attempt counts differ: `happy_path` ran 1 attempt because that run was started with a single attempt (its summary shows 0/1), so it is not a pass@3 failure. `terse_staff` has 3 attempts across 2 runs: the first run recorded 1 attempt (`quota_error`, a judge HTTP 503), and a second run made 2 more (1 fail, 1 `quota_error`). `minimum_reachable`, `staff_asks_details` and `sold_out_no_substitute` stop at the first pass, so they ran 1 attempt.
 
 Persona (7 calls): 0 same-turn hang-ups, 0 lines written for the customer, stayed in role. Gemini requests per call (bot only): 13.4 on average, against 19.6 had the persona also used Gemini, so about 31% fewer, not half. n = 7 calls, one run each; small sample.

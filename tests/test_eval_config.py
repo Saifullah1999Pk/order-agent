@@ -25,7 +25,7 @@ def test_defaults_untouched_without_overrides():
 
 
 def test_ollama_override_replaces_persona_and_judge():
-    s = apply_eval_configs(load(), ROOT / "evals" / "simulator-ollama.yaml", ROOT / "evals" / "judge-ollama.yaml")
+    s = apply_eval_configs(load(), ROOT / "evals" / "simulator.yaml", ROOT / "evals" / "judge-ollama.yaml")
     assert s.simulator["service"] == "ollama"
     assert s.simulator["model"] == "qwen3:8b"
     assert s.simulator["extra"] == {"reasoning_effort": "none"}
@@ -38,7 +38,7 @@ def test_ollama_override_replaces_persona_and_judge():
 
 
 def test_override_only_one_side():
-    s = apply_eval_configs(load(), ROOT / "evals" / "simulator-ollama.yaml", None)
+    s = apply_eval_configs(load(), ROOT / "evals" / "simulator.yaml", None)
     assert s.simulator["service"] == "ollama"
     assert s.judge["factory"] == "order_agent.eval_llm.groq_llm"
 
@@ -69,3 +69,20 @@ def test_ollama_classifier_has_long_timeout_and_thinking_off():
 def test_judge_ollama_yaml_uses_that_factory():
     s = apply_eval_configs(load(), None, ROOT / "evals" / "judge-ollama.yaml")
     assert s.judge["factory"] == "order_agent.eval_llm.ollama_classifier"
+
+
+def test_gemini_and_groq_persona_configs_build_services():
+    from pipecat.services.google.llm import GoogleLLMService
+    from pipecat.services.groq.llm import GroqLLMService
+
+    g = apply_eval_configs(load(), ROOT / "evals" / "simulator-gemini.yaml", None).simulator
+    assert g["factory"] == "order_agent.eval_llm.gemini_native_llm"
+    assert g["model"] == "gemini-3.5-flash-lite"
+    r = apply_eval_configs(load(), ROOT / "evals" / "simulator-groq.yaml", None).simulator
+    assert r["factory"] == "order_agent.eval_llm.groq_llm"
+    assert r["model"] == "openai/gpt-oss-120b"
+    assert not (ROOT / "evals" / "simulator-ollama.yaml").exists()
+
+
+def test_default_ollama_persona_keeps_reasoning_effort_none():
+    assert load().simulator["extra"] == {"reasoning_effort": "none"}

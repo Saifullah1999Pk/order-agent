@@ -49,23 +49,23 @@ Each test call involves three roles:
 | Simulated restaurant staff | `qwen3:8b` via Ollama | Your machine (GPU) |
 | Judge (scores the call) | Groq `openai/gpt-oss-20b` | Cloud, free tier |
 
-**Code checks override the judge.** After every call, deterministic checks on the agent's report decide the hard rules: outcome, budget, forbidden items, required items and minimum order. In our tests, no LLM judge agreed with these checks more than about 56% of the time. The judge is trusted only for soft qualities such as politeness. Each scenario gets up to 3 attempts (pass@3), and every attempt is recorded.
+**Code checks override the judge.** After every call, deterministic checks on the agent's report decide the hard rules: outcome, budget, forbidden items, required items and minimum order. Of the four judge setups we tested, none agreed with these checks more than about 56% of the time. The judge is trusted only for soft qualities such as politeness. Each scenario gets up to 3 attempts (pass@3), and every attempt is recorded.
 
 ## Results at a glance
 
 | | |
 |---|---|
 | v1 suite (2026-11-23) | 8 of 11 scenarios passed within 3 attempts. **0 failures came from the agent breaking a rule.** |
-| Since then | Fixed the simulated restaurant hanging up early and the agent's minimum-order handling. `minimum_reachable` and `staff_asks_details` now pass (2026-11-25). |
+| Since then | Fixed the simulated restaurant hanging up early and the agent's minimum-order handling. In the 2026-11-25 hybrid run ([evidence](evals/confirmation/hybrid-2026-11-25/README.md)), `minimum_reachable` and `staff_asks_details` passed on their first attempt, judged by the throttled Gemini judge (`evals/judge-gemini-throttled.yaml`) because the default Groq judge timed out on Groq's per-minute token cap. In the same run `happy_path` failed on the judge's conduct score (correct order, no rule violations) and `terse_staff` did not pass (a bot bug: it rewrote its order to match a wrong total the restaurant insisted on). |
 | Latency (end of speech to bot speaking) | Median 2.73 s, P90 3.64 s (n=28, bot on Groq, audio runs) |
-| Local LLM (Ollama, `qwen3:8b`) | Good as the simulated restaurant. Not reliable as the bot (it invented prices) or the judge. |
+| Local LLM (Ollama, `qwen3:8b`) | Good as the simulated restaurant (2 wrong-total slips in 7 calls, never hung up early). Not reliable as the bot (it invented prices) or the judge. |
 | Unit tests | 240 passing |
 
 Full write-up, with every number linked to its evidence: [docs/results-v1.md](docs/results-v1.md).
 
 ## Quick start
 
-Requirements: Python 3.12 and [uv](https://docs.astral.sh/uv/). For the default eval setup you also need [Ollama](https://ollama.com).
+Requirements: Python 3.12 and [uv](https://docs.astral.sh/uv/). For the default eval setup you also need [Ollama](https://ollama.com). No Ollama? Run the suite with a cloud restaurant instead (see below).
 
 ```bash
 uv sync
@@ -101,7 +101,21 @@ ollama pull qwen3:8b
 $env:OLLAMA_NUM_PARALLEL=1; $env:OLLAMA_CONTEXT_LENGTH=8192; $env:OLLAMA_KV_CACHE_TYPE="q8_0"; $env:OLLAMA_FLASH_ATTENTION=1; $env:OLLAMA_KEEP_ALIVE="2h"; ollama serve
 ```
 
-`ollama ps` should show `100% GPU`. On an AMD RX 6600 this works through Vulkan.
+On macOS or Linux (bash), the equivalent is:
+
+```bash
+OLLAMA_NUM_PARALLEL=1 OLLAMA_CONTEXT_LENGTH=8192 OLLAMA_KV_CACHE_TYPE=q8_0 OLLAMA_FLASH_ATTENTION=1 OLLAMA_KEEP_ALIVE=2h ollama serve
+```
+
+`ollama ps` should show `100% GPU`. On an AMD RX 6600 this works through Vulkan. `run_suite.py` checks that Ollama is running before it starts and stops with a clear message if it is not.
+
+**No Ollama?** Use a cloud simulated restaurant instead (it spends free-tier quota):
+
+```bash
+PYTHONIOENCODING=utf-8 uv run python run_suite.py --only happy_path --simulator evals/simulator-gemini.yaml
+```
+
+`evals/simulator-groq.yaml` is the Groq alternative, but that persona hung up early more often in our tests.
 
 ```bash
 PYTHONIOENCODING=utf-8 uv run python run_suite.py                         # all 11 scenarios
@@ -116,9 +130,15 @@ Useful options:
 | `--attempts N` | Attempts per scenario. Default 3. |
 | `--sleep S` | Pause between attempts. Raise it if you see 429s. |
 | `--rescore evals/results/<run>` | Re-classifies a saved run. Makes no new calls. |
-| `--simulator FILE` / `--judge FILE` | Swaps the restaurant or judge model for one run. |
+| `--simulator FILE` / `--judge FILE` | Swaps the restaurant or judge model for one run. Files are checked before any bot starts. |
 
 `evals/judge-gemini-throttled.yaml` is a rate-limited Gemini judge. Use it if the Groq judge hits its per-minute token cap.
+
+Fully local run (bot, restaurant and judge all on Ollama):
+
+```bash
+ORDER_AGENT_LLM_PROVIDER=ollama PYTHONIOENCODING=utf-8 uv run python run_suite.py --only happy_path --judge evals/judge-ollama.yaml
+```
 
 Results go to `evals/results/<timestamp>/`, which is gitignored. `summary.md` holds the per-attempt status. Run summaries kept as evidence are committed under `evals/confirmation/`.
 
@@ -129,6 +149,7 @@ Results go to `evals/results/<timestamp>/`, which is gitignored. `summary.md` ho
 | `ORDER_AGENT_LLM_PROVIDER=gemini` | The default |
 | `ORDER_AGENT_LLM_PROVIDER=groq` | Uses `ORDER_AGENT_GROQ_MODEL`, default `qwen/qwen3.8-27b`. Needs `GROQ_API_KEY`. |
 | `ORDER_AGENT_LLM_PROVIDER=ollama` | Uses `ORDER_AGENT_OLLAMA_MODEL`, default `qwen3:8b`. Fully local, no keys. |
+| `ORDER_AGENT_OLLAMA_URL` | Ollama's OpenAI-compatible address, default `http://localhost:11434/v1`. |
 
 A fully local setup, with the bot, restaurant and judge all on Ollama, is described with its honest quality results in [evals/confirmation/all-ollama/README.md](evals/confirmation/all-ollama/README.md).
 
@@ -172,9 +193,9 @@ tests/                 unit tests
 ## Next steps
 
 1. Price check against each scenario's menu, so made-up or inflated prices are caught.
-2. Rate-limit the Groq judge, so judging uses no Gemini quota.
-3. Urdu and Urdu–English conversation, building on the team's Urdu voice-agent proof of concept.
-4. Integrating a voice agent into a tax-filing assistant.
+2. Rate-limit the Groq judge (the existing throttle supports Gemini; extend it to Groq), so the default judge works without using Gemini quota.
+3. Urdu and Urdu–English (code-switched) conversation.
+4. Use the same pattern (LLM talks, code decides) in other domains.
 
 ## License
 

@@ -7,10 +7,29 @@ import yaml
 
 
 def _load(path: str | Path) -> dict:
-    data = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
+    p = Path(path)
+    if not p.is_file():
+        raise ValueError(f"{path}: file not found")
+    try:
+        data = yaml.safe_load(p.read_text(encoding="utf-8"))
+    except yaml.YAMLError as exc:
+        raise ValueError(f"{path}: not valid YAML ({exc})") from exc
     if not isinstance(data, dict):
         raise ValueError(f"{path}: expected a YAML mapping")
     return data
+
+
+def load_simulator_config(path: str | Path) -> dict:
+    """A persona LLM config file (like evals/simulator.yaml)."""
+    return _load(path)
+
+
+def load_judge_config(path: str | Path) -> dict:
+    """The `eval:` block of a judge config file (like evals/judge.yaml)."""
+    data = _load(path)
+    if not isinstance(data.get("eval"), dict):
+        raise ValueError(f"{path}: needs an 'eval:' mapping")
+    return data["eval"]
 
 
 def apply_eval_configs(scenario, simulator_path: str | Path | None, judge_path: str | Path | None):
@@ -22,10 +41,7 @@ def apply_eval_configs(scenario, simulator_path: str | Path | None, judge_path: 
     """
     changes = {}
     if simulator_path:
-        changes["simulator"] = _load(simulator_path)
+        changes["simulator"] = load_simulator_config(simulator_path)
     if judge_path:
-        data = _load(judge_path)
-        if not isinstance(data.get("eval"), dict):
-            raise ValueError(f"{judge_path}: needs an 'eval:' mapping")
-        changes["judge"] = data["eval"]
+        changes["judge"] = load_judge_config(judge_path)
     return dataclasses.replace(scenario, **changes) if changes else scenario

@@ -27,7 +27,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 from loguru import logger
 
-from order_agent.eval_config import apply_eval_configs
+from order_agent.eval_config import apply_eval_configs, load_judge_config, load_simulator_config
+from order_agent.preflight import ollama_up, preflight_message
 from order_agent.report import CallReport
 from order_agent.suite import (
     Expected,
@@ -225,7 +226,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--audio", action="store_true", help="audio mode: the simulated restaurant speaks (Kokoro) and the bot is transcribed (Whisper)")
     parser.add_argument("--attempts", type=int, default=3)
     parser.add_argument("--sleep", type=float, default=20.0, help="seconds between attempts and scenarios")
-    parser.add_argument("--simulator", metavar="YAML", help="persona LLM config to use instead of evals/simulator.yaml (e.g. evals/simulator-ollama.yaml)")
+    parser.add_argument("--simulator", metavar="YAML", help="persona LLM config to use instead of evals/simulator.yaml (e.g. evals/simulator-gemini.yaml or evals/simulator-groq.yaml if you have no Ollama)")
     parser.add_argument("--judge", metavar="YAML", help="judge config to use instead of evals/judge.yaml (e.g. evals/judge-ollama.yaml)")
     parser.add_argument("--rescore", metavar="RESULTS_DIR", help="re-classify the saved attempts of a results directory (no new runs) and rewrite its summary.md")
     return parser
@@ -252,6 +253,24 @@ def main() -> int:
     unknown = [n for n in names if n not in expectations]
     if unknown:
         parser.error(f"unknown scenario(s): {unknown}")
+
+    # Fail fast, before any bot starts: the config files must exist and parse, and Ollama must be up if used.
+    try:
+        if args.simulator:
+            load_simulator_config(args.simulator)
+        if args.judge:
+            load_judge_config(args.judge)
+        from pipecat.evals.scenario import EvalScenarioFile
+
+        for n in names:
+            sc = apply_eval_configs(
+                list(EvalScenarioFile.load(ROOT / "evals" / "scenarios" / f"{n}.yaml"))[0], args.simulator, args.judge
+            )
+            problem = preflight_message(sc.simulator or {}, sc.judge or {}, os.environ, ollama_up)
+            if problem:
+                parser.exit(2, f"error: {problem}\n")
+    except ValueError as exc:
+        parser.exit(2, f"error: {exc}\n")
 
     run_id = datetime.now().strftime("%Y%m%d-%H%M%S")
     run_dir = ROOT / "evals" / "results" / run_id

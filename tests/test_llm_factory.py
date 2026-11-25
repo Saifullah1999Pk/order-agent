@@ -175,3 +175,21 @@ async def test_tool_registration_with_ollama_service(brief):
     await llm._functions["add_item"].handler(params)
     assert results[-1]["ok"] is True
     assert session.items[0].quantity == 2
+
+
+def test_ollama_builds_local_service_with_thinking_off():
+    from pipecat.services.ollama.llm import OLLamaLLMService
+
+    s = Settings(llm_provider="ollama", ollama_model="qwen3:8b", ollama_base_url="http://box:1234/v1")
+    llm = build_bot_llm(s, "be polite")  # what bot.py calls for the ollama provider; no key, no network
+    assert isinstance(llm, OLLamaLLMService)
+    assert llm._settings.model == "qwen3:8b"
+    assert llm._settings.system_instruction == "be polite"
+    assert llm._settings.extra == {"reasoning_effort": "none"}
+
+
+def test_load_settings_reads_ollama_env(monkeypatch):
+    monkeypatch.setenv("ORDER_AGENT_LLM_PROVIDER", "ollama")
+    monkeypatch.setenv("ORDER_AGENT_OLLAMA_URL", "http://box:1234/v1")
+    s = load_settings()
+    assert (s.llm_provider, s.ollama_base_url) == ("ollama", "http://box:1234/v1")
