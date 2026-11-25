@@ -17,7 +17,7 @@ Built with [Pipecat](https://github.com/pipecat-ai/pipecat) as an internship pro
  you / restaurant ◀──voice── Kokoro (local) ◀──reply── LLM ◀──allowed / refused──┘
 ```
 
-**The LLM talks; plain code decides what is allowed.** The agent can only change the order through tools: `add_item`, `remove_item`, `set_fees`, `set_minimum_order`, `confirm_order` and `end_call`. Every tool call goes through `order_agent/rules.py`, which enforces the brief:
+**The LLM talks; plain code decides what is allowed.** The agent can only change the order through tools: `add_item`, `set_price`, `remove_item`, `set_fees`, `set_minimum_order`, `confirm_order` and `end_call`. Every tool call goes through `order_agent/rules.py`, which enforces the brief:
 
 - **Budget:** the total, including fees, never goes over.
 - **Allow-list:** only the wanted items or their listed substitutes can be ordered.
@@ -200,6 +200,7 @@ tests/                 unit tests
   - Running the simulated restaurant locally cut Gemini use by about 31% per test call (13.4 vs 19.6 requests).
 - **LLM judges are unreliable,** which is why the code checks decide pass or fail.
 - **Prices are now checked in two places.** The eval compares every price and fee in the report with the restaurant's menu in `evals/expected.yaml` (invented or off-menu items fail). At runtime the engine locks the first price it accepts for each item and the first non-zero fees, refuses later changes unless the bot flags a real correction (`price_corrected` / `corrected`), and tells the bot to ask the restaurant to itemise a total that does not match. The engine still cannot know a price is true. It trusts the first price the bot records, and the correction flags are the bot's own claim. The eval's menu check on final prices is the backstop. A correction reprices the whole line, and a tax of 0 is not locked.
+- **Unpriced items (restaurants that only give a total).** `add_item`'s price is optional; `set_price` fills one in later. With an unpriced item, or if `set_fees` was never called, the cart total is treated as unknown: `confirm_order` then checks the restaurant's quoted total against the budget, the delivery deadline, completeness and the forbidden items, and skips the cart-sum check (the report says the order was confirmed at the restaurant's total). If a minimum order applies, `confirm_order` refuses until every item has a price. Limits: in this mode the engine cannot detect a restaurant that quotes a wrong or inflated total within budget, and a delivery fee or tax the restaurant never mentions stays unknown.
 - **Not tested yet:** holding ("one minute please"), silence, real accents and noise. Ingredient claims ("the biryani has beef") can't be verified by code.
 
 ## Next steps
