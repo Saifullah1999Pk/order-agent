@@ -1,99 +1,185 @@
 # order-agent
 
-A Pipecat voice agent that phones a restaurant as the customer and places an order inside hard
-rules (budget, allowed items, forbidden keywords, delivery deadline). The LLM does the talking;
-`order_agent/rules.py` decides what is allowed. A suite of 11 simulated-restaurant scenarios
-checks it. Results: [docs/results-v1.md](docs/results-v1.md).
+**A voice agent that phones a restaurant as the customer and places a food order, without breaking the rules it was given.**
 
-## Setup
+You give the agent an order brief: what to order, a budget, acceptable substitutes, foods to avoid, and a delivery deadline. It calls the restaurant, talks to the staff, adapts when items are sold out or prices change, and confirms the order or politely declines. It then writes a report of the call.
 
-    uv sync
+Built with [Pipecat](https://github.com/pipecat-ai/pipecat) as an internship project at Arbisoft, to learn real-time voice agents and how to test them properly. It uses **free services only**: local speech models, free-tier cloud LLMs, and an optional local LLM through Ollama.
 
-Create `.env` (gitignored) with two free-tier keys:
+---
 
-    GOOGLE_API_KEY=...   # bot LLM (gemini-3.5-flash-lite, fallback gemini-2.5-flash)
-    GROQ_API_KEY=...     # judge (gpt-oss-20b), suite only. The simulated restaurant defaults to a local Ollama model (see below)
+## How it works
 
-The bot's LLM is Gemini by default. To run it on Groq's free tier instead (for example when Gemini's daily
-cap is used up), set in `.env` or the environment:
+```
+ you / restaurant ──voice──▶ Whisper (local) ──text──▶ LLM ──tool calls──▶ rules engine
+                                                        │                   (plain Python)
+                                                        ▼                         │
+ you / restaurant ◀──voice── Kokoro (local) ◀──reply── LLM ◀──allowed / refused──┘
+```
 
-    ORDER_AGENT_LLM_PROVIDER=groq              # "gemini" (default), "groq" or "ollama"
-    ORDER_AGENT_GROQ_MODEL=qwen/qwen3.8-27b    # default; needs GROQ_API_KEY. in 2 audio attempts gpt-oss-20b called a tool that does not exist
+**The LLM talks; plain code decides what is allowed.** The agent can only change the order through tools: `add_item`, `remove_item`, `set_fees`, `set_minimum_order`, `confirm_order` and `end_call`. Every tool call goes through `order_agent/rules.py`, which enforces the brief:
 
-The suite passes these to the bot it starts. Keep results from different bot models apart
-(see docs/results-v1.md section 9).
+- **Budget:** the total, including fees, never goes over.
+- **Allow-list:** only the wanted items or their listed substitutes can be ordered.
+- **Forbidden foods:** items matching a rule such as `seafood: [fish, prawn]` are refused.
+- **Completeness:** quantities never go down. A minimum order can only be met with items from the brief.
+- **Delivery deadline** and **quote fidelity**: the confirmed total must match the cart.
 
-### Default test setup: hybrid (Gemini bot, local Ollama restaurant, Groq judge)
+A refused tool call tells the agent why, and what it could try instead.
 
-The suite's simulated restaurant (`evals/simulator.yaml`) is local Ollama `qwen3:8b`, so running the suite needs Ollama
-running with the model pulled (`ollama pull qwen3:8b`). On Windows (PowerShell), start the server in its own window:
+**Example from a test run:** the restaurant offered prawn biryani, and the LLM tried to add it. The engine refused ("'prawn biryani' is not in your brief"), and the order stayed clean.
 
-    $env:OLLAMA_NUM_PARALLEL=1; $env:OLLAMA_CONTEXT_LENGTH=8192; $env:OLLAMA_KV_CACHE_TYPE="q8_0"; $env:OLLAMA_FLASH_ATTENTION=1; $env:OLLAMA_KEEP_ALIVE="2h"; ollama serve
+## How it is tested
 
-Check `ollama ps` says `100% GPU`. This halves Gemini use per test call, because the persona no longer calls Gemini. To use a
-cloud persona instead, pass `--simulator` with a config that has the Gemini or Groq block (both are kept as comments in
-`evals/simulator.yaml`; copy that file and uncomment one).
+Unit tests cover the rules engine, the reports, the tools and the call handling. On top of those, an **automated eval suite** runs 11 scenarios, each a simulated restaurant with a twist:
 
-### All-local (Ollama): bot, simulated restaurant and judge, no cloud keys
+- a dish is sold out;
+- prices rise;
+- the delivery would be too late;
+- there is a minimum order;
+- the staff push a forbidden dish;
+- the staff are terse;
+- …and so on.
 
-Needs [Ollama](https://ollama.com) and `ollama pull qwen3:8b` (5.2 GB, fits an 8 GB GPU). Start the server with one
-cache slot per role (bot, persona, judge) and a 4k context per slot. A q8 KV cache is what keeps all three slots on an
-8 GB GPU (check `ollama ps`: it should say `100% GPU`):
+Each test call involves three roles:
 
-    OLLAMA_NUM_PARALLEL=3 OLLAMA_CONTEXT_LENGTH=4096 OLLAMA_KV_CACHE_TYPE=q8_0 OLLAMA_FLASH_ATTENTION=1 OLLAMA_KEEP_ALIVE=2h ollama serve
+| Role | Model (default) | Runs where |
+|---|---|---|
+| The agent (bot) | Gemini `gemini-3.5-flash-lite` | Cloud, free tier |
+| Simulated restaurant staff | `qwen3:8b` via Ollama | Your machine (GPU) |
+| Judge (scores the call) | Groq `openai/gpt-oss-20b` | Cloud, free tier |
 
-Then run the suite with the bot, persona and judge on Ollama:
+**Code checks override the judge.** After every call, deterministic checks on the agent's report decide the hard rules: outcome, budget, forbidden items, required items and minimum order. In our tests, no LLM judge agreed with these checks more than about 56% of the time. The judge is trusted only for soft qualities such as politeness. Each scenario gets up to 3 attempts (pass@3), and every attempt is recorded.
 
-    ORDER_AGENT_LLM_PROVIDER=ollama PYTHONIOENCODING=utf-8 uv run python run_suite.py --only happy_path --simulator evals/simulator-ollama.yaml --judge evals/judge-ollama.yaml
+## Results at a glance
 
-`ORDER_AGENT_OLLAMA_MODEL` (default `qwen3:8b`) and `ORDER_AGENT_OLLAMA_URL` (default `http://localhost:11434/v1`) change
-the bot's model and server. qwen3's hidden thinking is switched off with `reasoning_effort: none` in the request (Ollama's
-OpenAI-compatible endpoint ignores `think: false`); the bot, persona and judge all send it. `--simulator` / `--judge`
-replace the persona and judge configs for that run only; the committed defaults (Ollama persona, Groq judge) are unchanged.
-Results and an honest quality comparison: `evals/confirmation/all-ollama/README.md`.
+| | |
+|---|---|
+| v1 suite (2026-11-23) | 8 of 11 scenarios passed within 3 attempts. **0 failures came from the agent breaking a rule.** |
+| Since then | Fixed the simulated restaurant hanging up early and the agent's minimum-order handling. `minimum_reachable` and `staff_asks_details` now pass (2026-11-25). |
+| Latency (end of speech to bot speaking) | Median 2.73 s, P90 3.64 s (n=28, bot on Groq, audio runs) |
+| Local LLM (Ollama, `qwen3:8b`) | Good as the simulated restaurant. Not reliable as the bot (it invented prices) or the judge. |
+| Unit tests | 240 passing |
 
-Anything that imports Pipecat must be run with `PYTHONIOENCODING=utf-8` on Windows (the dev
-runner crashes on non-UTF-8 stdout). Prefix every command below with it.
+Full write-up, with every number linked to its evidence: [docs/results-v1.md](docs/results-v1.md).
 
-## Run the bot (you play the restaurant)
+## Quick start
 
-    PYTHONIOENCODING=utf-8 uv run python bot.py
+Requirements: Python 3.12 and [uv](https://docs.astral.sh/uv/). For the default eval setup you also need [Ollama](https://ollama.com).
 
-Wait for "Bot ready!", open http://localhost:7860/client/ and click Connect. The agent waits
-3 seconds for you to greet it, then speaks first. Use `--port 7861` if 7860 is busy.
-`ORDER_BRIEF=path.yaml` picks the brief (default `briefs/example.yaml`).
-Each call writes a report (JSON and a short text summary) to `reports/` (gitignored).
+```bash
+uv sync
+```
 
-Menu card for manual calls: chicken biryani 900, chicken karahi 1400, raita 150, delivery fee 150 (PKR).
+Create `.env` (gitignored) with free-tier keys:
 
-## Run the eval suite
+```
+GOOGLE_API_KEY=...   # the agent's LLM (Gemini)
+GROQ_API_KEY=...     # the judge (Groq), eval suite only
+```
 
-Text mode (the simulated restaurant types, no audio models):
+> **Windows:** prefix every command that runs Pipecat with `PYTHONIOENCODING=utf-8`. Pipecat's dev runner crashes on non-UTF-8 output.
 
-    PYTHONIOENCODING=utf-8 uv run python run_suite.py                       # all 11 scenarios
-    PYTHONIOENCODING=utf-8 uv run python run_suite.py --only happy_path,pushes_forbidden
+### Talk to the agent (you play the restaurant)
 
-Audio mode (the simulated restaurant speaks with Kokoro, Whisper transcribes the bot):
+```bash
+PYTHONIOENCODING=utf-8 uv run python bot.py
+```
 
-    PYTHONIOENCODING=utf-8 uv run python run_suite.py --audio --only happy_path
+Open http://localhost:7860/client/, click **Connect** and answer like a restaurant. The agent waits 3 seconds for a greeting, then speaks first.
 
-Options: `--attempts N` (default 3, pass@3: stops at the first pass), `--sleep S` (seconds between
-attempts, default 20; raise it if you see 429s). A harness error that is a 429/503 is recorded as `quota_error`. So is a cut-off call whose `bot.log` shows the bot's own LLM failing with 429/503, unless a budget, forbidden-item or never-keyword violation is also present (a confirmed order with a violation stays `fail`).
-`--rescore evals/results/<run-id>` re-classifies saved attempts and rewrites that run's `summary.md` without any new run.
-Deterministic report checks (outcome, budget, forbidden items) override the judge.
+- Menu for manual calls: chicken biryani 900, chicken karahi 1400, raita 150, delivery 150 (PKR).
+- `ORDER_BRIEF=path.yaml` picks the order brief. The default is `briefs/example.yaml`.
+- Each call writes a report to `reports/`.
 
-Where things go (all under `evals/results/<timestamp>/`, gitignored): `summary.md`, and per scenario
-and attempt `bot.log`, `conversation.json`, `eval.log`, `judge.txt` and the call report (`.json`/`.txt`).
-Expected outcomes live in `evals/expected.yaml`, scenarios in `evals/scenarios/`, briefs in `evals/briefs/`.
-Run summaries kept as evidence are committed under `evals/confirmation/`.
+### Run the eval suite
 
-## Tests
+Start Ollama for the simulated restaurant, once per session. On Windows, in PowerShell:
 
-    uv run pytest
+```powershell
+ollama pull qwen3:8b
+$env:OLLAMA_NUM_PARALLEL=1; $env:OLLAMA_CONTEXT_LENGTH=8192; $env:OLLAMA_KV_CACHE_TYPE="q8_0"; $env:OLLAMA_FLASH_ATTENTION=1; $env:OLLAMA_KEEP_ALIVE="2h"; ollama serve
+```
 
-## Notes
+`ollama ps` should show `100% GPU`. On an AMD RX 6600 this works through Vulkan.
 
-`order_agent.eval_llm` builds OpenAI-compatible LLM services for Gemini
-(`https://generativelanguage.googleapis.com/v1beta/openai/`, model id without the `models/` prefix)
-and Groq. Free-tier limits that matter: Gemini about 15 requests/min per model and a daily cap;
-Groq 8000 tokens/min per model.
+```bash
+PYTHONIOENCODING=utf-8 uv run python run_suite.py                         # all 11 scenarios
+PYTHONIOENCODING=utf-8 uv run python run_suite.py --only happy_path       # one scenario
+PYTHONIOENCODING=utf-8 uv run python run_suite.py --audio --only happy_path   # spoken (Kokoro + Whisper)
+```
+
+Useful options:
+
+| Option | What it does |
+|---|---|
+| `--attempts N` | Attempts per scenario. Default 3. |
+| `--sleep S` | Pause between attempts. Raise it if you see 429s. |
+| `--rescore evals/results/<run>` | Re-classifies a saved run. Makes no new calls. |
+| `--simulator FILE` / `--judge FILE` | Swaps the restaurant or judge model for one run. |
+
+`evals/judge-gemini-throttled.yaml` is a rate-limited Gemini judge. Use it if the Groq judge hits its per-minute token cap.
+
+Results go to `evals/results/<timestamp>/`, which is gitignored. `summary.md` holds the per-attempt status. Run summaries kept as evidence are committed under `evals/confirmation/`.
+
+### Swap the agent's LLM
+
+| Setting | Effect |
+|---|---|
+| `ORDER_AGENT_LLM_PROVIDER=gemini` | The default |
+| `ORDER_AGENT_LLM_PROVIDER=groq` | Uses `ORDER_AGENT_GROQ_MODEL`, default `qwen/qwen3.8-27b`. Needs `GROQ_API_KEY`. |
+| `ORDER_AGENT_LLM_PROVIDER=ollama` | Uses `ORDER_AGENT_OLLAMA_MODEL`, default `qwen3:8b`. Fully local, no keys. |
+
+A fully local setup, with the bot, restaurant and judge all on Ollama, is described with its honest quality results in [evals/confirmation/all-ollama/README.md](evals/confirmation/all-ollama/README.md).
+
+### Unit tests
+
+```bash
+uv run pytest
+```
+
+## Project layout
+
+```
+bot.py                 the voice agent (Pipecat pipeline, transports, call lifecycle)
+run_suite.py           eval runner (pass@3, report checks, quota handling, --rescore)
+order_agent/
+  rules.py             the rules engine (all hard rules live here)
+  tools.py             the agent's tools, each delegating to the rules engine
+  prompt.py            the agent's instructions, built from the order brief
+  report.py            per-call report (JSON + plain-English summary)
+  call.py              call state, end-of-call and nudge handling
+  llm_factory.py       Gemini / Groq / Ollama for the agent
+  eval_llm.py          LLM factories for the simulated restaurant and judge
+  suite.py, throttle.py  eval checks, error classification, judge rate limiting
+briefs/                order briefs
+evals/                 scenarios, expected outcomes, model configs, committed evidence
+docs/                  design spec, implementation plan, results write-up
+spike/                 early go/no-go experiment (kept as evidence)
+tests/                 unit tests
+```
+
+## Status and known limits
+
+- **English only, and no real phone line yet.** Calls run in the browser over WebRTC.
+- **Free-tier quotas shape everything.**
+  - Gemini allows about 500 requests a day and 15 a minute. Groq caps tokens per minute and per day.
+  - Running the simulated restaurant locally cut Gemini use by about 31% per test call (13.4 vs 19.6 requests).
+- **LLM judges are unreliable,** which is why the code checks decide pass or fail.
+- **The agent can still be pushed by a restaurant that insists on a wrong total.** The engine trusts the unit prices the agent reports. A price check against each scenario's real menu is the next fix.
+- **Not tested yet:** holding ("one minute please"), silence, real accents and noise. Ingredient claims ("the biryani has beef") can't be verified by code.
+
+## Next steps
+
+1. Price check against each scenario's menu, so made-up or inflated prices are caught.
+2. Rate-limit the Groq judge, so judging uses no Gemini quota.
+3. Urdu and Urdu–English conversation, building on the team's Urdu voice-agent proof of concept.
+4. Integrating a voice agent into a tax-filing assistant.
+
+## License
+
+To be decided.
+
+## Acknowledgements
+
+Built on [Pipecat](https://github.com/pipecat-ai/pipecat), [faster-whisper](https://github.com/SYSTRAN/faster-whisper), [Kokoro](https://github.com/thewh1teagle/kokoro-onnx) and [Ollama](https://ollama.com). Developed with [Claude Code](https://claude.ai/code), using spec-driven design, test-driven development and independent reviews for every task.
