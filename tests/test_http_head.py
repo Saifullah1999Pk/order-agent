@@ -261,3 +261,34 @@ def test_action_after_end_call_is_409(client):
     r2 = _act(client, sid, "add_item", name="chicken biryani", quantity=1, unit_price_pkr=900)
     assert r2.status_code == 409
     assert r2.json()["error"]["code"] == "session_closed"
+
+
+# --- POST /sessions/{id}/transcript (T041)
+
+def _line(client, sid, **body):
+    return client.post(f"/sessions/{sid}/transcript", json=body)
+
+
+def test_transcript_204_and_counts(client):
+    sid = _new(client)
+    r = _line(client, sid, role="restaurant", text="Hello, Karachi Kitchen")
+    assert r.status_code == 204 and r.content == b""
+    _line(client, sid, role="agent", text="Hi, a delivery order please")
+    assert client.get(f"/sessions/{sid}").json()["transcript_lines"] == 2
+
+
+@pytest.mark.parametrize("body", [{"role": "agent", "text": "  "}, {"role": "customer", "text": "hi"}, {"role": "agent"}])
+def test_transcript_422(client, body):
+    sid = _new(client)
+    assert _line(client, sid, **body).status_code == 422
+
+
+def test_transcript_unknown_404(client):
+    assert _line(client, "a" * 32, role="agent", text="hi").status_code == 404
+
+
+def test_transcript_closed_409(client):
+    sid = _new(client)
+    _act(client, sid, "end_call", outcome="not_ordered", reason="testing")
+    r = _line(client, sid, role="agent", text="hi")
+    assert r.status_code == 409 and r.json()["error"]["code"] == "session_closed"

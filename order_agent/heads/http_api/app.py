@@ -4,7 +4,7 @@ from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
@@ -13,6 +13,7 @@ from order_agent.heads.http_api.schemas import (
     ActionResult,
     SessionCreated,
     SessionInfo,
+    TranscriptRequest,
     StartSession,
     ToolInfo,
 )
@@ -135,5 +136,10 @@ def create_app(
                 raise SessionClosed(f"Session {session_id} has already ended.")
             outcome = await controller.perform(body.tool, body.arguments)
         return ActionResult(ok=outcome.ok, message=outcome.message, ended=outcome.ended)
+
+    @app.post("/sessions/{session_id}/transcript", status_code=204)
+    async def add_transcript(session_id: str, body: TranscriptRequest) -> Response:
+        _live(session_id).add_line(body.role, body.text)
+        return Response(status_code=204)
 
     return app
