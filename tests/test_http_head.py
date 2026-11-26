@@ -292,3 +292,86 @@ def test_transcript_closed_409(client):
     _act(client, sid, "end_call", outcome="not_ordered", reason="testing")
     r = _line(client, sid, role="agent", text="hi")
     assert r.status_code == 409 and r.json()["error"]["code"] == "session_closed"
+
+
+# --- end, report, delete (T042)
+
+def _order_and_end(client, sid):
+    assert _act(client, sid, "add_item", name="chicken biryani", quantity=2, unit_price_pkr=900).json()["ok"]
+    assert _act(client, sid, "set_fees", delivery_fee_pkr=150, tax_pkr=0).json()["ok"]
+    assert _act(client, sid, "confirm_order", quoted_total_pkr=1950, delivery_minutes=45).json()["ok"]
+    r = _act(client, sid, "end_call", outcome="ordered", reason="order placed")
+    assert r.json()["ended"] is True
+
+
+def test_end_live_session_writes_dropped_report(client, reports_dir):
+    sid = _new(client)
+    r = client.post(f"/sessions/{sid}/end", json={})
+    assert r.status_code == 200
+    body = r.json()
+    assert set(body) == {"report", "summary", "report_path"}
+    assert body["report"]["outcome"] == "call_dropped"
+    assert body["report"]["reason"] == "call ended without end_call"
+    assert not Path(body["report_path"]).is_absolute()
+    assert (reports_dir / body["report_path"]).is_file()
+    assert body["summary"].startswith("The call dropped")
+    assert client.get(f"/sessions/{sid}/report").json() == body
+    assert client.get(f"/sessions/{sid}").json()["state"] == "ended"
+
+
+def test_end_without_body_and_idempotent(client, reports_dir):
+    sid = _new(client)
+    first = client.post(f"/sessions/{sid}/end")
+    second = client.post(f"/sessions/{sid}/end", json={})
+    assert first.status_code == second.status_code == 200
+    assert first.json() == second.json()
+    assert len(list(reports_dir.rglob("*.json"))) == 1
+
+
+def test_end_after_end_call_returns_existing_report(client, reports_dir):
+    sid = _new(client)
+    _order_and_end(client, sid)
+    r = client.post(f"/sessions/{sid}/end", json={})
+    assert r.json()["report"]["outcome"] == "ordered"
+    assert len(list(reports_dir.rglob("*.json"))) == 1
+
+
+def test_report_not_ready_while_live(client):
+    sid = _new(client)
+    r = client.get(f"/sessions/{sid}/report")
+    assert r.status_code == 409
+    assert r.json()["error"]["code"] == "report_not_ready"
+
+
+def test_report_after_end_call_is_ordered(client):
+    sid = _new(client)
+    _order_and_end(client, sid)
+    r = client.get(f"/sessions/{sid}/report")
+    assert r.status_code == 200
+    assert r.json()["report"]["outcome"] == "ordered"
+    assert r.json()["summary"].startswith("The call ended with the order placed")
+    assert client.get(f"/sessions/{sid}").json()["report_ready"] is True
+
+
+def test_delete_live_session_writes_report_first(client, reports_dir):
+    sid = _new(client)
+    r = client.delete(f"/sessions/{sid}")
+    assert r.status_code == 204
+    reports = list(reports_dir.rglob("*.json"))
+    assert len(reports) == 1 and '"call_dropped"' in reports[0].read_text(encoding="utf-8")
+    assert client.get(f"/sessions/{sid}").status_code == 404
+
+
+def test_delete_ended_session_writes_no_second_report(client, reports_dir):
+    sid = _new(client)
+    _order_and_end(client, sid)
+    assert client.delete(f"/sessions/{sid}").status_code == 204
+    assert len(list(reports_dir.rglob("*.json"))) == 1
+
+
+@pytest.mark.parametrize("method,path", [("post", "end"), ("get", "report"), ("delete", "")])
+def test_end_report_delete_unknown_404(client, method, path):
+    url = "/sessions/" + "9" * 32 + ("/" + path if path else "")
+    r = getattr(client, method)(url)
+    assert r.status_code == 404
+    assert r.json()["error"]["code"] == "session_not_found"

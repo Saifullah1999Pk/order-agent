@@ -11,6 +11,8 @@ from fastapi.responses import JSONResponse
 from order_agent.heads.http_api.schemas import (
     ActionRequest,
     ActionResult,
+    EndRequest,
+    ReportResponse,
     SessionCreated,
     SessionInfo,
     TranscriptRequest,
@@ -25,6 +27,7 @@ from order_agent.heads.http_api.store import (
     TooManySessions,
 )
 from order_agent.model.brief import OrderBrief, load_brief
+from order_agent.model.report import summarise
 
 
 class InvalidRequest(Exception):
@@ -140,6 +143,36 @@ def create_app(
     @app.post("/sessions/{session_id}/transcript", status_code=204)
     async def add_transcript(session_id: str, body: TranscriptRequest) -> Response:
         _live(session_id).add_line(body.role, body.text)
+        return Response(status_code=204)
+
+    def _report_response(controller) -> ReportResponse:
+        if controller.report is None or controller.report_path is None:
+            raise ReportNotReady("The call is still live; there is no report yet.")
+        return ReportResponse(
+            report=controller.report,
+            summary=summarise(controller.report),
+            report_path=controller.report_path.relative_to(reports_dir).as_posix(),
+        )
+
+    @app.post("/sessions/{session_id}/end")
+    async def end_session(session_id: str, body: EndRequest | None = None) -> ReportResponse:
+        store: SessionStore = app.state.store
+        controller = store.get(session_id)
+        async with store.lock(session_id):
+            await controller.drop()  # returns the existing report if the call already ended
+        return _report_response(controller)
+
+    @app.get("/sessions/{session_id}/report")
+    async def get_report(session_id: str) -> ReportResponse:
+        return _report_response(app.state.store.get(session_id))
+
+    @app.delete("/sessions/{session_id}", status_code=204)
+    async def delete_session(session_id: str) -> Response:
+        store: SessionStore = app.state.store
+        controller = store.get(session_id)
+        async with store.lock(session_id):
+            await controller.drop()  # a live call is finished as call_dropped, so no report is lost
+        store.delete(session_id)
         return Response(status_code=204)
 
     return app
