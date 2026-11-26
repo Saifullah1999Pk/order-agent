@@ -107,3 +107,11 @@ def test_prompt_no_derived_prices_or_guessed_fees(brief):
     assert "never by dividing or subtracting from a total" in prompt
     assert "Only record fees the restaurant stated" in prompt
     assert "a bare 'no' to a combined question" in prompt
+
+
+def test_prompt_asks_for_item_readback_and_forbids_own_totals(brief):
+    prompt = build_system_prompt(brief).lower()
+    assert "read your items back with their quantities, together with the total and the delivery time" in prompt
+    assert "pass what the restaurant read back as restaurant_items" in prompt
+    assert "never state a total you worked out yourself" in prompt
+    assert "if the restaurant's read-back or total differs from your order, say so politely and ask them to check" in prompt
