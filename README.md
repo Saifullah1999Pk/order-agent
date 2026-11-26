@@ -171,6 +171,92 @@ A fully local setup, with the bot, restaurant and judge all on Ollama, is descri
 uv run pytest
 ```
 
+## Architecture
+
+The code is split into layers so the rules and the conversation logic can be used, and tested, without any voice framework. One call can be driven by a phone-style voice pipeline or, just as well, by plain HTTP requests.
+
+```
+   heads (talk to the outside world)
+   +-----------------------------+   +-----------------------------+
+   | voice head (Pipecat)        |   | HTTP head (FastAPI, local)  |
+   | order_agent/heads/voice     |   | order_agent/heads/http_api  |
+   +--------------+--------------+   +--------------+--------------+
+                  \                               /
+                   v                             v
+              +--------------------------------------+
+              | Controller: order_agent/controller   |   one call, no framework
+              | CallController, tool dispatch, prompt|
+              +------------------+-------------------+
+                                 v
+              +--------------------------------------+
+              | Model: order_agent/model             |   pure rules and data
+              | brief, rules engine, matching, report|
+              +--------------------------------------+
+
+   order_agent/evaltools: eval suite tooling, used by run_suite.py (sits beside the layers)
+```
+
+- **Model** decides what is allowed (budget, allow-list, forbidden foods, deadline). It knows nothing about voice, web or LLMs.
+- **Controller** runs one call: it holds the order state, turns a tool call into a model decision, writes the report, and builds the agent's instructions. It has no web or voice framework either.
+- **Heads** connect a channel to the Controller. The voice head listens and speaks through Pipecat. The HTTP head lets a script play the agent by sending requests.
+
+### Module map
+
+| Module | Layer | What it does |
+|---|---|---|
+| `order_agent/model/brief.py` | Model | The order brief: what to order and the hard rules |
+| `order_agent/model/matching.py` | Model | Item-name matching (case, word order, plurals) |
+| `order_agent/model/rules.py` | Model | The rules engine; every tool call is checked here |
+| `order_agent/model/report.py` | Model | The per-call report (JSON and plain-English summary) |
+| `order_agent/controller/session.py` | Controller | `CallController`: one conversation, independent of the channel |
+| `order_agent/controller/tools.py` | Controller | Framework-free tool dispatch over the rules engine |
+| `order_agent/controller/toolspecs.py` | Controller | The tool definitions the LLM sees |
+| `order_agent/controller/prompt.py` | Controller | The agent's instructions, built from the brief |
+| `order_agent/controller/nudge.py` | Controller | When to nudge the agent after an empty reply |
+| `order_agent/heads/voice/pipeline.py` | Voice head | Pipecat pipeline: speech to text, LLM, text to speech |
+| `order_agent/heads/voice/bridge.py` | Voice head | Maps each Pipecat event to one Controller call |
+| `order_agent/heads/voice/hooks.py` | Voice head | The two things only the pipeline can do (speak, nudge) |
+| `order_agent/heads/voice/tools.py` | Voice head | Pipecat tool schemas built from the Controller's specs |
+| `order_agent/heads/voice/llm_factory.py` | Voice head | Builds the agent's LLM (Gemini, Groq or Ollama) |
+| `order_agent/heads/voice/probe.py` | Voice head | Gemini availability probe run before the call |
+| `order_agent/heads/http_api/app.py` | HTTP head | The FastAPI app: sessions, actions, transcript, report |
+| `order_agent/heads/http_api/schemas.py` | HTTP head | Request and response models |
+| `order_agent/heads/http_api/store.py` | HTTP head | In-memory sessions, one Controller each |
+| `order_agent/heads/http_api/__main__.py` | HTTP head | Starts the server locally |
+| `order_agent/evaltools/suite.py` | Eval tools | Deterministic report checks, error classification, summary |
+| `order_agent/evaltools/throttle.py` | Eval tools | Judge rate limiting and 429 retries |
+| `order_agent/evaltools/eval_llm.py` | Eval tools | LLM factories for the simulated restaurant and judge |
+| `order_agent/evaltools/eval_config.py` | Eval tools | Swap a scenario's restaurant or judge config |
+| `order_agent/evaltools/preflight.py` | Eval tools | Checks before a run (is Ollama up) |
+
+Outside the layers: `order_agent/config.py` (settings and API keys, used by the heads and eval tools, never by the Model or Controller) and `order_agent/eval_llm.py` (a re-export shim so the `evals/*.yaml` files keep working). `bot.py` and `run_suite.py` are entry points that only wire things together.
+
+### The dependency rule
+
+Dependencies point inward only: `heads -> controller -> model`. An inner layer never imports an outer one. The two heads never import each other, and no head imports the rules engine directly; it reaches it through the Controller.
+
+### The boundary test
+
+`tests/test_architecture.py` reads every file's imports (with Python's `ast` module) and fails if a layer imports something it should not, for example `pipecat` inside the Model. It also fails if a new module is not placed in a layer. It runs with the normal unit tests. The full rules are in [specs/001-headless-mvc/contracts/boundaries.md](specs/001-headless-mvc/contracts/boundaries.md).
+
+### Run the HTTP head
+
+No voice, no API keys, no LLM: you play the agent by sending requests. It listens on `127.0.0.1:8000` only.
+
+```bash
+uv run python -m order_agent.heads.http_api
+```
+
+The endpoints are described in [specs/001-headless-mvc/contracts/http-api.md](specs/001-headless-mvc/contracts/http-api.md).
+
+### Add a new head
+
+1. Create `order_agent/heads/<name>/`.
+2. Build a `CallController(brief, reports_dir=..., hooks=<your CallHooks or None>)`.
+3. Translate your channel's events into the Controller calls listed in [specs/001-headless-mvc/contracts/controller-api.md](specs/001-headless-mvc/contracts/controller-api.md).
+4. Add the head to `LAYERS` in `tests/architecture.py`, with the third-party packages it may use. `tests/test_architecture.py` then checks it.
+5. Add its modules to the module map above (a test fails if one is missing).
+
 ## Project layout
 
 ```
