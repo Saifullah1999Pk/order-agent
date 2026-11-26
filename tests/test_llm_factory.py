@@ -103,7 +103,7 @@ def test_gemini_without_google_key_raises_clear_error(monkeypatch, tmp_path):
 
 
 def test_gemini_eval_factories_need_google_key(monkeypatch, tmp_path):
-    from order_agent.eval_llm import gemini_llm, gemini_native_llm
+    from order_agent.evaltools.eval_llm import gemini_llm, gemini_native_llm
 
     _no_google(monkeypatch, tmp_path)
     for factory in (gemini_llm, gemini_native_llm):

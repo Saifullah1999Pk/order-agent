@@ -1,104 +1,26 @@
-"""LLM factory for Pipecat's eval tools, pointing at Gemini's OpenAI-compatible API."""
+"""Compatibility module: evals/*.yaml name factories as ``order_agent.eval_llm.*``.
 
-from pipecat.classifiers.llm.classifier import LLMClassifier
-from pipecat.services.google.llm import GoogleLLMService
-from pipecat.services.groq.llm import GroqLLMService
-from pipecat.services.openai.llm import OpenAILLMService
+The implementation lives in order_agent.evaltools.eval_llm. This is the one allowed shim (FR-010):
+it contains only re-exports so the YAML files and docs need no edit.
+"""
+from order_agent.evaltools.eval_llm import (
+    ThrottledGroqLLMService,
+    ThrottledOpenAILLMService,
+    gemini_classifier,
+    gemini_llm,
+    gemini_native_llm,
+    groq_classifier,
+    groq_llm,
+    ollama_classifier,
+)
 
-from order_agent.config import GEMINI_OPENAI_BASE_URL, load_settings, require_google_key
-from order_agent.throttle import Throttle
-
-THROTTLE_KEYS = ("max_concurrency", "min_interval_s", "max_retries", "retry_base_s")
-_throttles: dict[str, Throttle] = {}
-
-
-class ThrottledOpenAILLMService(OpenAILLMService):
-    """Paces ``run_inference``, the one call the eval judge and explainer make."""
-
-    def __init__(self, *, throttle: Throttle, **kwargs):
-        super().__init__(**kwargs)
-        self._throttle = throttle
-        # The SDK retries 429s itself (default 2); ours are paced, so they are the only ones.
-        self._client = self._client.with_options(max_retries=0)
-
-    async def run_inference(self, *args, **kwargs):
-        parent = super().run_inference
-        return await self._throttle.run(lambda: parent(*args, **kwargs))
-
-
-class ThrottledGroqLLMService(ThrottledOpenAILLMService, GroqLLMService):
-    """Groq service (reasoning_effort etc.) with the same throttled ``run_inference``."""
-
-
-def _shared_throttle(config: dict) -> Throttle:
-    """One limiter per model and settings, so eval and explainer share the gap."""
-    opts = {k: config[k] for k in THROTTLE_KEYS if k in config}
-    key = f"{config.get('model')}|{sorted(opts.items())}"
-    if key not in _throttles:
-        _throttles[key] = Throttle(**opts)
-    return _throttles[key]
-
-
-def gemini_llm(config: dict) -> OpenAILLMService:
-    kwargs = dict(
-        api_key=require_google_key(load_settings()),
-        base_url=GEMINI_OPENAI_BASE_URL,
-        settings=OpenAILLMService.Settings(model=config.get("model", "gemini-3.5-flash-lite")),
-    )
-    if any(k in config for k in THROTTLE_KEYS):
-        return ThrottledOpenAILLMService(throttle=_shared_throttle(config), **kwargs)
-    return OpenAILLMService(**kwargs)
-
-
-def gemini_classifier(config: dict) -> LLMClassifier:
-    """Judge classifier whose timeout (``timeout_s``) allows for the throttle's queue."""
-    return LLMClassifier(llm=gemini_llm(config), timeout=config.get("timeout_s", 120.0))
-
-
-def gemini_native_llm(config: dict) -> GoogleLLMService:
-    """Native Google service for the simulator persona.
-
-    The OpenAI-compatible route breaks the persona's end_call tool round trip
-    (missing thought_signature / empty function_response name).
-    """
-    return GoogleLLMService(
-        api_key=require_google_key(load_settings()),
-        settings=GoogleLLMService.Settings(model=config.get("model", "gemini-3.5-flash-lite")),
-    )
-
-
-def groq_llm(config: dict) -> GroqLLMService:
-    """Groq (free tier) service for the simulated restaurant and the judge.
-
-    With any throttle key in ``config`` it is a throttled service (Groq's free tier caps
-    tokens per minute, and the judge sends the whole transcript with each question).
-    """
-    key = load_settings().groq_api_key
-    if not key:
-        raise RuntimeError("GROQ_API_KEY is not set (put it in order-agent/.env)")
-    settings = GroqLLMService.Settings(model=config.get("model", "openai/gpt-oss-120b"))
-    if "reasoning_effort" in config:
-        settings.reasoning_effort = config["reasoning_effort"]
-    if any(k in config for k in THROTTLE_KEYS):
-        return ThrottledGroqLLMService(throttle=_shared_throttle(config), api_key=key, settings=settings)
-    return GroqLLMService(api_key=key, settings=settings)
-
-
-def groq_classifier(config: dict) -> LLMClassifier:
-    """Judge classifier on Groq; ``timeout_s`` (default 180) must outlast the throttle's queue."""
-    return LLMClassifier(llm=groq_llm(config), timeout=config.get("timeout_s", 180.0))
-
-
-def ollama_classifier(config: dict) -> LLMClassifier:
-    """Local Ollama judge. Pipecat's default 10 s classifier timeout is shorter than the queue of the
-    judge's ~7 parallel questions on a small GPU, so it gets ``timeout_s`` (default 300)."""
-    from pipecat.services.ollama.llm import OLLamaLLMService
-
-    llm = OLLamaLLMService(
-        base_url=config.get("endpoint") or "http://localhost:11434/v1",
-        settings=OLLamaLLMService.Settings(
-            model=config.get("model", "qwen3:8b"),
-            extra=config.get("extra") or {"reasoning_effort": "none"},
-        ),
-    )
-    return LLMClassifier(llm=llm, timeout=config.get("timeout_s", 300.0))
+__all__ = [
+    "gemini_llm",
+    "gemini_classifier",
+    "gemini_native_llm",
+    "groq_llm",
+    "groq_classifier",
+    "ollama_classifier",
+    "ThrottledOpenAILLMService",
+    "ThrottledGroqLLMService",
+]
