@@ -102,3 +102,8 @@ async def test_reply_precedes_report_and_hangup(h):
     await h.call("end_call", {"outcome": "not_ordered", "reason": "sold out"})
     assert h.events == ["reply:report_exists=False", "hangup"]
     assert any(h.controller.reports_dir.glob("*"))
+
+
+async def test_malformed_restaurant_items_one_refusal_through_voice_handler(h):
+    result = await h.call("confirm_order", {"quoted_total_pkr": 1800, "delivery_minutes": 30, "restaurant_items": [{"name": "x", "quantity": 0}]})
+    assert result["ok"] is False and "restaurant_items must be a list" in result["message"]

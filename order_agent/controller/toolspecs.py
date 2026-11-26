@@ -65,6 +65,15 @@ TOOL_SPECS: tuple[ToolSpec, ...] = (
         properties={
             "quoted_total_pkr": {"type": "number", "description": "The all-in total the restaurant quoted, in PKR."},
             "delivery_minutes": {"type": "integer", "description": "Delivery time in minutes (longest end of a range)."},
+            "restaurant_items": {
+                "type": "array",
+                "description": "The items and quantities the restaurant read back when confirming, if they listed them.",
+                "items": {
+                    "type": "object",
+                    "properties": {"name": {"type": "string"}, "quantity": {"type": "integer"}},
+                    "required": ["name", "quantity"],
+                },
+            },
         },
         required=["quoted_total_pkr", "delivery_minutes"],
     ),
