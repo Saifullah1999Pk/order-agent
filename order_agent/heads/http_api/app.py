@@ -8,7 +8,7 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from order_agent.heads.http_api.schemas import SessionCreated, StartSession, ToolInfo
+from order_agent.heads.http_api.schemas import SessionCreated, SessionInfo, StartSession, ToolInfo
 from order_agent.heads.http_api.store import (
     NotFound,
     ReportNotReady,
@@ -98,6 +98,17 @@ def create_app(
                 ToolInfo(name=t.name, description=t.description, properties=t.properties, required=t.required)
                 for t in controller.tool_specs()
             ],
+        )
+
+    @app.get("/sessions/{session_id}")
+    async def get_session(session_id: str) -> SessionInfo:
+        controller = app.state.store.get(session_id)
+        return SessionInfo(
+            session_id=session_id,
+            state="ended" if controller.finished else "live",
+            order_state=controller.session.state,
+            transcript_lines=len(controller.transcript),
+            report_ready=controller.report is not None,
         )
 
     return app

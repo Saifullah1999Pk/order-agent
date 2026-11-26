@@ -143,3 +143,41 @@ def test_create_session_429_beyond_cap(client):
     r = client.post("/sessions", json={"brief_name": "example"})
     assert r.status_code == 429
     assert r.json()["error"]["code"] == "too_many_sessions"
+
+
+# --- GET /sessions/{id} (T039)
+
+def _new(client, name="example"):
+    r = client.post("/sessions", json={"brief_name": name})
+    assert r.status_code == 201
+    return r.json()["session_id"]
+
+
+def test_get_session_new(client):
+    sid = _new(client)
+    r = client.get(f"/sessions/{sid}")
+    assert r.status_code == 200
+    assert r.json() == {
+        "session_id": sid,
+        "state": "live",
+        "order_state": "open",
+        "transcript_lines": 0,
+        "report_ready": False,
+    }
+
+
+def test_get_session_confirmed_after_confirm(client):
+    from decimal import Decimal
+
+    sid = _new(client)
+    session = client.app.state.store.get(sid).session
+    assert session.add_item("chicken biryani", 2, Decimal(900), False).ok
+    assert session.set_fees(Decimal(150), Decimal(0), False).ok
+    assert session.confirm_order(Decimal(1950), 45).ok
+    assert client.get(f"/sessions/{sid}").json()["order_state"] == "confirmed"
+
+
+def test_get_session_unknown_is_404(client):
+    r = client.get("/sessions/" + "0" * 32)
+    assert r.status_code == 404
+    assert r.json()["error"]["code"] == "session_not_found"
