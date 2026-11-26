@@ -66,15 +66,32 @@ def test_real_tree_has_no_violations(layer, path):
     assert violations(path.read_text(encoding="utf-8"), layer, package=package) == []
 
 
-def test_every_module_is_classified():
-    unclassified = []
-    for path in sorted(ROOT.rglob("*.py")):
-        rel = path.relative_to(ROOT)
-        if len(rel.parts) > 1 or rel.name in ("__init__.py", "config.py"):
+def unclassified_modules(rel_paths):
+    """Posix paths (relative to order_agent/) that no layer, flat allowance or compat module covers."""
+    out = []
+    for rel in rel_paths:
+        parts = rel.split("/")
+        if len(parts) == 1:
+            if rel in ("__init__.py", "config.py") or rel[:-3] in COMPAT_MODULES:
+                continue
+        elif rel == "heads/__init__.py" or any(rel.startswith(layer + "/") for layer in LAYERS):
             continue
-        if rel.stem not in COMPAT_MODULES:
-            unclassified.append(str(rel))
-    assert unclassified == []
+        out.append(rel)
+    return out
+
+
+def test_unclassified_modules_flags_nested_and_unknown_paths():
+    assert unclassified_modules(["heads/sms/x.py", "utils/x.py", "stray.py"]) == [
+        "heads/sms/x.py", "utils/x.py", "stray.py",
+    ]
+    assert unclassified_modules(
+        ["__init__.py", "config.py", "eval_llm.py", "heads/__init__.py", "heads/voice/bot.py", "model/rules.py"]
+    ) == []
+
+
+def test_every_module_is_classified():
+    rels = [p.relative_to(ROOT).as_posix() for p in sorted(ROOT.rglob("*.py"))]
+    assert unclassified_modules(rels) == []
 
 
 @pytest.mark.parametrize(
