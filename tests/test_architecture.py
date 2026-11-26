@@ -11,19 +11,17 @@ from architecture import LAYERS, _under, imported_modules, violations
 
 ROOT = Path(__file__).resolve().parent.parent / "order_agent"
 
-# Flat modules that exist today and are moved into layers by later steps.
-LEGACY_FLAT = {
-    "brief", "matching", "rules", "report", "prompt", "call",
-    "llm_factory", "eval_config", "eval_llm", "suite", "throttle", "preflight",
-}
+# The one allowed flat module besides __init__.py and config.py: evals/*.yaml name factories as
+# order_agent.eval_llm.*, so it stays as a re-export-only compat module (FR-010, analysis F1).
+COMPAT_MODULES = {"eval_llm"}
 
 
 def _layer_files():
     for layer in LAYERS:
         base = ROOT / layer
-        if base.is_dir():
-            for path in sorted(base.rglob("*.py")):
-                yield pytest.param(layer, path, id=str(path.relative_to(ROOT)).replace("\\", "/"))
+        assert base.is_dir(), f"layer directory missing: {base}"
+        for path in sorted(base.rglob("*.py")):
+            yield pytest.param(layer, path, id=str(path.relative_to(ROOT)).replace("\\", "/"))
 
 
 def test_imported_modules_resolves_relative_and_lazy_imports():
@@ -74,7 +72,7 @@ def test_every_module_is_classified():
         rel = path.relative_to(ROOT)
         if len(rel.parts) > 1 or rel.name in ("__init__.py", "config.py"):
             continue
-        if rel.stem not in LEGACY_FLAT:
+        if rel.stem not in COMPAT_MODULES:
             unclassified.append(str(rel))
     assert unclassified == []
 
@@ -159,3 +157,30 @@ def test_no_imports_of_legacy_shims():
             if any(_under(name, b) for b in banned):
                 offenders.append(f"{path.relative_to(REPO)}: {name}")
     assert offenders == []
+
+
+def test_layer_directories_exist():
+    for layer in LAYERS:
+        assert (ROOT / layer).is_dir(), layer
+
+
+def test_compat_eval_llm_is_reexports_only():
+    import ast
+
+    tree = ast.parse((ROOT / "eval_llm.py").read_text(encoding="utf-8"))
+    names = None
+    for node in tree.body:
+        if isinstance(node, ast.Expr) and isinstance(node.value, ast.Constant):
+            continue  # module docstring
+        if isinstance(node, ast.ImportFrom):
+            assert node.module == "order_agent.evaltools.eval_llm"
+        elif isinstance(node, ast.Assign) and [t.id for t in node.targets] == ["__all__"]:
+            names = [e.value for e in node.value.elts]
+        else:
+            raise AssertionError(f"compat module may only re-export, found {type(node).__name__}")
+    imported = {a.name for n in tree.body if isinstance(n, ast.ImportFrom) for a in n.names}
+    assert names is not None and set(names) == imported
+    assert set(names) == {
+        "gemini_llm", "gemini_classifier", "gemini_native_llm", "groq_llm", "groq_classifier",
+        "ollama_classifier", "ThrottledOpenAILLMService", "ThrottledGroqLLMService",
+    }
