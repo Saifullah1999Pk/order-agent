@@ -126,3 +126,19 @@ def test_legacy_tools_module_gone():
 
     assert not (ROOT / "tools.py").exists()
     assert not hasattr(call, "make_on_end")
+
+
+@pytest.mark.parametrize(
+    "src",
+    [
+        "from order_agent.controller import x",
+        "from order_agent.heads.voice import x",
+    ],
+)
+def test_checker_catches_forbidden_evaltools_imports(src):
+    assert violations(src, "evaltools", package="order_agent.evaltools") != []
+
+
+def test_checker_accepts_clean_evaltools_snippet():
+    src = "import pipecat\nimport yaml\nfrom order_agent.model.report import CallReport\n"
+    assert violations(src, "evaltools", package="order_agent.evaltools") == []

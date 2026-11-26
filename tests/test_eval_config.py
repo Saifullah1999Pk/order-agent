@@ -6,7 +6,7 @@ from pipecat.evals.scenario import EvalScenarioFile
 from pipecat.services.ollama.llm import OLLamaLLMService
 from pipecat.evals.services import llm_service_from_config, classifier_from_config
 
-from order_agent.eval_config import apply_eval_configs
+from order_agent.evaltools.eval_config import apply_eval_configs
 
 ROOT = Path(__file__).parent.parent
 SCENARIO = ROOT / "evals" / "scenarios" / "happy_path.yaml"

@@ -27,8 +27,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 from loguru import logger
 
-from order_agent.eval_config import apply_eval_configs, load_judge_config, load_simulator_config
-from order_agent.preflight import ollama_up, preflight_message
+from order_agent.evaltools.eval_config import apply_eval_configs, load_judge_config, load_simulator_config
+from order_agent.evaltools.preflight import ollama_up, preflight_message
 from order_agent.report import CallReport
 from order_agent.suite import (
     Expected,

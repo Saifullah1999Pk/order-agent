@@ -29,6 +29,12 @@ LAYERS = {
         "forbidden": ("fastapi", "starlette", "uvicorn", "order_agent.heads.http_api", "order_agent.evaltools")
         + _HEAD_NARROWING,
     },
+    "evaltools": {
+        # Eval tooling may use any third-party library; it must not reach the Controller or a head.
+        "third_party": None,
+        "internal": ("order_agent.model", "order_agent.config", "order_agent.evaltools"),
+        "forbidden": ("order_agent.controller", "order_agent.heads"),
+    },
     "heads/http_api": {
         "third_party": {"fastapi", "starlette", "uvicorn", "pydantic", "loguru"},
         "internal": ("order_agent.model", "order_agent.controller", "order_agent.config", "order_agent.heads.http_api"),
@@ -73,6 +79,7 @@ def violations(source: str, layer: str, package: str | None = None) -> list[str]
         elif top == "order_agent":
             if name != "order_agent" and not any(_under(name, p) for p in rule["internal"]):
                 bad.append(name)
-        elif top not in sys.stdlib_module_names and top not in rule["third_party"]:
+        elif (top not in sys.stdlib_module_names and rule["third_party"] is not None
+              and top not in rule["third_party"]):
             bad.append(name)
     return bad
