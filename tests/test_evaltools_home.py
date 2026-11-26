@@ -48,3 +48,9 @@ def _factories(node):
     elif isinstance(node, list):
         for item in node:
             yield from _factories(item)
+
+
+def test_suite_lives_in_evaltools():
+    from order_agent.evaltools.suite import load_expected, render_summary, rescore_run
+
+    assert callable(load_expected) and callable(render_summary) and callable(rescore_run)

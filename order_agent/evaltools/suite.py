@@ -16,9 +16,9 @@ from typing import Literal
 import yaml
 from pydantic import BaseModel
 
-from order_agent.brief import OrderBrief, load_brief
-from order_agent.matching import normalise
-from order_agent.report import CallReport
+from order_agent.model.brief import OrderBrief, load_brief
+from order_agent.model.matching import normalise
+from order_agent.model.report import CallReport
 
 Status = Literal["pass", "fail", "quota_error", "restaurant_error", "error"]
 
@@ -314,7 +314,7 @@ _PRICE_VIOLATION = re.compile(r"^(?:price for |item '.*' is not on the menu|deli
 _TOTALS_LINE = re.compile(
     r"Totals \(Rs, delivery included\): (?P<body>.+?)\. When you quote a total, use these exact figures; never add it up yourself\."
 )
-SCENARIO_DIR = Path(__file__).resolve().parent.parent / "evals" / "scenarios"
+SCENARIO_DIR = Path(__file__).resolve().parents[2] / "evals" / "scenarios"
 
 
 def persona_totals(name: str, scenario_dir: Path = SCENARIO_DIR) -> set[Decimal]:

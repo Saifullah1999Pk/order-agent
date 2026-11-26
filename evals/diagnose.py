@@ -8,7 +8,7 @@ import re
 import sys
 from pathlib import Path
 
-from order_agent.suite import strip_ansi
+from order_agent.evaltools.suite import strip_ansi
 
 
 def main(run: Path) -> None:
