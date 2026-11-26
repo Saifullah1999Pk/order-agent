@@ -29,6 +29,13 @@ LAYERS = {
         "forbidden": ("fastapi", "starlette", "uvicorn", "order_agent.heads.http_api", "order_agent.evaltools")
         + _HEAD_NARROWING,
     },
+    "heads/http_api": {
+        "third_party": {"fastapi", "starlette", "uvicorn", "pydantic", "loguru"},
+        "internal": ("order_agent.model", "order_agent.controller", "order_agent.config", "order_agent.heads.http_api"),
+        "forbidden": ("pipecat", "torch", "faster_whisper", "kokoro", "google", "openai", "groq", "ollama",
+                      "order_agent.heads.voice", "order_agent.evaltools")
+        + _HEAD_NARROWING,
+    },
 }
 
 

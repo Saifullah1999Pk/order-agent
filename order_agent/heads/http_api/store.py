@@ -17,6 +17,14 @@ class TooManySessions(Exception):
     pass
 
 
+class SessionClosed(Exception):
+    pass
+
+
+class ReportNotReady(Exception):
+    pass
+
+
 class SessionStore:
     def __init__(self, max_sessions: int = 100) -> None:
         self.max_sessions = max_sessions
