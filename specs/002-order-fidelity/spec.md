@@ -36,7 +36,7 @@ Before confirming, the bot reads its items and quantities back. If the restauran
 **Acceptance Scenarios**:
 
 1. **Given** a cart of 2 chicken biryani and 3 raita, **When** `confirm_order` is called with `restaurant_items` of 2 chicken biryani and 4 raita, **Then** it is refused, the reason names raita (restaurant 4, order 3), and it says to correct the restaurant and not to change the order to match.
-2. **Given** the same cart, **When** `restaurant_items` lists exactly the cart's items and quantities (names matched with the existing item matching), **Then** the other confirmation checks run as today.
+2. **Given** the same cart, **When** `restaurant_items` lists exactly the cart's items and quantities (names matched to cart lines as described under Edge Cases), **Then** the other confirmation checks run as today.
 3. **Given** `restaurant_items` is omitted, **When** `confirm_order` is called, **Then** behaviour is unchanged from today.
 4. **Given** malformed `restaurant_items` (not a list, a missing name or quantity, a non-integer or non-positive quantity), **When** `confirm_order` is called, **Then** exactly one refusal result comes back, with no exception (same contract as other malformed arguments).
 

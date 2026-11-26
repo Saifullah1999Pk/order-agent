@@ -17,7 +17,7 @@ There are two changes at `confirm_order`. First, the mismatch refusal stops leak
 ## Design
 
 - **Model (`OrderSession.confirm_order`).** It gains a keyword argument `restaurant_items: list[tuple[str, int]] | None = None`.
-  - Names are matched to cart lines with the existing matcher (the same one `add_item` and `remove_item` use), and duplicates are summed.
+  - Names are matched to cart lines exactly (normalised), else to the one cart line whose words contain or are contained in the name's words (zero or several candidates: unmatched); duplicates are summed. (Revised in review: the allow-list matcher rejects partial names by design.)
   - A name that matches no cart line counts as an extra item.
   - Differences are listed as `"<item>: restaurant <n>, order <m>"`, with the order's quantity 0 for an extra item and the restaurant's 0 for a missing one.
   - The refusal says: "Refused: the restaurant's read-back does not match your order (<differences>). Politely correct the restaurant with your order's items and quantities. Do not change the order to match; then confirm again with their read-back."
