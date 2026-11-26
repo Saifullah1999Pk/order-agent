@@ -24,6 +24,7 @@ Built with [Pipecat](https://github.com/pipecat-ai/pipecat) as an internship pro
 - **Forbidden foods:** items matching a rule such as `seafood: [fish, prawn]` are refused.
 - **Completeness:** quantities never go down. A minimum order can only be met with items from the brief.
 - **Delivery deadline** and **quote fidelity**: the confirmed total must match the cart.
+- **Read-back check:** if the restaurant's read-back of items and quantities (`restaurant_items`) differs from the cart, `confirm_order` is refused until the bot has corrected the restaurant. A refused total never reveals the cart's own total.
 
 A refused tool call tells the agent why, and what it could try instead.
 
