@@ -89,7 +89,7 @@ A live re-run of `minimum_reachable` after FR-001 to FR-007 (`evals/results/2026
 ### Additional requirements
 
 - **FR-008**: The minimum-order hint MUST tell the bot to ask the restaurant to add the suggested quantity, and to record it with `add_item` only after the restaurant agrees. It MUST NOT state a projected total. The suggested item, quantity and its cost-fit logic are unchanged.
-- **FR-009**: The Controller MUST refuse an `add_item` call identical in item and quantity to one already accepted earlier in the same LLM turn. The refusal reads: "Refused: you already added <n> x <item> in this turn. Add more only if the restaurant agreed to more, in your next turn." Turns are those the head reports through `llm_turn_started`. If the head never reports turns (the HTTP head), the guard is inactive.
+- **FR-009**: The Controller MUST refuse an `add_item` call identical in item and quantity to one already accepted since the restaurant last spoke (the same restaurant turn). The refusal reads: "Refused: you already added <n> x <item> since the restaurant last spoke. Add more only after the restaurant agrees to more." The guard is armed by the first `llm_turn_started` and reset by `restaurant_spoke` (Pipecat reports an assistant turn for every LLM generation, including the re-run after tool results, so LLM turns cannot be the reset point). If the head never reports turns (the HTTP head), the guard is inactive.
 - **SC-004**: A live re-run of `minimum_reachable` has no attempt where the cart holds an item quantity the bot never asked the restaurant for. This needs the user's go-ahead.
 
 Tests that pin the old hint text change with a stated reason.

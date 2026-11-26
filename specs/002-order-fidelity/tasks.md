@@ -43,9 +43,9 @@
   - Old pins change, with the reason.
 - [ ] T008 [US2] Same-turn duplicate `add_item` guard in the Controller (FR-009), in `order_agent/controller/session.py`
   - RED:
-    - after `llm_turn_started()`, a second identical `add_item` in the same turn is refused with the FR-009 text and the cart is unchanged;
-    - a different quantity or item in the same turn is allowed;
-    - the same add after the next `llm_turn_started()` is allowed;
+    - after `llm_turn_started()`, a second identical `add_item` since the restaurant last spoke (even across another `llm_turn_started()`) is refused with the FR-009 text and the cart is unchanged;
+    - a different quantity or item is allowed;
+    - the same add after `restaurant_spoke()` is allowed;
     - with no `llm_turn_started()` ever called (HTTP head), repeats are allowed;
     - the refusal goes through `perform`, gives exactly one result, and is recorded as a tool event.
   - GREEN: implement in the controller, not in the heads.

@@ -154,13 +154,14 @@ class CallController:
             return None
 
     def _same_turn_repeat(self, tool: str, arguments: Mapping | None) -> ToolOutcome | None:
-        """FR-009: refuse an add_item identical (same normalised item name and quantity) to one accepted earlier this LLM turn."""
+        """FR-009: refuse an add_item identical (same normalised item name and quantity) to one accepted since the restaurant last spoke."""
         if tool != "add_item" or self._turn_adds is None:
             return None
         key = self._add_key(arguments)
         if key is None or key not in self._turn_adds:
             return None
-        message = f"Refused: you already added {key[1]} x {arguments['name']} in this turn. Add more only if the restaurant agreed to more, in your next turn."
+        held = next((i.name for i in self.session.items if normalise(i.name) == key[0]), arguments["name"])
+        message = f"Refused: you already added {key[1]} x {held} since the restaurant last spoke. Add more only after the restaurant agrees to more."
         args = {k: arguments.get(k) for k in ("name", "quantity", "unit_price_pkr")}
         args["price_corrected"] = bool(arguments.get("price_corrected", False))
         self.session.record_refusal("add_item", args, message)
@@ -195,6 +196,8 @@ class CallController:
     def restaurant_spoke(self, text: str | None = None) -> None:
         """The restaurant's turn started: reset the nudge flags, cancel a pending nudge."""
         self._restaurant_has_spoken = True
+        if self._turn_adds is not None:
+            self._turn_adds.clear()  # a new restaurant turn: the bot may add again (FR-009)
         self._opening.cancel()
         self._nudges.on_user_turn_started()
         self._nudge_scheduler.cancel()
@@ -202,7 +205,10 @@ class CallController:
             self.add_line("restaurant", text)
 
     def llm_turn_started(self) -> None:
-        self._turn_adds = set()  # a new LLM turn: the same-turn add guard starts over (and arms on the first call)
+        # Only arms the FR-009 guard. Pipecat reports a new assistant turn for EVERY generation (including the
+        # re-run after tool results), so this cannot be the reset point: restaurant_spoke() is.
+        if self._turn_adds is None:
+            self._turn_adds = set()
         self._nudges.on_llm_run_started()
         self._nudge_scheduler.cancel()
 

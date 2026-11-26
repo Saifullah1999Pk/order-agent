@@ -5,7 +5,7 @@ from order_agent.controller.session import CallController
 from order_agent.model.brief import WantedLine
 
 NOW = datetime(2026, 11, 23, 19, 30)
-REFUSAL = "Refused: you already added {n} x {item} in this turn. Add more only if the restaurant agreed to more, in your next turn."
+REFUSAL = "Refused: you already added {n} x {item} since the restaurant last spoke. Add more only after the restaurant agrees to more."
 
 
 def _c(make_brief, tmp_path) -> CallController:
@@ -41,13 +41,44 @@ async def test_different_quantity_or_item_same_turn_allowed(make_brief, tmp_path
     assert (await c.perform("add_item", {"name": "chicken biryani", "quantity": 1, "unit_price_pkr": 900})).ok
 
 
-async def test_same_add_after_next_turn_started_is_allowed(make_brief, tmp_path):
+async def test_next_llm_generation_does_not_reset_the_guard(make_brief, tmp_path):
+    # Pipecat reports a new assistant turn for every generation, including the re-run after tool results.
     c = _c(make_brief, tmp_path)
     c.llm_turn_started()
     assert (await c.perform("add_item", _raita())).ok
     c.llm_turn_started()
+    out = await c.perform("add_item", _raita())
+    assert not out.ok and out.message == REFUSAL.format(n=1, item="raita")
+    assert _qty(c) == 1
+
+
+async def test_restaurant_speaking_resets_the_guard(make_brief, tmp_path):
+    c = _c(make_brief, tmp_path)
+    c.llm_turn_started()
+    assert (await c.perform("add_item", _raita())).ok
+    c.restaurant_spoke()
+    c.llm_turn_started()
     assert (await c.perform("add_item", _raita())).ok
     assert _qty(c) == 2
+
+
+async def test_refusal_appears_in_the_built_report(make_brief, tmp_path):
+    c = _c(make_brief, tmp_path)
+    c.llm_turn_started()
+    await c.perform("add_item", _raita())
+    out = await c.perform("add_item", _raita())
+    await c.finish("not_ordered", "x")
+    events = [e for e in c.report.tool_events if e["tool"] == "add_item"]
+    assert [e["ok"] for e in events] == [True, False]
+    assert events[1]["message"] == out.message and events[1]["args"]["quantity"] == 1
+
+
+async def test_refusal_uses_the_cart_name(make_brief, tmp_path):
+    c = _c(make_brief, tmp_path)
+    c.llm_turn_started()
+    await c.perform("add_item", _raita(1, "Raita"))
+    out = await c.perform("add_item", _raita(1, "raitas"))
+    assert out.message == REFUSAL.format(n=1, item="Raita")
 
 
 async def test_guard_inactive_when_turns_never_reported(make_brief, tmp_path):
