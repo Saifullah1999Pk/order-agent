@@ -375,3 +375,79 @@ def test_end_report_delete_unknown_404(client, method, path):
     r = getattr(client, method)(url)
     assert r.status_code == 404
     assert r.json()["error"]["code"] == "session_not_found"
+
+
+# --- isolation (T043, FR-007)
+
+import httpx  # noqa: E402
+
+
+def _brief_b():
+    b = _brief_dict()
+    b["customer_name"] = "Sara Khan"
+    b["budget_pkr"] = 1500
+    b["wanted"] = [{"item": "chicken karahi", "quantity": 1}]
+    return b
+
+
+async def test_two_sessions_do_not_leak(reports_dir):
+    app = create_app(reports_dir, brief_dir=ROOT / "briefs")
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://t") as c:
+        a = (await c.post("/sessions", json={"brief": _brief_dict()})).json()["session_id"]
+        b = (await c.post("/sessions", json={"brief": _brief_b()})).json()["session_id"]
+        assert a != b
+
+        async def act(sid, tool, **arguments):
+            return (await c.post(f"/sessions/{sid}/actions", json={"tool": tool, "arguments": arguments})).json()
+
+        async def line(sid, role, text):
+            return await c.post(f"/sessions/{sid}/transcript", json={"role": role, "text": text})
+
+        async def run_a():
+            assert (await act(a, "add_item", name="chicken biryani", quantity=2, unit_price_pkr=900))["ok"]
+            await line(a, "restaurant", "A: two biryani")
+            assert (await act(a, "set_fees", delivery_fee_pkr=150, tax_pkr=0))["ok"]
+            return await c.post(f"/sessions/{a}/end")
+
+        async def run_b():
+            assert (await act(b, "add_item", name="chicken karahi", quantity=1, unit_price_pkr=1100))["ok"]
+            locked = await act(b, "set_price", name="chicken karahi", unit_price_pkr=1200)
+            assert locked["ok"] is False  # the price lock holds in B
+            await line(b, "restaurant", "B: one karahi")
+            await line(b, "agent", "B: thanks")
+            return await c.post(f"/sessions/{b}/end")
+
+        ra, rb = await asyncio.gather(run_a(), run_b())
+        ra, rb = ra.json(), rb.json()
+
+        assert [(i["name"], i["quantity"]) for i in ra["report"]["items"]] == [("chicken biryani", 2)]
+        assert [(i["name"], i["quantity"]) for i in rb["report"]["items"]] == [("chicken karahi", 1)]
+        assert ra["report"]["items"][0]["unit_price_pkr"] == "900"
+        assert rb["report"]["items"][0]["unit_price_pkr"] == "1100"
+        assert ra["report"]["fees_set"] is True and ra["report"]["delivery_fee_pkr"] == "150"
+        assert rb["report"]["fees_set"] is False
+        assert [t["text"] for t in ra["report"]["transcript"]] == ["A: two biryani"]
+        assert [t["text"] for t in rb["report"]["transcript"]] == ["B: one karahi", "B: thanks"]
+        assert ra["report_path"] != rb["report_path"]
+        assert len(list(reports_dir.rglob("*.json"))) == 2
+        assert (reports_dir / ra["report_path"]).is_file() and (reports_dir / rb["report_path"]).is_file()
+
+
+async def test_actions_on_ended_session_do_not_affect_other(reports_dir):
+    app = create_app(reports_dir, brief_dir=ROOT / "briefs")
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://t") as c:
+        a = (await c.post("/sessions", json={"brief": _brief_dict()})).json()["session_id"]
+        b = (await c.post("/sessions", json={"brief": _brief_b()})).json()["session_id"]
+        await c.post(f"/sessions/{b}/actions", json={"tool": "add_item", "arguments": {"name": "chicken karahi", "quantity": 1, "unit_price_pkr": 1100}})
+        end = await c.post(f"/sessions/{a}/actions", json={"tool": "end_call", "arguments": {"outcome": "not_ordered", "reason": "x"}})
+        assert end.json()["ended"] is True
+        late = await c.post(f"/sessions/{a}/actions", json={"tool": "add_item", "arguments": {"name": "chicken biryani", "quantity": 1, "unit_price_pkr": 900}})
+        assert late.status_code == 409
+        info_b = (await c.get(f"/sessions/{b}")).json()
+        assert info_b["state"] == "live" and info_b["order_state"] == "open"
+        more = await c.post(f"/sessions/{b}/actions", json={"tool": "set_fees", "arguments": {"delivery_fee_pkr": 100, "tax_pkr": 0}})
+        assert more.json()["ok"] is True
+        rep_b = (await c.post(f"/sessions/{b}/end")).json()["report"]
+        assert [i["name"] for i in rep_b["items"]] == ["chicken karahi"]
+        rep_a = (await c.get(f"/sessions/{a}/report")).json()["report"]
+        assert rep_a["items"] == [] and rep_a["outcome"] == "not_ordered"
