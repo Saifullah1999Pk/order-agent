@@ -176,7 +176,7 @@ def test_total_only_quote_below_known_partial_sum_refused(brief):
     s.add_item("raita", 1, None)
     r = s.confirm_order(Decimal("1000"), 45)
     assert not r.ok
-    assert "less than the prices already recorded (Rs 2000)" in r.message
+    assert "less than the prices already recorded." in r.message and "2000" not in r.message
     assert "Rs 1000" in r.message
     assert s.state == "open"
 

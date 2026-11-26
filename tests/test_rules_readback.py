@@ -84,3 +84,54 @@ def test_given_readback_is_recorded_in_event_args(brief):
     s.confirm_order(Decimal("1950"), 45, restaurant_items=[("chicken biryani", 3)])
     assert s.events[-1].args["restaurant_items"] == [("chicken biryani", 3)]
     assert not s.events[-1].ok
+
+
+def _two_lines(make_brief, with_mutton=True) -> OrderSession:
+    wanted = [WantedLine(item="chicken biryani", quantity=2, substitutes=["mutton biryani"]), WantedLine(item="raita", quantity=3, optional=True)]
+    s = OrderSession(make_brief(wanted=wanted), NOW)
+    assert s.add_item("chicken biryani", 1, Decimal("900")).ok
+    if with_mutton:
+        assert s.add_item("mutton biryani", 1, Decimal("1000")).ok
+    return s
+
+
+def test_subset_name_matches_a_unique_cart_line(make_brief):
+    s = _cart(make_brief)
+    r = s.confirm_order(Decimal("2200"), 45, restaurant_items=[("biryani", 2), ("raita", 3)])
+    assert r.ok, r.message
+
+
+def test_wrong_quantity_via_subset_name_is_refused(make_brief):
+    s = _cart(make_brief)
+    r = s.confirm_order(Decimal("2200"), 45, restaurant_items=[("biryani", 3), ("raita", 3)])
+    assert not r.ok and "chicken biryani: restaurant 3, order 2" in r.message
+
+
+def test_reverse_subset_name_matches_a_unique_cart_line(make_brief):
+    s = _cart(make_brief)
+    r = s.confirm_order(Decimal("2200"), 45, restaurant_items=[("special chicken biryani", 2), ("raita", 3)])
+    assert r.ok, r.message
+
+
+def test_ambiguous_subset_name_is_refused_as_extra(make_brief):
+    s = _two_lines(make_brief)
+    r = s.confirm_order(Decimal("1900"), 45, restaurant_items=[("biryani", 2)])
+    assert not r.ok and "biryani: restaurant 2, order 0" in r.message
+
+
+def test_extra_naan_still_refused_with_subset_matching(make_brief):
+    s = _cart(make_brief)
+    r = s.confirm_order(Decimal("2200"), 45, restaurant_items=[("biryani", 2), ("raita", 3), ("naan", 1)])
+    assert not r.ok and "naan: restaurant 1, order 0" in r.message
+
+
+def test_subset_and_exact_names_for_one_line_are_summed(make_brief):
+    s = _cart(make_brief)
+    r = s.confirm_order(Decimal("2200"), 45, restaurant_items=[("biryani", 1), ("chicken biryani", 1), ("raita", 3)])
+    assert r.ok, r.message
+
+
+def test_readback_refusal_has_an_escape(make_brief):
+    s = _cart(make_brief)
+    r = s.confirm_order(Decimal("2200"), 45, restaurant_items=[("raita", 3)])
+    assert "If they will not correct it, end the call as not_ordered." in r.message

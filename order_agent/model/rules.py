@@ -340,12 +340,18 @@ class OrderSession:
 
     def _readback_differences(self, restaurant_items: list[tuple[str, int]]) -> list[str]:
         """Differences between what the restaurant read back and the cart, as '<item>: restaurant n, order m'."""
-        said: dict[frozenset[str], list] = {}  # matched name -> [display name, quantity]
-        for name, quantity in restaurant_items:
-            said.setdefault(normalise(name), [name, 0])[1] += quantity
         held: dict[frozenset[str], list] = {}
         for item in self.items:
             held.setdefault(normalise(item.name), [item.name, 0])[1] += item.quantity
+        said: dict[frozenset[str], list] = {}  # cart line key (or the name's own words if unmatched) -> [display name, quantity]
+        for name, quantity in restaurant_items:
+            words = normalise(name)
+            if words in held:
+                key = words
+            else:
+                near = [k for k in held if words and (words <= k or k <= words)]
+                key = near[0] if len(near) == 1 else words
+            said.setdefault(key, [held[key][0] if key in held else name, 0])[1] += quantity
         out = []
         for key in [*held, *(k for k in said if k not in held)]:
             name = held[key][0] if key in held else said[key][0]
@@ -365,7 +371,7 @@ class OrderSession:
         if restaurant_items is not None:
             differences = self._readback_differences(restaurant_items)
             if differences:
-                return ToolResult(False, f"Refused: the restaurant's read-back does not match your order ({'; '.join(differences)}). Politely correct the restaurant with your order's items and quantities. Do not change the order to match; then confirm again with their read-back.")
+                return ToolResult(False, f"Refused: the restaurant's read-back does not match your order ({'; '.join(differences)}). Politely correct the restaurant with your order's items and quantities. Do not change the order to match; then confirm again with their read-back. If they will not correct it, end the call as not_ordered.")
 
         missing = self.missing_lines()
         if missing:
@@ -384,7 +390,7 @@ class OrderSession:
             # Nothing honest to sum: hold the restaurant's own total to the budget (and the deadline below),
             # and it cannot be lower than what is already recorded.
             if quoted < total:
-                return ToolResult(False, f"Refused: The restaurant's total (Rs {_fmt(quoted)}) is less than the prices already recorded (Rs {_fmt(total)}). Ask them to check the total.")
+                return ToolResult(False, f"Refused: The restaurant's total (Rs {_fmt(quoted)}) is less than the prices already recorded. Ask them to check the total.")
             if quoted > self.brief.budget_pkr:
                 return ToolResult(False, f"Refused: the restaurant's total of {_fmt(quoted)} PKR is over your budget of {_fmt(self.brief.budget_pkr)} PKR. Ask whether something can be cheaper; otherwise end the call as not_ordered.")
         elif quoted != total:

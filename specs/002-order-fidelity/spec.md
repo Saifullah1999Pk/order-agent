@@ -42,7 +42,7 @@ Before confirming, the bot reads its items and quantities back. If the restauran
 
 ### Edge Cases
 
-- The restaurant names an item with a different but matching name (for example "biryani" for "chicken biryani"). Matching uses the existing item matcher, not exact string equality.
+- The restaurant names an item with a different but matching name (for example "biryani" for "chicken biryani"). A name matches a cart line by exact normalised words (case, word order, plurals), else by the one cart line whose words contain, or are contained in, the name's words. If none or several qualify, it counts as an extra item.
 - An item listed twice in `restaurant_items` is summed before comparing.
 - A mismatch refusal is recorded in the report's tool events like any other refusal.
 - Both checks apply to the voice head and the HTTP head identically, because both go through the Controller.
