@@ -184,3 +184,23 @@ def test_compat_eval_llm_is_reexports_only():
         "gemini_llm", "gemini_classifier", "gemini_native_llm", "groq_llm", "groq_classifier",
         "ollama_classifier", "ThrottledOpenAILLMService", "ThrottledGroqLLMService",
     }
+
+
+def test_runtime_import_graph():
+    """contracts/boundaries.md item 4: importing Model and Controller loads no speech or web stack."""
+    import json
+    import subprocess
+    import sys
+
+    code = (
+        "import sys, json, pkgutil\n"
+        "import order_agent.model, order_agent.controller\n"
+        "import importlib\n"
+        "for pkg in (order_agent.model, order_agent.controller):\n"
+        "    for m in pkgutil.iter_modules(pkg.__path__):\n"
+        "        importlib.import_module(pkg.__name__ + '.' + m.name)\n"
+        "banned = ('pipecat', 'fastapi', 'starlette', 'uvicorn', 'google', 'openai', 'torch')\n"
+        "print(json.dumps(sorted(m for m in sys.modules if m.split('.')[0] in banned)))\n"
+    )
+    result = subprocess.run([sys.executable, "-I", "-c", code], capture_output=True, text=True, check=True)
+    assert json.loads(result.stdout.strip().splitlines()[-1]) == []
