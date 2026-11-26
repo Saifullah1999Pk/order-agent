@@ -1,0 +1,79 @@
+[
+  {
+    "role": "assistant",
+    "content": "Hello, I would like to place a delivery order, please."
+  },
+  {
+    "role": "user",
+    "content": "Sure, what would you like to order?"
+  },
+  {
+    "role": "assistant",
+    "content": "I'd like two chicken biryanis and one raita, please, for delivery. Do you have these available, and what are their prices?"
+  },
+  {
+    "role": "user",
+    "content": "We have all the items you mentioned. The total for two chicken biryanis and one raita, including delivery, is Rs 2100. Delivery takes 45 minutes. Would you like to place the order?"
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "name": "chicken biryani",
+      "quantity": 2
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "name": "raita",
+      "quantity": 1
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Could you please tell me the delivery fee, tax, and if there is a minimum order? Also, what is my delivery address and callback number? My notes are for it to be less spicy if possible."
+  },
+  {
+    "role": "user",
+    "content": "The delivery fee is Rs 150, there is no tax, and there is no minimum order. Your address and callback number are not provided in your call. Could you please share them?"
+  },
+  {
+    "role": "tool_call",
+    "name": "set_fees",
+    "arguments": {
+      "tax_pkr": 0,
+      "delivery_fee_pkr": 150
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "My address is House 12, Street 4, F-7/2, Islamabad, and my callback number is 0300-0000000. Could you please confirm the final total and delivery time?"
+  },
+  {
+    "role": "user",
+    "content": "The final total is Rs 2100, and delivery will take 45 minutes. Your order is confirmed. Thank you, and have a great day!"
+  },
+  {
+    "role": "tool_call",
+    "name": "confirm_order",
+    "arguments": {
+      "delivery_minutes": 45,
+      "quoted_total_pkr": 2100
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "end_call",
+    "arguments": {
+      "outcome": "ordered",
+      "reason": "Order successfully placed and confirmed."
+    },
+    "cancelled": false
+  }
+]
