@@ -32,11 +32,18 @@ class SessionStore:
         self._locks: dict[str, asyncio.Lock] = {}
 
     def create(
-        self, brief: OrderBrief, *, reports_dir: Path, now: datetime | None = None
+        self,
+        brief: OrderBrief,
+        *,
+        reports_dir: Path,
+        now: datetime | None = None,
+        per_session_dir: bool = False,
     ) -> tuple[str, CallController]:
         if len(self._controllers) >= self.max_sessions:
             raise TooManySessions(f"At most {self.max_sessions} sessions at once; delete one first.")
         session_id = uuid.uuid4().hex
+        if per_session_dir:
+            reports_dir = reports_dir / session_id
         controller = CallController(brief, reports_dir=reports_dir, now=now, hooks=None)
         self._controllers[session_id] = controller
         self._locks[session_id] = asyncio.Lock()

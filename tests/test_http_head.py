@@ -64,3 +64,82 @@ def test_checker_accepts_clean_http_head_snippet():
         "from order_agent.model.brief import load_brief\nfrom order_agent.model.report import summarise\n"
     )
     assert violations(src, "heads/http_api", package="order_agent.heads.http_api") == []
+
+
+# --- POST /sessions (T038)
+
+import yaml  # noqa: E402
+
+from order_agent.controller.prompt import build_system_prompt  # noqa: E402
+from order_agent.model.brief import OrderBrief, load_brief  # noqa: E402
+
+
+def _brief_dict():
+    raw = yaml.safe_load((ROOT / "briefs" / "example.yaml").read_text(encoding="utf-8"))
+    return OrderBrief(**raw).model_dump(mode="json")
+
+
+def test_create_session_inline_brief(client):
+    r = client.post("/sessions", json={"brief": _brief_dict()})
+    assert r.status_code == 201
+    body = r.json()
+    assert len(body["session_id"]) == 32
+    assert body["instructions"] == build_system_prompt(OrderBrief(**_brief_dict()))
+    assert body["opening_text"].startswith("Nobody has spoken yet.")
+    assert len(body["tools"]) == 7
+    assert {t["name"] for t in body["tools"]} >= {"add_item", "end_call"}
+    add = next(t for t in body["tools"] if t["name"] == "add_item")
+    assert add["required"] == ["name", "quantity"] and "properties" in add and add["description"]
+
+
+def test_create_session_by_brief_name(client):
+    r = client.post("/sessions", json={"brief_name": "example"})
+    assert r.status_code == 201
+    assert r.json()["instructions"] == build_system_prompt(load_brief(ROOT / "briefs" / "example.yaml"))
+
+
+def test_call_time_overrides(client):
+    inline = client.post("/sessions", json={"brief": _brief_dict()}).json()["instructions"]
+    other = client.post(
+        "/sessions", json={"brief": _brief_dict(), "call_time": "2026-11-23T08:00:00"}
+    ).json()["instructions"]
+    expected = build_system_prompt(
+        OrderBrief(**_brief_dict()).model_copy(update={"call_time": __import__("datetime").datetime(2026, 11, 23, 8)})
+    )
+    assert other == expected
+    assert isinstance(inline, str)
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {},
+        {"brief_name": "example", "brief": {}},
+        {"brief_name": "does_not_exist"},
+        {"brief_name": "../example"},
+        {"brief_name": "..\example"},
+        {"brief": {"customer_name": "only a name"}},
+    ],
+)
+def test_create_session_422(client, payload):
+    r = client.post("/sessions", json=payload)
+    assert r.status_code == 422
+    assert r.json()["error"]["code"] == "validation_error"
+
+
+def test_create_session_invalid_brief_file_is_422(reports_dir, tmp_path):
+    bad_dir = tmp_path / "briefs"
+    bad_dir.mkdir()
+    (bad_dir / "bad.yaml").write_text("customer_name: x\n", encoding="utf-8")
+    c = TestClient(create_app(reports_dir, brief_dir=bad_dir))
+    r = c.post("/sessions", json={"brief_name": "bad"})
+    assert r.status_code == 422 and r.json()["error"]["code"] == "validation_error"
+
+
+def test_create_session_429_beyond_cap(client):
+    client.app.state.store.max_sessions = 2
+    assert client.post("/sessions", json={"brief_name": "example"}).status_code == 201
+    assert client.post("/sessions", json={"brief_name": "example"}).status_code == 201
+    r = client.post("/sessions", json={"brief_name": "example"})
+    assert r.status_code == 429
+    assert r.json()["error"]["code"] == "too_many_sessions"

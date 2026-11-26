@@ -8,6 +8,7 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
+from order_agent.heads.http_api.schemas import SessionCreated, StartSession, ToolInfo
 from order_agent.heads.http_api.store import (
     NotFound,
     ReportNotReady,
@@ -15,6 +16,11 @@ from order_agent.heads.http_api.store import (
     SessionStore,
     TooManySessions,
 )
+from order_agent.model.brief import OrderBrief, load_brief
+
+
+class InvalidBrief(Exception):
+    pass
 
 
 def _error(status: int, code: str, message: str) -> JSONResponse:
@@ -48,6 +54,10 @@ def create_app(
     async def _too_many(request: Request, exc: TooManySessions):
         return _error(429, "too_many_sessions", str(exc))
 
+    @app.exception_handler(InvalidBrief)
+    async def _bad_brief(request: Request, exc: InvalidBrief):
+        return _error(422, "validation_error", str(exc))
+
     @app.exception_handler(RequestValidationError)
     async def _invalid(request: Request, exc: RequestValidationError):
         parts = []
@@ -59,5 +69,35 @@ def create_app(
     @app.get("/health")
     async def health() -> dict:
         return {"status": "ok"}
+
+    def _load_named_brief(name: str) -> OrderBrief:
+        path = brief_dir / f"{name}.yaml"
+        if not path.is_file():
+            raise InvalidBrief(f"Unknown brief_name {name!r}.")
+        try:
+            return load_brief(path)
+        except Exception as exc:  # noqa: BLE001 - bad YAML or a brief that fails validation
+            raise InvalidBrief(f"Brief {name!r} is not a valid brief: {exc}") from None
+
+    @app.post("/sessions", status_code=201)
+    async def start_session(body: StartSession) -> SessionCreated:
+        brief = body.brief if body.brief is not None else _load_named_brief(body.brief_name)
+        if body.call_time is not None:
+            brief = brief.model_copy(update={"call_time": body.call_time})
+        store: SessionStore = app.state.store
+        # One reports folder per session: report files are named by start second, so two
+        # sessions begun in the same second would otherwise overwrite each other.
+        session_id, controller = store.create(
+            brief, reports_dir=reports_dir, now=clock(), per_session_dir=True
+        )
+        return SessionCreated(
+            session_id=session_id,
+            instructions=controller.instructions,
+            opening_text=controller.opening_text,
+            tools=[
+                ToolInfo(name=t.name, description=t.description, properties=t.properties, required=t.required)
+                for t in controller.tool_specs()
+            ],
+        )
 
     return app
