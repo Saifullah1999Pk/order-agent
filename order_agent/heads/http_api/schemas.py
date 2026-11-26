@@ -84,12 +84,3 @@ class ReportResponse(BaseModel):
     report: CallReport
     summary: str
     report_path: str  # relative to the server's reports dir, never absolute
-
-
-class ErrorDetail(BaseModel):
-    code: str
-    message: str
-
-
-class ErrorBody(BaseModel):
-    error: ErrorDetail

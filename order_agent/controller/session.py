@@ -102,7 +102,7 @@ class CallController:
                 report = build_report(
                     self.session, outcome, reason, self.transcript, self.started_at, datetime.now()
                 )
-                self.report_path = self._write_report(report)
+                self.report_path = write_report(report, self.reports_dir)
                 self.report = report
                 self._nudge_scheduler.cancel()  # nothing fires after the call ended
                 self._opening.cancel()
@@ -203,6 +203,3 @@ class CallController:
         if self._hooks is None or self.finished or self._restaurant_has_spoken:
             return  # the normal turn flow answers them
         await self._hooks.inject(self.opening_text)
-
-    def _write_report(self, report: CallReport) -> Path:
-        return write_report(report, self.reports_dir)

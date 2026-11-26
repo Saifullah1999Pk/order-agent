@@ -85,7 +85,7 @@ Pydantic request/response models (full shapes in `contracts/http-api.md`):
 | `TranscriptRequest.text` | non-blank |
 | `ReportResponse.report_path` | path relative to the server's reports dir (never absolute) |
 
-Other models: `SessionInfo`, `ActionResult`, `EndRequest`, `ErrorBody`.
+Other models: `SessionInfo`, `ActionResult`, `EndRequest`.
 `SessionStore`: `dict[str, CallController]` with `create`, `get`, `delete`, `count`; `SessionStore.max_sessions` defaults to 100. Session id is a
 random uuid4 hex string and carries no meaning.
 
