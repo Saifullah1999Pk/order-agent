@@ -76,6 +76,10 @@ class OrderSession:
         self.events.append(ToolEvent(tool, args, result.ok, result.message, self.now))
         return result
 
+    def record_refusal(self, tool: str, args: dict, message: str) -> ToolResult:
+        """Record a refusal made outside the rules engine (the Controller's same-turn guard), like any other event."""
+        return self._record(tool, args, ToolResult(False, message))
+
     def _items_total(self) -> Decimal:
         """Food subtotal of the priced items (unpriced items add nothing: see _has_unpriced)."""
         return sum((i.quantity * i.unit_price_pkr for i in self.items if i.unit_price_pkr is not None), Decimal(0))

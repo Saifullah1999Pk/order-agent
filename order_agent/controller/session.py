@@ -18,6 +18,7 @@ from order_agent.controller.prompt import build_system_prompt
 from order_agent.controller.toolspecs import TOOL_SPECS, ToolSpec
 from order_agent.controller.tools import ToolDispatcher, ToolOutcome
 from order_agent.model.brief import OrderBrief
+from order_agent.model.matching import normalise
 from order_agent.model.report import CallReport, TranscriptLine, build_report, write_report
 from order_agent.model.rules import OrderSession
 
@@ -67,6 +68,7 @@ class CallController:
         self._dispatcher = ToolDispatcher(self.session)
         self._nudges = NudgeTracker()
         self._opened = False
+        self._turn_adds: set[tuple[frozenset[str], int]] | None = None  # None until the head reports a turn
         self._restaurant_has_spoken = False
         self._opening = NudgeScheduler(self._fire_opening, delay=opening_wait_secs, sleep=sleep)
         self._nudge_scheduler = NudgeScheduler(self._fire_nudge, delay=nudge_delay_secs, sleep=sleep)
@@ -128,10 +130,41 @@ class CallController:
         Order on a successful end_call: reply to the LLM, write the report, hang up. Each step is
         attempted even if the one before failed (the failure is logged).
         """
+        repeat = self._same_turn_repeat(tool, arguments)
+        if repeat is not None:
+            return repeat
         outcome = await self._dispatcher.dispatch(tool, arguments)
+        if tool == "add_item" and outcome.ok:
+            key = self._add_key(arguments)
+            if key is not None and self._turn_adds is not None:
+                self._turn_adds.add(key)
         if tool == "end_call" and outcome.ended:
             await self._end_call(outcome, arguments or {}, reply)
         return outcome
+
+    @staticmethod
+    def _add_key(arguments: Mapping | None) -> tuple[frozenset[str], int] | None:
+        """(normalised item name, quantity) of an add_item call, or None if it cannot be read."""
+        try:
+            name, quantity = arguments["name"], arguments["quantity"]
+            if isinstance(quantity, bool) or not isinstance(quantity, (int, float)) or int(quantity) != quantity or not isinstance(name, str):
+                return None
+            return normalise(name), int(quantity)
+        except Exception:  # noqa: BLE001 - the dispatcher gives the normal refusal
+            return None
+
+    def _same_turn_repeat(self, tool: str, arguments: Mapping | None) -> ToolOutcome | None:
+        """FR-009: refuse an add_item identical (same normalised item name and quantity) to one accepted earlier this LLM turn."""
+        if tool != "add_item" or self._turn_adds is None:
+            return None
+        key = self._add_key(arguments)
+        if key is None or key not in self._turn_adds:
+            return None
+        message = f"Refused: you already added {key[1]} x {arguments['name']} in this turn. Add more only if the restaurant agreed to more, in your next turn."
+        args = {k: arguments.get(k) for k in ("name", "quantity", "unit_price_pkr")}
+        args["price_corrected"] = bool(arguments.get("price_corrected", False))
+        self.session.record_refusal("add_item", args, message)
+        return ToolOutcome(ok=False, message=message)
 
     async def _end_call(
         self,
@@ -169,6 +202,7 @@ class CallController:
             self.add_line("restaurant", text)
 
     def llm_turn_started(self) -> None:
+        self._turn_adds = set()  # a new LLM turn: the same-turn add guard starts over (and arms on the first call)
         self._nudges.on_llm_run_started()
         self._nudge_scheduler.cancel()
 
