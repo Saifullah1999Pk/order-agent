@@ -8,7 +8,14 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from order_agent.heads.http_api.schemas import SessionCreated, SessionInfo, StartSession, ToolInfo
+from order_agent.heads.http_api.schemas import (
+    ActionRequest,
+    ActionResult,
+    SessionCreated,
+    SessionInfo,
+    StartSession,
+    ToolInfo,
+)
 from order_agent.heads.http_api.store import (
     NotFound,
     ReportNotReady,
@@ -19,7 +26,7 @@ from order_agent.heads.http_api.store import (
 from order_agent.model.brief import OrderBrief, load_brief
 
 
-class InvalidBrief(Exception):
+class InvalidRequest(Exception):
     pass
 
 
@@ -54,8 +61,8 @@ def create_app(
     async def _too_many(request: Request, exc: TooManySessions):
         return _error(429, "too_many_sessions", str(exc))
 
-    @app.exception_handler(InvalidBrief)
-    async def _bad_brief(request: Request, exc: InvalidBrief):
+    @app.exception_handler(InvalidRequest)
+    async def _bad_brief(request: Request, exc: InvalidRequest):
         return _error(422, "validation_error", str(exc))
 
     @app.exception_handler(RequestValidationError)
@@ -73,11 +80,11 @@ def create_app(
     def _load_named_brief(name: str) -> OrderBrief:
         path = brief_dir / f"{name}.yaml"
         if not path.is_file():
-            raise InvalidBrief(f"Unknown brief_name {name!r}.")
+            raise InvalidRequest(f"Unknown brief_name {name!r}.")
         try:
             return load_brief(path)
         except Exception as exc:  # noqa: BLE001 - bad YAML or a brief that fails validation
-            raise InvalidBrief(f"Brief {name!r} is not a valid brief: {exc}") from None
+            raise InvalidRequest(f"Brief {name!r} is not a valid brief: {exc}") from None
 
     @app.post("/sessions", status_code=201)
     async def start_session(body: StartSession) -> SessionCreated:
@@ -110,5 +117,23 @@ def create_app(
             transcript_lines=len(controller.transcript),
             report_ready=controller.report is not None,
         )
+
+    def _live(session_id: str):
+        controller = app.state.store.get(session_id)
+        if controller.finished or controller.session.state == "ended":
+            raise SessionClosed(f"Session {session_id} has already ended.")
+        return controller
+
+    @app.post("/sessions/{session_id}/actions")
+    async def act(session_id: str, body: ActionRequest) -> ActionResult:
+        store: SessionStore = app.state.store
+        controller = _live(session_id)
+        if body.tool not in {spec.name for spec in controller.tool_specs()}:
+            raise InvalidRequest(f"Unknown tool {body.tool!r}.")
+        async with store.lock(session_id):
+            if controller.finished:  # another request ended the call while this one waited
+                raise SessionClosed(f"Session {session_id} has already ended.")
+            outcome = await controller.perform(body.tool, body.arguments)
+        return ActionResult(ok=outcome.ok, message=outcome.message, ended=outcome.ended)
 
     return app

@@ -181,3 +181,83 @@ def test_get_session_unknown_is_404(client):
     r = client.get("/sessions/" + "0" * 32)
     assert r.status_code == 404
     assert r.json()["error"]["code"] == "session_not_found"
+
+
+# --- POST /sessions/{id}/actions (T040)
+
+import asyncio  # noqa: E402
+from datetime import datetime  # noqa: E402
+
+from order_agent.controller import CallController  # noqa: E402
+
+
+def _act(client, sid, tool, **arguments):
+    return client.post(f"/sessions/{sid}/actions", json={"tool": tool, "arguments": arguments})
+
+
+def _direct(tool, **arguments):
+    """What the controller itself answers on a fresh session built from the same brief."""
+    ctrl = CallController(load_brief(ROOT / "briefs" / "example.yaml"), reports_dir=Path("unused"), now=datetime(2026, 11, 23, 19, 30))
+    return asyncio.run(ctrl.perform(tool, arguments))
+
+
+def test_action_add_item_ok(client):
+    sid = _new(client)
+    r = _act(client, sid, "add_item", name="chicken biryani", quantity=2, unit_price_pkr=900)
+    assert r.status_code == 200
+    body = r.json()
+    assert body["ok"] is True and body["ended"] is False and body["message"]
+
+
+def test_action_forbidden_item_is_a_200_refusal(client):
+    sid = _new(client)
+    r = _act(client, sid, "add_item", name="prawn karahi", quantity=1, unit_price_pkr=900)
+    assert r.status_code == 200
+    expected = _direct("add_item", name="prawn karahi", quantity=1, unit_price_pkr=900)
+    assert r.json() == {"ok": False, "message": expected.message, "ended": False}
+    assert expected.ok is False
+
+
+def test_action_over_budget_is_a_200_refusal(client):
+    sid = _new(client)
+    r = _act(client, sid, "add_item", name="chicken biryani", quantity=5, unit_price_pkr=900)
+    expected = _direct("add_item", name="chicken biryani", quantity=5, unit_price_pkr=900)
+    assert r.status_code == 200
+    assert r.json()["ok"] is False
+    assert r.json()["message"] == expected.message
+
+
+def test_action_bad_arguments_refused(client):
+    sid = _new(client)
+    r = _act(client, sid, "add_item", name="chicken biryani", quantity="two")
+    assert r.status_code == 200
+    assert r.json()["ok"] is False and r.json()["message"].startswith("Refused: ")
+
+
+def test_action_unknown_tool_422(client):
+    sid = _new(client)
+    r = _act(client, sid, "fly_to_moon")
+    assert r.status_code == 422
+    assert r.json()["error"]["code"] == "validation_error"
+
+
+def test_action_arguments_must_be_an_object(client):
+    sid = _new(client)
+    r = client.post(f"/sessions/{sid}/actions", json={"tool": "add_item", "arguments": [1]})
+    assert r.status_code == 422
+
+
+def test_action_unknown_session_404(client):
+    r = _act(client, "f" * 32, "add_item", name="x", quantity=1)
+    assert r.status_code == 404
+    assert r.json()["error"]["code"] == "session_not_found"
+
+
+def test_action_after_end_call_is_409(client):
+    sid = _new(client)
+    r = _act(client, sid, "end_call", outcome="not_ordered", reason="testing")
+    assert r.status_code == 200
+    assert r.json()["ok"] is True and r.json()["ended"] is True
+    r2 = _act(client, sid, "add_item", name="chicken biryani", quantity=1, unit_price_pkr=900)
+    assert r2.status_code == 409
+    assert r2.json()["error"]["code"] == "session_closed"
