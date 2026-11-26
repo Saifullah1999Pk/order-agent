@@ -40,6 +40,14 @@ def _fmt(amount: Decimal) -> str:
     return f"{amount:f}"
 
 
+TOTAL_MISMATCH = (
+    "Refused: the restaurant's total does not match the prices and fees you recorded. "
+    "Do not tell the restaurant a total of your own. Ask them to itemise the total: each item with its price, then the delivery fee and tax. "
+    "Do not edit the cart or the fees to make the totals match. Only if they clearly state a changed price or fee, correct it "
+    "(add_item with price_corrected=true, or set_fees with corrected=true); if they cannot explain it, end the call as not_ordered."
+)
+
+
 def _closed(state: str, what: str) -> ToolResult:
     return ToolResult(False, f"Refused: the order is already {state}; {what} can no longer change.")
 
@@ -357,7 +365,7 @@ class OrderSession:
             if quoted > self.brief.budget_pkr:
                 return ToolResult(False, f"Refused: the restaurant's total of {_fmt(quoted)} PKR is over your budget of {_fmt(self.brief.budget_pkr)} PKR. Ask whether something can be cheaper; otherwise end the call as not_ordered.")
         elif quoted != total:
-            return ToolResult(False, f"Refused: the restaurant quoted {_fmt(quoted)} PKR but the cart total is {_fmt(total)} PKR (items {_fmt(self._items_total())}, delivery {_fmt(self.delivery_fee_pkr)}, tax {_fmt(self.tax_pkr)}). Do not edit the cart or the fees to make the totals match. Ask the restaurant to itemise the total: each item with its price, then the delivery fee and tax. Only if they clearly state a changed price or fee, correct it (add_item with price_corrected=true, or set_fees with corrected=true); if they cannot explain it, end the call as not_ordered.")
+            return ToolResult(False, TOTAL_MISMATCH)
 
         if self._below_minimum():
             return ToolResult(False, self._minimum_refusal())

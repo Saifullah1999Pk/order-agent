@@ -142,5 +142,6 @@ def test_confirm_mismatch_tells_bot_to_ask_for_itemised_total(brief):
     s.set_fees(D("150"), D("0"))
     r = s.confirm_order(D("1350"), 45)
     assert not r.ok
-    for phrase in ("1350", "1950", "itemise", "each item", "Do not edit"):
+    for phrase in ("itemise", "each item", "Do not edit", "Do not tell the restaurant a total of your own"):
         assert phrase in r.message
+    assert "1350" not in r.message and "1950" not in r.message

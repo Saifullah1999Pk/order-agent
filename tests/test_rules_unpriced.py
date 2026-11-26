@@ -144,7 +144,7 @@ def test_priced_cart_with_fees_unchanged(brief):
     s.set_fees(Decimal("150"), Decimal("0"))
     assert s.cart_total_known() is True
     r = s.confirm_order(Decimal("2100"), 45)
-    assert not r.ok and "1950" in r.message
+    assert not r.ok and "1950" not in r.message and "does not match" in r.message
     assert s.confirm_order(Decimal("1950"), 45).ok
     assert s.confirmed_at_total_only is False
 

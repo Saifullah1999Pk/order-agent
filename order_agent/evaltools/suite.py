@@ -19,6 +19,7 @@ from pydantic import BaseModel
 from order_agent.model.brief import OrderBrief, load_brief
 from order_agent.model.matching import normalise
 from order_agent.model.report import CallReport
+from order_agent.model.rules import TOTAL_MISMATCH
 
 Status = Literal["pass", "fail", "quota_error", "restaurant_error", "error"]
 
@@ -331,9 +332,16 @@ def _wrong_quotes(report: CallReport) -> list[Decimal]:
     quotes = []
     for event in report.tool_events:
         if event.get("tool") == "confirm_order" and event.get("ok") is False:
-            m = _QUOTE_MISMATCH.search(str(event.get("message", "")))
-            if m and Decimal(m.group(1)) != Decimal(m.group(2)):
-                quotes.append(Decimal(m.group(1)))
+            message = str(event.get("message", ""))
+            m = _QUOTE_MISMATCH.search(message)
+            if m:  # older reports: the refusal carried both figures
+                if Decimal(m.group(1)) != Decimal(m.group(2)):
+                    quotes.append(Decimal(m.group(1)))
+            elif message == TOTAL_MISMATCH:  # the refusal no longer carries figures: the quote is in the args
+                try:
+                    quotes.append(Decimal(str((event.get("args") or {})["quoted_total_pkr"])))
+                except Exception:  # noqa: BLE001 - unreadable quote: not counted
+                    pass
     return quotes
 
 

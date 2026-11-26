@@ -764,3 +764,13 @@ def test_missing_conduct_metric_is_not_passed():
 def test_rescore_without_conduct_metric_stays_fail(tmp_path):
     r = _rescore(tmp_path, _wrong_total_report(quoted="1250"), "goal: not met: x\n")
     assert r.status == "fail"
+
+
+def test_restaurant_error_still_recognised_with_the_new_mismatch_refusal():
+    # FR-001 removed the figures from the refusal text; the quote now comes from the event's args.
+    from order_agent.model.rules import TOTAL_MISMATCH
+
+    event = _ev("confirm_order", {"quoted_total_pkr": "1250", "delivery_minutes": 45}, False, TOTAL_MISMATCH)
+    status, notes = _settle(_wrong_total_report(events=[event]))
+    assert status == "restaurant_error"
+    assert "restaurant quoted Rs 1250, which matches no valid order" in notes[-1]

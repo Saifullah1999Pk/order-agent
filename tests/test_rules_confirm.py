@@ -47,9 +47,21 @@ def test_confirm_rejects_mismatched_total(brief):
     s = _two_biryani(brief)
     result = s.confirm_order(Decimal("1800"), 45)
     assert not result.ok
-    assert "1950" in result.message
+    assert "does not match" in result.message
     assert s.state == "open"
     assert s.delivery_eta is None and s.quoted_total_pkr is None
+
+
+def test_mismatch_refusal_reveals_no_computed_figures(brief):
+    s = _two_biryani(brief)  # items 1800, delivery 150, tax 0, cart total 1950
+    result = s.confirm_order(Decimal("1800"), 45)
+    assert not result.ok
+    for figure in ("1950", "1800", "150", "items "):
+        assert figure not in result.message
+    assert "Do not tell the restaurant a total of your own" in result.message
+    assert "itemise" in result.message
+    assert "Do not edit the cart or the fees" in result.message
+    assert "not_ordered" in result.message
 
 
 def test_confirm_rejects_late_delivery(brief):
