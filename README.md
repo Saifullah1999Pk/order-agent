@@ -48,7 +48,7 @@ Each test call involves three roles:
 |---|---|---|
 | The agent (bot) | Gemini `gemini-3.5-flash-lite` | Cloud, free tier |
 | Simulated restaurant staff | `qwen3:8b` via Ollama | Your machine (GPU) |
-| Judge (scores the call) | Groq `openai/gpt-oss-20b`, throttled (one call at a time, 30 s apart) | Cloud, free tier |
+| Judge (scores the call) | Groq `openai/gpt-oss-120b`, throttled (one call at a time, 30 s apart) | Cloud, free tier |
 
 **Code checks override the judge.** After every call, deterministic checks on the agent's report decide the hard rules: outcome, budget, forbidden items, required items and minimum order. Of the four judge setups we tested, none agreed with these checks more than about 56% of the time. The judge is trusted only for soft qualities such as politeness. Each scenario gets up to 3 attempts (pass@3), and every attempt is recorded.
 

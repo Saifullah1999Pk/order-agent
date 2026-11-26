@@ -1,4 +1,4 @@
-# Default judge: Groq openai/gpt-oss-20b, throttled for the free tier.
+# Default judge: Groq openai/gpt-oss-120b, throttled for the free tier.
 # Why: Pipecat's judge fires ~7 classifier questions at once (1 goal question + 1 per
 # bot turn), each carrying the whole transcript (~2.5-3.4k tokens in, plus a JSON
 # answer out). Groq's free tier allows 8000 tokens/minute per model, so un-throttled
@@ -14,7 +14,7 @@
 # explanation can occasionally come back empty; the verdict still stands.
 eval:
   factory: order_agent.eval_llm.groq_classifier  # LLMClassifier with timeout_s
-  model: openai/gpt-oss-20b
+  model: openai/gpt-oss-120b
   reasoning_effort: low
   max_concurrency: 1
   min_interval_s: 30
@@ -24,7 +24,7 @@ eval:
 # explainer: ignored by Pipecat 1.17.0 (kept for documentation only)
 explainer:
   factory: order_agent.eval_llm.groq_llm
-  model: openai/gpt-oss-20b
+  model: openai/gpt-oss-120b
   reasoning_effort: low
   max_concurrency: 1
   min_interval_s: 30

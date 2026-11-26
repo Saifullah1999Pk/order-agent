@@ -1,0 +1,8 @@
+price_over_budget/attempt-2 | goal=JudgeVerdict(verdict='yes', reason='P(yes)=0.98', raw_response='{"probability":0.98}', confidence=0.98, probabilities={'yes': 0.98, 'no': 0.020000000000000018}) | conduct=0.8 passed=False
+price_over_budget/attempt-3 | goal=JudgeVerdict(verdict='yes', reason='P(yes)=0.99', raw_response='{"probability":0.99}', confidence=0.99, probabilities={'yes': 0.99, 'no': 0.010000000000000009}) | conduct=1.0 passed=True
+price_drop_optional/attempt-1 | goal=JudgeVerdict(verdict='yes', reason='P(yes)=0.98', raw_response='{"probability":0.98}', confidence=0.98, probabilities={'yes': 0.98, 'no': 0.020000000000000018}) | conduct=1.0 passed=True
+2026-11-26 18:10:51.497 | WARNING  | pipecat.evals.judge:_ask:756 - Judge question failed, asking again: ThrottledGroqLLMService#3 failed to answer: Error code: 400 - Failed to generate JSON. Please adjust your prompt. See 'failed_generation'
+sold_out_no_substitute/attempt-1 | goal=JudgeVerdict(verdict='yes', reason='P(yes)=0.98', raw_response='{"probability":0.98}', confidence=0.98, probabilities={'yes': 0.98, 'no': 0.020000000000000018}) | conduct=0.8 passed=False
+happy_path/attempt-1 | goal=JudgeVerdict(verdict='yes', reason='P(yes)=0.99', raw_response='{"probability":0.99}', confidence=0.99, probabilities={'yes': 0.99, 'no': 0.010000000000000009}) | conduct=1.0 passed=True
+terse_staff/attempt-1 | goal=JudgeVerdict(verdict='yes', reason='P(yes)=0.99', raw_response='{"probability":0.99}', confidence=0.99, probabilities={'yes': 0.99, 'no': 0.010000000000000009}) | conduct=1.0 passed=True; no_repeat_loop=1.0 passed=True
+

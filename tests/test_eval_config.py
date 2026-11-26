@@ -97,7 +97,7 @@ def test_committed_default_judge_is_throttled_groq(monkeypatch):
     monkeypatch.setenv("GOOGLE_API_KEY", "test-key")
     j = apply_eval_configs(load(), None, None).judge  # Pipecat reads only the eval block
     assert j["factory"] == "order_agent.eval_llm.groq_classifier"
-    assert j["model"] == "openai/gpt-oss-20b"
+    assert j["model"] == "openai/gpt-oss-120b"
     assert (j["max_concurrency"], j["min_interval_s"], j["max_retries"], j["retry_base_s"]) == (1, 30, 3, 15)
     assert j["timeout_s"] == 600
     clf = classifier_from_config(j, where="judge.eval")
