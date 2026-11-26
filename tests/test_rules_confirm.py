@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 
-from order_agent.rules import OrderSession
+from order_agent.model.rules import OrderSession
 
 NOW = datetime(2026, 11, 23, 19, 30)
 
@@ -211,7 +211,7 @@ def test_minimum_refusal_names_quantity(brief):
 
 
 def test_shortfall_hint_says_when_nothing_fits_budget(make_brief):
-    from order_agent.brief import WantedLine
+    from order_agent.model.brief import WantedLine
 
     wanted = [WantedLine(item="chicken biryani", quantity=2, substitutes=[])]
     s = _session(make_brief(budget_pkr=Decimal("2000"), wanted=wanted))
@@ -262,7 +262,7 @@ def test_hint_after_remove_swap_does_not_say_not_ordered(brief):
 
 
 def test_hint_prefers_optional_over_cheaper_required(make_brief):
-    from order_agent.brief import WantedLine
+    from order_agent.model.brief import WantedLine
 
     wanted = [
         WantedLine(item="chicken biryani", quantity=1, substitutes=[]),

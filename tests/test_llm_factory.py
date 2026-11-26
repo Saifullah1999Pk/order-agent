@@ -1,6 +1,5 @@
 """The bot's LLM is chosen by settings; no network calls."""
 
-from datetime import datetime
 from types import SimpleNamespace
 
 import pytest
@@ -9,9 +8,9 @@ from pipecat.services.google.llm import GoogleLLMService
 from pipecat.services.groq.llm import GroqLLMService
 
 from order_agent.config import Settings, load_settings
-from order_agent.llm_factory import build_bot_llm
-from order_agent.rules import OrderSession
-from order_agent.tools import build_tools
+from order_agent.heads.voice.llm_factory import build_bot_llm
+from order_agent.controller import CallController
+from order_agent.heads.voice.tools import build_tools
 
 NAMES = {"add_item", "remove_item", "set_fees", "set_minimum_order", "confirm_order", "end_call"}
 
@@ -56,13 +55,11 @@ def test_groq_sends_developer_messages_as_user():
     assert build_bot_llm(s, "x").supports_developer_role is False
 
 
-async def test_tool_registration_with_groq_service(brief):
-    session = OrderSession(brief, datetime(2026, 11, 23, 19, 30))
+async def test_tool_registration_with_groq_service(brief, tmp_path):
+    controller = CallController(brief, reports_dir=tmp_path, now=brief.call_time)
+    session = controller.session
 
-    async def on_end(outcome, reason):
-        pass
-
-    context = LLMContext(tools=build_tools(session, on_end))
+    context = LLMContext(tools=build_tools(controller))
     s = Settings(google_api_key="g", groq_api_key="k", llm_provider="groq")
     llm = build_bot_llm(s, "x")
     llm._sync_registered_tool_handlers(context.tools)
@@ -106,7 +103,7 @@ def test_gemini_without_google_key_raises_clear_error(monkeypatch, tmp_path):
 
 
 def test_gemini_eval_factories_need_google_key(monkeypatch, tmp_path):
-    from order_agent.eval_llm import gemini_llm, gemini_native_llm
+    from order_agent.evaltools.eval_llm import gemini_llm, gemini_native_llm
 
     _no_google(monkeypatch, tmp_path)
     for factory in (gemini_llm, gemini_native_llm):
@@ -152,13 +149,11 @@ def test_ollama_works_without_any_keys(monkeypatch):
     build_bot_llm(s, "x")
 
 
-async def test_tool_registration_with_ollama_service(brief):
-    session = OrderSession(brief, datetime(2026, 11, 23, 19, 30))
+async def test_tool_registration_with_ollama_service(brief, tmp_path):
+    controller = CallController(brief, reports_dir=tmp_path, now=brief.call_time)
+    session = controller.session
 
-    async def on_end(outcome, reason):
-        pass
-
-    context = LLMContext(tools=build_tools(session, on_end))
+    context = LLMContext(tools=build_tools(controller))
     llm = build_bot_llm(Settings(llm_provider="ollama"), "x")
     llm._sync_registered_tool_handlers(context.tools)
     assert NAMES <= set(llm._functions)

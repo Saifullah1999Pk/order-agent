@@ -6,7 +6,7 @@ from pipecat.evals.scenario import EvalScenarioFile
 from pipecat.services.ollama.llm import OLLamaLLMService
 from pipecat.evals.services import llm_service_from_config, classifier_from_config
 
-from order_agent.eval_config import apply_eval_configs
+from order_agent.evaltools.eval_config import apply_eval_configs
 
 ROOT = Path(__file__).parent.parent
 SCENARIO = ROOT / "evals" / "scenarios" / "happy_path.yaml"
@@ -55,7 +55,7 @@ def test_run_suite_has_selection_flags():
 def test_ollama_classifier_has_long_timeout_and_thinking_off():
     from pipecat.classifiers.llm.classifier import LLMClassifier
 
-    from order_agent.eval_llm import ollama_classifier
+    from order_agent.evaltools.eval_llm import ollama_classifier
 
     c = ollama_classifier({"model": "qwen3:8b", "timeout_s": 300})
     assert isinstance(c, LLMClassifier)
@@ -91,7 +91,7 @@ def test_default_ollama_persona_keeps_reasoning_effort_none():
 def test_committed_default_judge_is_throttled_groq(monkeypatch):
     from pipecat.services.groq.llm import GroqLLMService
 
-    from order_agent.eval_llm import ThrottledOpenAILLMService
+    from order_agent.evaltools.eval_llm import ThrottledOpenAILLMService
 
     monkeypatch.setenv("GROQ_API_KEY", "groq-test")
     monkeypatch.setenv("GOOGLE_API_KEY", "test-key")

@@ -3,21 +3,42 @@ from types import SimpleNamespace
 
 import pytest
 
-from order_agent.rules import OrderSession
-from order_agent.tools import build_tools
+from order_agent.controller import CallController
+from order_agent.heads.voice.tools import build_tools
+from order_agent.model.rules import OrderSession
 
 NAMES = ["add_item", "set_price", "remove_item", "set_fees", "set_minimum_order", "confirm_order", "end_call"]
 
 
+class RecordingHooks:
+    """Stands in for the voice hooks: hangup records what the report says (the old on_end args)."""
+
+    def __init__(self, harness):
+        self.harness = harness
+
+    async def inject(self, text):
+        pass
+
+    async def hangup(self):
+        report = self.harness.controller.report
+        self.harness.ended.append((report.outcome, report.reason))
+
+
 class Harness:
-    def __init__(self, brief):
-        self.session = OrderSession(brief, brief.call_time)
+    def __init__(self, brief, reports_dir, hooks=None):
+        self.brief, self.reports_dir = brief, reports_dir
+        self.rebuild(hooks)
+
+    def rebuild(self, hooks=None):
+        """A fresh controller (call after patching anything the dispatcher captures at construction)."""
         self.ended: list[tuple[str, str]] = []
         self.properties: list = []
-        self.tools = build_tools(self.session, self._on_end)
-
-    async def _on_end(self, outcome, reason):
-        self.ended.append((outcome, reason))
+        self.controller = CallController(
+            self.brief, reports_dir=self.reports_dir, now=self.brief.call_time,
+            hooks=hooks if hooks is not None else RecordingHooks(self),
+        )
+        self.session = self.controller.session
+        self.tools = build_tools(self.controller)
 
     async def call(self, tool, **arguments):
         schema = next(t for t in self.tools.standard_tools if t.name == tool)
@@ -34,8 +55,8 @@ class Harness:
 
 
 @pytest.fixture
-def h(brief):
-    return Harness(brief)
+def h(brief, tmp_path):
+    return Harness(brief, tmp_path)
 
 
 def test_tools_schema_names(h):
@@ -99,17 +120,21 @@ async def test_handler_survives_session_exception(h, monkeypatch):
     def boom(*a, **k):
         raise RuntimeError("kaboom")
 
-    monkeypatch.setattr(h.session, "add_item", boom)
-    h.tools = build_tools(h.session, h._on_end)
+    monkeypatch.setattr(OrderSession, "add_item", boom)
+    h.rebuild()  # the dispatcher binds session.add_item at construction, so patch first
     result = await h.call("add_item", name="chicken biryani", quantity=1, unit_price_pkr=900)
     assert result["ok"] is False and "kaboom" in result["message"]
 
 
 async def test_end_call_survives_exception_in_on_end(h):
-    async def bad_on_end(outcome, reason):
-        raise RuntimeError("shutdown failed")
+    class BadHooks:
+        async def inject(self, text):
+            pass
 
-    h.tools = build_tools(h.session, bad_on_end)
+        async def hangup(self):
+            raise RuntimeError("shutdown failed")
+
+    h.rebuild(hooks=BadHooks())
     result = await h.call("end_call", outcome="not_ordered", reason="nothing")
     assert result["ok"] is True
 

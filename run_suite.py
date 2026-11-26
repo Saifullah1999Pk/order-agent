@@ -5,7 +5,7 @@
 Uses Pipecat's Python API (EvalScenarioFile / EvalSession) rather than the `pipecat eval run` CLI:
 the result object carries the judge verdict, harness errors and per-metric judge lines (needed to
 spot quota errors hidden in a PASS/FAIL run) and the conversation, with no output parsing.
-All decisions live in order_agent/suite.py; this file is orchestration only.
+All decisions live in order_agent/evaltools/suite.py; this file is orchestration only.
 
 --audio runs the scenarios in audio mode (the simulated restaurant is spoken and the bot's speech is
 transcribed) and also records the conversation audio (EvalSessionParams.record_path).
@@ -27,10 +27,10 @@ from pathlib import Path
 from dotenv import load_dotenv
 from loguru import logger
 
-from order_agent.eval_config import apply_eval_configs, load_judge_config, load_simulator_config
-from order_agent.preflight import ollama_up, preflight_message
-from order_agent.report import CallReport
-from order_agent.suite import (
+from order_agent.evaltools.eval_config import apply_eval_configs, load_judge_config, load_simulator_config
+from order_agent.evaltools.preflight import ollama_up, preflight_message
+from order_agent.model.report import CallReport
+from order_agent.evaltools.suite import (
     Expected,
     ScenarioResult,
     downgrade_for_bot_quota,

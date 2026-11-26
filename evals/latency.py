@@ -18,7 +18,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-from order_agent.suite import strip_ansi
+from order_agent.evaltools.suite import strip_ansi
 TS = re.compile(r"^(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\.\d+)")
 STAGES = {
     "LLM TTFB": re.compile(r"(?:Google|Groq)LLMService#\d+ TTFB: ([\d.]+)s"),

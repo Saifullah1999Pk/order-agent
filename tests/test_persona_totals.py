@@ -18,7 +18,7 @@ from pathlib import Path
 
 import yaml
 
-from order_agent.suite import load_expected
+from order_agent.evaltools.suite import load_expected
 
 SCENARIO_DIR = Path(__file__).parent.parent / "evals" / "scenarios"
 MINIMUM_FOOD_PKR = {"minimum_reachable": Decimal(2200), "minimum_unreachable": Decimal(3000)}

@@ -7,6 +7,8 @@ dependencies = [
     "pipecat-ai[google,openai,webrtc,runner,silero,whisper,kokoro,cli]==1.17.0",
     "pyyaml",
     "python-dotenv",
+    "fastapi==0.165.0",
+    "uvicorn==0.54.0",
 ]
 
 [dependency-groups]
@@ -22,3 +24,4 @@ packages = ["order_agent"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
+pythonpath = ["."]

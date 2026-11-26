@@ -1,8 +1,8 @@
 from datetime import datetime
 from decimal import Decimal
 
-from order_agent.rules import OrderSession
-from order_agent.brief import WantedLine
+from order_agent.model.rules import OrderSession
+from order_agent.model.brief import WantedLine
 
 NOW = datetime(2026, 11, 23, 19, 30)
 

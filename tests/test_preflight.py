@@ -2,8 +2,8 @@
 
 import pytest
 
-from order_agent.eval_config import load_judge_config, load_simulator_config
-from order_agent.preflight import check_ollama, ollama_bases, preflight_message
+from order_agent.evaltools.eval_config import load_judge_config, load_simulator_config
+from order_agent.evaltools.preflight import check_ollama, ollama_bases, preflight_message
 
 OLLAMA_PERSONA = {"service": "ollama", "model": "qwen3:8b"}
 GROQ_PERSONA = {"factory": "order_agent.eval_llm.groq_llm", "model": "openai/gpt-oss-120b"}

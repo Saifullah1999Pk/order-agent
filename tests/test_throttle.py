@@ -2,7 +2,7 @@ import asyncio
 
 import pytest
 
-from order_agent.throttle import Throttle, is_rate_limit_error
+from order_agent.evaltools.throttle import Throttle, is_rate_limit_error
 
 
 class FakeClock:

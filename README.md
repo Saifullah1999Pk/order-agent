@@ -17,7 +17,7 @@ Built with [Pipecat](https://github.com/pipecat-ai/pipecat) as an internship pro
  you / restaurant ◀──voice── Kokoro (local) ◀──reply── LLM ◀──allowed / refused──┘
 ```
 
-**The LLM talks; plain code decides what is allowed.** The agent can only change the order through tools: `add_item`, `set_price`, `remove_item`, `set_fees`, `set_minimum_order`, `confirm_order` and `end_call`. Every tool call goes through `order_agent/rules.py`, which enforces the brief:
+**The LLM talks; plain code decides what is allowed.** The agent can only change the order through tools: `add_item`, `set_price`, `remove_item`, `set_fees`, `set_minimum_order`, `confirm_order` and `end_call`. Every tool call goes through `order_agent/model/rules.py`, which enforces the brief:
 
 - **Budget:** the total, including fees, never goes over.
 - **Allow-list:** only the wanted items or their listed substitutes can be ordered.
@@ -47,7 +47,7 @@ Each test call involves three roles:
 |---|---|---|
 | The agent (bot) | Gemini `gemini-3.5-flash-lite` | Cloud, free tier |
 | Simulated restaurant staff | `qwen3:8b` via Ollama | Your machine (GPU) |
-| Judge (scores the call) | Groq `openai/gpt-oss-20b`, throttled (one call at a time, 20 s apart) | Cloud, free tier |
+| Judge (scores the call) | Groq `openai/gpt-oss-20b`, throttled (one call at a time, 30 s apart) | Cloud, free tier |
 
 **Code checks override the judge.** After every call, deterministic checks on the agent's report decide the hard rules: outcome, budget, forbidden items, required items and minimum order. Of the four judge setups we tested, none agreed with these checks more than about 56% of the time. The judge is trusted only for soft qualities such as politeness. Each scenario gets up to 3 attempts (pass@3), and every attempt is recorded.
 
@@ -59,7 +59,7 @@ Each test call involves three roles:
 | Since then | Fixed the simulated restaurant hanging up early and the agent's minimum-order handling. In the 2026-11-25 hybrid run ([evidence](evals/confirmation/hybrid-2026-11-25/README.md)), `minimum_reachable` and `staff_asks_details` passed on their first attempt, judged by the throttled Gemini judge (`evals/judge-gemini-throttled.yaml`) because the default Groq judge timed out on Groq's per-minute token cap. In the same run `happy_path` failed on the judge's conduct score (correct order, no rule violations) and `terse_staff` did not pass (a bot bug: it rewrote its order to match a wrong total the restaurant insisted on). |
 | Latency (end of speech to bot speaking) | Median 2.73 s, P90 3.64 s (n=28, bot on Groq, audio runs) |
 | Local LLM (Ollama, `qwen3:8b`) | Good as the simulated restaurant (2 wrong-total slips in 7 calls, never hung up early). Not reliable as the bot (it invented prices) or the judge. |
-| Unit tests | 285 passing |
+| Unit tests | 674 passing |
 
 Full write-up, with every number linked to its evidence: [docs/results-v1.md](docs/results-v1.md).
 
@@ -171,22 +171,111 @@ A fully local setup, with the bot, restaurant and judge all on Ollama, is descri
 uv run pytest
 ```
 
+## Architecture
+
+The code is split into layers so the rules and the conversation logic can be used, and tested, without any voice framework. One call can be driven by a phone-style voice pipeline or, just as well, by plain HTTP requests.
+
+```
+   heads (talk to the outside world)
+   +-----------------------------+   +-----------------------------+
+   | voice head (Pipecat)        |   | HTTP head (FastAPI, local)  |
+   | order_agent/heads/voice     |   | order_agent/heads/http_api  |
+   +--------------+--------------+   +--------------+--------------+
+                  \                               /
+                   v                             v
+              +--------------------------------------+
+              | Controller: order_agent/controller   |   one call, no framework
+              | CallController, tool dispatch, prompt|
+              +------------------+-------------------+
+                                 v
+              +--------------------------------------+
+              | Model: order_agent/model             |   pure rules and data
+              | brief, rules engine, matching, report|
+              +--------------------------------------+
+
+   order_agent/evaltools: eval suite tooling, used by run_suite.py (sits beside the layers)
+```
+
+- **Model** decides what is allowed (budget, allow-list, forbidden foods, deadline). It knows nothing about voice, web or LLMs.
+- **Controller** runs one call: it holds the order state, turns a tool call into a model decision, writes the report, and builds the agent's instructions. It has no web or voice framework either.
+- **Heads** connect a channel to the Controller. The voice head listens and speaks through Pipecat. The HTTP head lets a script play the agent by sending requests.
+
+### Module map
+
+| Module | Layer | What it does |
+|---|---|---|
+| `order_agent/model/brief.py` | Model | The order brief: what to order and the hard rules |
+| `order_agent/model/matching.py` | Model | Item-name matching (case, word order, plurals) |
+| `order_agent/model/rules.py` | Model | The rules engine; every tool call is checked here |
+| `order_agent/model/report.py` | Model | The per-call report (JSON and plain-English summary) |
+| `order_agent/controller/session.py` | Controller | `CallController`: one conversation, independent of the channel |
+| `order_agent/controller/tools.py` | Controller | Framework-free tool dispatch over the rules engine |
+| `order_agent/controller/toolspecs.py` | Controller | The tool definitions the LLM sees |
+| `order_agent/controller/prompt.py` | Controller | The agent's instructions, built from the brief |
+| `order_agent/controller/nudge.py` | Controller | When to nudge the agent after an empty reply |
+| `order_agent/heads/voice/pipeline.py` | Voice head | Pipecat pipeline: speech to text, LLM, text to speech |
+| `order_agent/heads/voice/bridge.py` | Voice head | Maps each Pipecat event to one Controller call |
+| `order_agent/heads/voice/hooks.py` | Voice head | The two things only the pipeline can do (`inject`: speak a developer message and run the LLM, used for the opening and nudges; `hangup`) |
+| `order_agent/heads/voice/tools.py` | Voice head | Pipecat tool schemas built from the Controller's specs |
+| `order_agent/heads/voice/llm_factory.py` | Voice head | Builds the agent's LLM (Gemini, Groq or Ollama) |
+| `order_agent/heads/voice/probe.py` | Voice head | Gemini availability probe run before the call |
+| `order_agent/heads/http_api/app.py` | HTTP head | The FastAPI app: sessions, actions, transcript, report |
+| `order_agent/heads/http_api/schemas.py` | HTTP head | Request and response models |
+| `order_agent/heads/http_api/store.py` | HTTP head | In-memory sessions, one Controller each |
+| `order_agent/heads/http_api/__main__.py` | HTTP head | Starts the server locally |
+| `order_agent/evaltools/suite.py` | Eval tools | Deterministic report checks, error classification, summary |
+| `order_agent/evaltools/throttle.py` | Eval tools | Judge rate limiting and 429 retries |
+| `order_agent/evaltools/eval_llm.py` | Eval tools | LLM factories for the simulated restaurant and judge |
+| `order_agent/evaltools/eval_config.py` | Eval tools | Swap a scenario's restaurant or judge config |
+| `order_agent/evaltools/preflight.py` | Eval tools | Checks before a run (is Ollama up) |
+
+Outside the layers: `order_agent/config.py` (settings and API keys, used by the heads and eval tools, never by the Model or Controller) and `order_agent/eval_llm.py` (a re-export shim so the `evals/*.yaml` files keep working). `bot.py` and `run_suite.py` are entry points that only wire things together.
+
+### The dependency rule
+
+Dependencies point inward only: `heads -> controller -> model`. An inner layer never imports an outer one. The two heads never import each other, and no head imports the rules engine directly; it reaches it through the Controller.
+
+### The boundary test
+
+`tests/test_architecture.py` reads every file's imports (with Python's `ast` module) and fails if a layer imports something it should not, for example `pipecat` inside the Model. It also fails if a new module is not placed in a layer. It runs with the normal unit tests. The full rules are in [specs/001-headless-mvc/contracts/boundaries.md](specs/001-headless-mvc/contracts/boundaries.md).
+
+### Run the HTTP head
+
+No voice, no API keys, no LLM: you play the agent by sending requests. It listens on `127.0.0.1:8000` only.
+
+```bash
+uv run python -m order_agent.heads.http_api
+```
+
+Start it from the repo root: `brief_name` loads `briefs/<name>.yaml` relative to the current directory.
+
+The endpoints are described in [specs/001-headless-mvc/contracts/http-api.md](specs/001-headless-mvc/contracts/http-api.md).
+
+### Add a new head
+
+1. Create `order_agent/heads/<name>/`.
+2. Build a `CallController(brief, reports_dir=..., hooks=<your CallHooks or None>)`.
+3. Translate your channel's events into the Controller calls listed in [specs/001-headless-mvc/contracts/controller-api.md](specs/001-headless-mvc/contracts/controller-api.md).
+4. Add the head to `LAYERS` in `tests/architecture.py`, with the third-party packages it may use. `tests/test_architecture.py` then checks it.
+5. Add its modules to the module map above (a test fails if one is missing).
+
 ## Project layout
 
 ```
-bot.py                 the voice agent (Pipecat pipeline, transports, call lifecycle)
-run_suite.py           eval runner (pass@3, report checks, quota handling, --rescore)
+bot.py                 entry point: starts the voice agent (wiring only)
+run_suite.py           entry point: eval runner (pass@3, report checks, quota handling, --rescore)
 order_agent/
-  rules.py             the rules engine (all hard rules live here)
-  tools.py             the agent's tools, each delegating to the rules engine
-  prompt.py            the agent's instructions, built from the order brief
-  report.py            per-call report (JSON + plain-English summary)
-  call.py              call state, end-of-call and nudge handling
-  llm_factory.py       Gemini / Groq / Ollama for the agent
-  eval_llm.py          LLM factories for the simulated restaurant and judge
-  suite.py, throttle.py  eval checks, error classification, judge rate limiting
+  model/               pure rules and data: brief, matching, rules engine, report
+  controller/          one call, no framework: CallController, tool dispatch, prompt, nudges
+  heads/voice/         Pipecat voice head: pipeline, event bridge, LLM factory
+  heads/http_api/      FastAPI head for local use: app, schemas, in-memory sessions
+  evaltools/           eval suite tooling: checks, throttle, preflight, eval LLM factories
+  config.py            settings and API keys
+  eval_llm.py          re-export shim so evals/*.yaml factory paths keep working
+  (every module is listed in the Architecture section above)
 briefs/                order briefs
 evals/                 scenarios, expected outcomes, model configs, committed evidence
+specs/                 feature spec, plan, tasks and contracts (specs/001-headless-mvc/); .specify/ holds the spec tooling
 docs/                  design spec, implementation plan, results write-up
 spike/                 early go/no-go experiment (kept as evidence)
 tests/                 unit tests

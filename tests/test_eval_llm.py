@@ -1,6 +1,6 @@
 from pipecat.services.openai.base_llm import BaseOpenAILLMService
 
-from order_agent.eval_llm import gemini_llm
+from order_agent.evaltools.eval_llm import gemini_llm
 
 
 def test_gemini_llm_factory(monkeypatch):
@@ -28,7 +28,7 @@ def test_gemini_llm_reads_key_from_dotenv_file(monkeypatch, tmp_path):
 def test_gemini_native_llm_factory(monkeypatch):
     from pipecat.services.google.llm import GoogleLLMService
 
-    from order_agent.eval_llm import gemini_native_llm
+    from order_agent.evaltools.eval_llm import gemini_native_llm
 
     monkeypatch.setenv("GOOGLE_API_KEY", "test-key")
     llm = gemini_native_llm({"model": "gemini-2.5-flash"})
@@ -38,7 +38,7 @@ def test_gemini_native_llm_factory(monkeypatch):
 
 
 def test_groq_llm_factory(monkeypatch):
-    from order_agent.eval_llm import groq_llm
+    from order_agent.evaltools.eval_llm import groq_llm
 
     monkeypatch.setenv("GOOGLE_API_KEY", "test-key")
     monkeypatch.setenv("GROQ_API_KEY", "groq-test")
@@ -52,7 +52,7 @@ def test_groq_llm_requires_key(monkeypatch):
     import pytest
 
     import order_agent.config as config
-    from order_agent.eval_llm import groq_llm
+    from order_agent.evaltools.eval_llm import groq_llm
 
     monkeypatch.setenv("GOOGLE_API_KEY", "test-key")
     monkeypatch.delenv("GROQ_API_KEY", raising=False)
@@ -62,7 +62,7 @@ def test_groq_llm_requires_key(monkeypatch):
 
 
 def test_groq_llm_passes_reasoning_effort(monkeypatch):
-    from order_agent.eval_llm import groq_llm
+    from order_agent.evaltools.eval_llm import groq_llm
 
     monkeypatch.setenv("GOOGLE_API_KEY", "test-key")
     monkeypatch.setenv("GROQ_API_KEY", "groq-test")
@@ -71,14 +71,14 @@ def test_groq_llm_passes_reasoning_effort(monkeypatch):
 
 
 def test_gemini_llm_plain_without_throttle_keys(monkeypatch):
-    from order_agent.eval_llm import ThrottledOpenAILLMService
+    from order_agent.evaltools.eval_llm import ThrottledOpenAILLMService
 
     monkeypatch.setenv("GOOGLE_API_KEY", "test-key")
     assert not isinstance(gemini_llm({"model": "m"}), ThrottledOpenAILLMService)
 
 
 def test_gemini_llm_throttled_when_configured_and_limiter_shared(monkeypatch):
-    from order_agent.eval_llm import ThrottledOpenAILLMService
+    from order_agent.evaltools.eval_llm import ThrottledOpenAILLMService
 
     monkeypatch.setenv("GOOGLE_API_KEY", "test-key")
     cfg = {"model": "m", "max_concurrency": 1, "min_interval_s": 4.5, "max_retries": 3}
@@ -90,8 +90,8 @@ def test_gemini_llm_throttled_when_configured_and_limiter_shared(monkeypatch):
 async def test_throttled_service_wraps_run_inference(monkeypatch):
     from pipecat.services.openai.llm import OpenAILLMService
 
-    from order_agent.eval_llm import ThrottledOpenAILLMService
-    from order_agent.throttle import Throttle
+    from order_agent.evaltools.eval_llm import ThrottledOpenAILLMService
+    from order_agent.evaltools.throttle import Throttle
 
     calls = []
 
@@ -109,7 +109,7 @@ async def test_throttled_service_wraps_run_inference(monkeypatch):
 
 
 def test_gemini_classifier_factory_sets_timeout(monkeypatch):
-    from order_agent.eval_llm import gemini_classifier
+    from order_agent.evaltools.eval_llm import gemini_classifier
 
     monkeypatch.setenv("GOOGLE_API_KEY", "test-key")
     c = gemini_classifier({"model": "m", "min_interval_s": 4.5, "timeout_s": 90})
@@ -130,7 +130,7 @@ def _groq_env(monkeypatch):
 
 
 def test_groq_llm_plain_without_throttle_keys(monkeypatch):
-    from order_agent.eval_llm import ThrottledOpenAILLMService, groq_llm
+    from order_agent.evaltools.eval_llm import ThrottledOpenAILLMService, groq_llm
 
     _groq_env(monkeypatch)
     assert not isinstance(groq_llm({"model": "openai/gpt-oss-20b"}), ThrottledOpenAILLMService)
@@ -139,7 +139,7 @@ def test_groq_llm_plain_without_throttle_keys(monkeypatch):
 def test_groq_llm_throttled_keeps_groq_settings(monkeypatch):
     from pipecat.services.groq.llm import GroqLLMService
 
-    from order_agent.eval_llm import ThrottledOpenAILLMService, groq_llm
+    from order_agent.evaltools.eval_llm import ThrottledOpenAILLMService, groq_llm
 
     _groq_env(monkeypatch)
     llm = groq_llm({"model": "openai/gpt-oss-20b", "reasoning_effort": "low", "min_interval_s": 20})
@@ -151,14 +151,14 @@ def test_groq_llm_throttled_keeps_groq_settings(monkeypatch):
 
 
 def test_groq_throttled_disables_sdk_retries(monkeypatch):
-    from order_agent.eval_llm import groq_llm
+    from order_agent.evaltools.eval_llm import groq_llm
 
     _groq_env(monkeypatch)
     assert groq_llm({"model": "m", "min_interval_s": 20})._client.max_retries == 0
 
 
 def test_groq_classifier_sets_timeout_and_default(monkeypatch):
-    from order_agent.eval_llm import ThrottledOpenAILLMService, groq_classifier
+    from order_agent.evaltools.eval_llm import ThrottledOpenAILLMService, groq_classifier
 
     _groq_env(monkeypatch)
     c = groq_classifier({"model": "m", "min_interval_s": 20, "timeout_s": 300})
@@ -168,7 +168,7 @@ def test_groq_classifier_sets_timeout_and_default(monkeypatch):
 
 
 def test_groq_eval_and_explainer_share_limiter(monkeypatch):
-    from order_agent.eval_llm import groq_classifier, groq_llm
+    from order_agent.evaltools.eval_llm import groq_classifier, groq_llm
 
     _groq_env(monkeypatch)
     cfg = {"model": "openai/gpt-oss-20b", "reasoning_effort": "low", "max_concurrency": 1,
@@ -179,8 +179,8 @@ def test_groq_eval_and_explainer_share_limiter(monkeypatch):
 async def test_groq_rate_limit_text_is_retried(monkeypatch):
     from pipecat.services.openai.llm import OpenAILLMService
 
-    from order_agent.eval_llm import groq_llm
-    from order_agent.throttle import Throttle, is_rate_limit_error
+    from order_agent.evaltools.eval_llm import groq_llm
+    from order_agent.evaltools.throttle import Throttle, is_rate_limit_error
 
     _groq_env(monkeypatch)
     msg = ("Error code: 400 - {'error': {'message': 'Rate limit reached for model "

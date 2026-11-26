@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 
-from order_agent.rules import OrderSession
+from order_agent.model.rules import OrderSession
 
 NOW = datetime(2026, 11, 23, 19, 30)
 D = Decimal

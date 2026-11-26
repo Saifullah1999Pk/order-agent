@@ -4,8 +4,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from order_agent.report import CallReport
-from order_agent.suite import (
+from order_agent.model.report import CallReport
+from order_agent.evaltools.suite import (
     Expected,
     ScenarioResult,
     check_report,
@@ -377,7 +377,7 @@ def test_confirmed_order_with_429_stays_fail():
 
 
 def test_strip_ansi():
-    from order_agent.suite import strip_ansi
+    from order_agent.evaltools.suite import strip_ansi
 
     assert strip_ansi("[31mhi[0m") == "hi"
 
@@ -385,7 +385,7 @@ def test_strip_ansi():
 def test_rescore_attempt_downgrades_quota_starved_dropped_call(tmp_path):
     import json
 
-    from order_agent.suite import rescore_attempt
+    from order_agent.evaltools.suite import rescore_attempt
 
     exp = load_expected("evals/expected.yaml")["happy_path"]
     d = tmp_path / "attempt-1"
@@ -424,7 +424,7 @@ def _quota_attempt_dir(tmp_path, report, judge_error=True):
 
 
 def test_rescore_harness_429_with_budget_violation_is_fail(tmp_path):
-    from order_agent.suite import rescore_attempt
+    from order_agent.evaltools.suite import rescore_attempt
 
     exp = load_expected("evals/expected.yaml")["happy_path"]
     d = _quota_attempt_dir(tmp_path, make_report(total="2700", quoted=None))
@@ -432,7 +432,7 @@ def test_rescore_harness_429_with_budget_violation_is_fail(tmp_path):
 
 
 def test_rescore_harness_429_with_only_drop_consequences_is_quota_error(tmp_path):
-    from order_agent.suite import rescore_attempt
+    from order_agent.evaltools.suite import rescore_attempt
 
     exp = load_expected("evals/expected.yaml")["happy_path"]
     d = _quota_attempt_dir(tmp_path, make_report(outcome="call_dropped", total="0", quoted=None, items=[]))
@@ -440,7 +440,7 @@ def test_rescore_harness_429_with_only_drop_consequences_is_quota_error(tmp_path
 
 
 def test_harness_status_with_report_checks_violations_first():
-    from order_agent.suite import harness_status_with_report
+    from order_agent.evaltools.suite import harness_status_with_report
 
     exp = load_expected("evals/expected.yaml")["happy_path"]
     assert harness_status_with_report("quota_error", make_report(total="2700", quoted=None), exp) == "fail"
@@ -545,7 +545,7 @@ def _wrong_total_report(quoted="1250", cart="2100", events=None, outcome="not_or
 
 
 def _settle(report, conduct_passed=True, totals=HP_TOTALS, **over):
-    from order_agent.suite import settle_status
+    from order_agent.evaltools.suite import settle_status
 
     exp = priced(**over)
     checked = check_report_full(report, exp)
@@ -612,7 +612,7 @@ def test_wrong_quote_with_budget_violation_stays_fail():
 
 
 def test_confirmed_order_uses_normal_logic():
-    from order_agent.suite import settle_status
+    from order_agent.evaltools.suite import settle_status
 
     exp = priced()
     ok = make_report(total="1950", quoted="1950", tool_events=[_refused_confirm("1250", "1950")])
@@ -627,7 +627,7 @@ def test_refusal_that_is_not_a_total_mismatch_is_not_restaurant_error():
 
 
 def test_passing_status_is_never_changed():
-    from order_agent.suite import settle_status
+    from order_agent.evaltools.suite import settle_status
 
     exp = priced(outcome="not_ordered", must_include=[])
     r = _wrong_total_report()
@@ -636,7 +636,7 @@ def test_passing_status_is_never_changed():
 
 
 def test_persona_totals_reads_the_committed_totals_line():
-    from order_agent.suite import persona_totals
+    from order_agent.evaltools.suite import persona_totals
 
     assert {Decimal(x) for x in ("1950", "2100", "2250", "2400")} <= persona_totals("happy_path")
     assert Decimal("1250") not in persona_totals("happy_path")
@@ -661,7 +661,7 @@ def test_summary_shows_restaurant_error_distinctly():
 def _rescore(tmp_path, report, judge="goal: not met: no order\nmetric conduct: 1.0 passed=True\n"):
     import json
 
-    from order_agent.suite import rescore_attempt
+    from order_agent.evaltools.suite import rescore_attempt
 
     exp = load_expected("evals/expected.yaml")["happy_path"]
     d = tmp_path / "attempt-1"
@@ -747,13 +747,13 @@ def test_unpriced_cart_is_never_restaurant_error():
 
 
 def test_menu_total_of_unpriced_cart_is_none():
-    from order_agent.suite import _menu_total
+    from order_agent.evaltools.suite import _menu_total
 
     assert _menu_total(_unpriced_report(), priced()) is None
 
 
 def test_missing_conduct_metric_is_not_passed():
-    from order_agent.suite import conduct_passed
+    from order_agent.evaltools.suite import conduct_passed
 
     assert conduct_passed([]) is False
     assert conduct_passed([("goal", True)]) is False

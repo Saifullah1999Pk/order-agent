@@ -2,7 +2,7 @@ import asyncio, json, sys, time
 from pathlib import Path
 from pipecat.evals.scenario import EvalScenarioFile
 from pipecat.evals.simulation_judge import EvalSimulationJudge
-from order_agent.eval_config import apply_eval_configs
+from order_agent.evaltools.eval_config import apply_eval_configs
 
 judge_cfg, listfile, out = sys.argv[1:4]
 done = set()
