@@ -74,3 +74,22 @@ Before confirming, the bot reads its items and quantities back. If the restauran
 - The LLM reports the restaurant's read-back honestly. Code cannot hear the call. This raises the bar; it is not proof. The prompt asks for the read-back, and the judge's conduct metric still checks the conversation.
 - Judge-model reliability is a separate investigation (four of the run's eight judge-failed attempts were judge errors). It is out of scope here.
 - The rare stray "data" token at the start of a Gemini reply (once in about 20 calls) is out of scope and recorded as a follow-up.
+
+## Addendum (2026-11-26): the cart drifting from the conversation
+
+A live re-run of `minimum_reachable` after FR-001 to FR-007 (`evals/results/20261126-183358`) found the following:
+
+- No total anchoring occurred, and the read-back check fired as intended.
+- It exposed a deeper bug. The bot's cart held more raita than it had asked the restaurant for, and the bot then "corrected" a restaurant that was right.
+  - In attempt 2 the bot said "add one more raita", but recorded `add_item raita 1` twice in the same LLM turn.
+  - In attempt 3 it recorded raita silently, and twice in one turn.
+- The judge rightly failed the correcting turn.
+- The root cause is in code. The minimum-order hint says "add N more X … The total would then be Y PKR". The bot adds immediately, before the restaurant agrees, and is handed a projected total it could repeat.
+
+### Additional requirements
+
+- **FR-008**: The minimum-order hint MUST tell the bot to ask the restaurant to add the suggested quantity, and to record it with `add_item` only after the restaurant agrees. It MUST NOT state a projected total. The suggested item, quantity and its cost-fit logic are unchanged.
+- **FR-009**: The Controller MUST refuse an `add_item` call identical in item and quantity to one already accepted earlier in the same LLM turn. The refusal reads: "Refused: you already added <n> x <item> in this turn. Add more only if the restaurant agreed to more, in your next turn." Turns are those the head reports through `llm_turn_started`. If the head never reports turns (the HTTP head), the guard is inactive.
+- **SC-004**: A live re-run of `minimum_reachable` has no attempt where the cart holds an item quantity the bot never asked the restaurant for. This needs the user's go-ahead.
+
+Tests that pin the old hint text change with a stated reason.
