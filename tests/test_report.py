@@ -2,8 +2,8 @@ import json
 from datetime import datetime
 from decimal import Decimal
 
-from order_agent.report import CallReport, TranscriptLine, build_report, summarise, write_report
-from order_agent.rules import OrderSession
+from order_agent.model.report import CallReport, TranscriptLine, build_report, summarise, write_report
+from order_agent.model.rules import OrderSession
 
 NOW = datetime(2026, 11, 23, 19, 30)
 END = datetime(2026, 11, 23, 19, 36)

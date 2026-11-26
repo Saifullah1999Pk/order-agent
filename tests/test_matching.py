@@ -1,4 +1,4 @@
-from order_agent.matching import match_line, normalise
+from order_agent.model.matching import match_line, normalise
 
 
 def test_normalise_strips_plurals_and_punctuation():

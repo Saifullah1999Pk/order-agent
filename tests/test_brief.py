@@ -6,7 +6,7 @@ import pytest
 import yaml
 from pydantic import ValidationError
 
-from order_agent.brief import OrderBrief, load_brief
+from order_agent.model.brief import OrderBrief, load_brief
 
 
 def _data() -> dict:

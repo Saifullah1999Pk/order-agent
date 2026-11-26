@@ -1,4 +1,4 @@
-from order_agent.prompt import build_system_prompt
+from order_agent.controller.prompt import build_system_prompt
 
 
 def test_prompt_contains_rules(brief):
@@ -74,7 +74,7 @@ def test_prompt_refusal_guidance_matches_rules(brief):
 
 
 def test_prompt_follows_named_minimum_shortfall(brief):
-    from order_agent.prompt import build_system_prompt
+    from order_agent.controller.prompt import build_system_prompt
 
     text = build_system_prompt(brief)
     assert "add exactly that" in text

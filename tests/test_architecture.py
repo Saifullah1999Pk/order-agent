@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from architecture import LAYERS, imported_modules, violations
+from architecture import LAYERS, _under, imported_modules, violations
 
 ROOT = Path(__file__).resolve().parent.parent / "order_agent"
 
@@ -122,10 +122,7 @@ def test_checker_accepts_clean_voice_head_snippet():
 
 
 def test_legacy_tools_module_gone():
-    import order_agent.call as call
-
     assert not (ROOT / "tools.py").exists()
-    assert not hasattr(call, "make_on_end")
 
 
 @pytest.mark.parametrize(
@@ -142,3 +139,23 @@ def test_checker_catches_forbidden_evaltools_imports(src):
 def test_checker_accepts_clean_evaltools_snippet():
     src = "import pipecat\nimport yaml\nfrom order_agent.model.report import CallReport\n"
     assert violations(src, "evaltools", package="order_agent.evaltools") == []
+
+
+REPO = ROOT.parent
+LEGACY_SHIMS = ("brief", "matching", "rules", "report", "prompt", "call", "llm_factory")
+
+
+def test_no_imports_of_legacy_shims():
+    """T051: nothing imports order_agent.{brief,matching,rules,report,prompt,call,llm_factory}."""
+    shim_paths = {ROOT / f"{name}.py" for name in LEGACY_SHIMS}
+    banned = {f"order_agent.{name}" for name in LEGACY_SHIMS}
+    sources = [*REPO.glob("*.py"), *ROOT.rglob("*.py"), *(REPO / "tests").glob("*.py"), *(REPO / "evals").rglob("*.py")]
+    offenders = []
+    for path in sorted(set(sources)):
+        if path in shim_paths or path == Path(__file__):
+            continue
+        package = ".".join(("order_agent",) + path.relative_to(ROOT).parts[:-1]) if ROOT in path.parents else ""
+        for name in imported_modules(path.read_text(encoding="utf-8"), package):
+            if any(_under(name, b) for b in banned):
+                offenders.append(f"{path.relative_to(REPO)}: {name}")
+    assert offenders == []

@@ -8,7 +8,7 @@ from pipecat.services.google.llm import GoogleLLMService
 from pipecat.services.groq.llm import GroqLLMService
 
 from order_agent.config import Settings, load_settings
-from order_agent.llm_factory import build_bot_llm
+from order_agent.heads.voice.llm_factory import build_bot_llm
 from order_agent.controller import CallController
 from order_agent.heads.voice.tools import build_tools
 

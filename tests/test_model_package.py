@@ -1,41 +1,28 @@
-"""The Model modules live in order_agent.model; old flat paths are compat shims."""
+"""The Model modules live in order_agent.model (the old flat paths are gone, T052)."""
 
 
 def test_brief_lives_in_model():
     from order_agent.model.brief import OrderBrief, WantedLine, load_brief
-    import order_agent.brief as old
 
-    assert old.OrderBrief is OrderBrief
-    assert old.WantedLine is WantedLine
-    assert old.load_brief is load_brief
+    assert OrderBrief and WantedLine and callable(load_brief)
 
 
 def test_matching_lives_in_model():
     from order_agent.model.matching import match_line, normalise
-    import order_agent.matching as old
 
-    assert old.normalise is normalise
-    assert old.match_line is match_line
+    assert callable(normalise) and callable(match_line)
 
 
 def test_rules_live_in_model():
     from order_agent.model.rules import CartItem, OrderSession, ToolEvent, ToolResult
-    import order_agent.rules as old
 
-    assert old.OrderSession is OrderSession
-    assert old.ToolResult is ToolResult
-    assert old.ToolEvent is ToolEvent
-    assert old.CartItem is CartItem
+    assert CartItem and OrderSession and ToolEvent and ToolResult
 
 
 def test_report_lives_in_model():
     from order_agent.model.report import (
         CallReport, TranscriptLine, build_report, summarise, write_report,
     )
-    import order_agent.report as old
 
-    assert old.CallReport is CallReport
-    assert old.TranscriptLine is TranscriptLine
-    assert old.build_report is build_report
-    assert old.summarise is summarise
-    assert old.write_report is write_report
+    assert CallReport and TranscriptLine
+    assert callable(build_report) and callable(summarise) and callable(write_report)

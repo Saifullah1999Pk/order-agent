@@ -3,7 +3,7 @@ from decimal import Decimal
 
 import pytest
 
-from order_agent.brief import OrderBrief, WantedLine
+from order_agent.model.brief import OrderBrief, WantedLine
 
 
 def _make_brief(**overrides) -> OrderBrief:

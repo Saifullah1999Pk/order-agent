@@ -5,7 +5,7 @@ import pytest
 
 from order_agent.controller import CallController
 from order_agent.heads.voice.tools import build_tools
-from order_agent.rules import OrderSession
+from order_agent.model.rules import OrderSession
 
 NAMES = ["add_item", "set_price", "remove_item", "set_fees", "set_minimum_order", "confirm_order", "end_call"]
 
