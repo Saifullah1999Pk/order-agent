@@ -24,7 +24,7 @@ Start a call from a brief. Body (exactly one of the two brief fields):
 { "session_id": "3f9c...", "instructions": "You are Ali Raza, ...", "opening_text": "Nobody has spoken yet. ...",
   "tools": [ {"name": "add_item", "description": "...", "properties": {...}, "required": ["name","quantity"]} ] }
 ```
-Errors: `422` invalid brief or both/neither brief field or unknown `brief_name`; `429` too many live sessions.
+Errors: `422` invalid brief or both/neither brief field or unknown `brief_name`; `429` too many sessions: the cap (default 100) counts every stored session, ended ones included, until it is removed with `DELETE`.
 
 ### `GET /sessions/{id}`
 `200 {"session_id", "state": "live|ended", "order_state": "open|confirmed|ended", "transcript_lines": N,
@@ -52,9 +52,9 @@ Idempotent: if the call already ended, returns the existing report. `404` unknow
 `200`:
 ```json
 { "report": { ...CallReport JSON, same fields as a voice-call report... },
-  "summary": "The call ended with the order placed (ordered): ...", "report_path": "reports/20261123-193000.json" }
+  "summary": "The call ended with the order placed (ordered): ...", "report_path": "3f9c.../20261123-193000.json" }
 ```
-`report_path` is relative to the server's reports dir (never an absolute local path). `409 report_not_ready` while the call is live;
+`report_path` is `<session_id>/<stamp>.json`, relative to the server's reports dir (never an absolute local path). Each HTTP session writes into its own subfolder so two concurrent sessions never overwrite each other's report within the same second. `409 report_not_ready` while the call is live;
 `404` unknown.
 
 ### `DELETE /sessions/{id}`
@@ -67,6 +67,10 @@ a report is never lost. `404` unknown.
 ```
 Codes: `session_not_found` (404), `session_closed` (409), `report_not_ready` (409), `too_many_sessions`
 (429), `validation_error` (422; FastAPI's default 422 body is mapped to this shape).
+
+## Non-goals
+- Sessions live in process memory only and never expire: an ended session stays (and counts toward the
+  429 cap) until a client calls `DELETE`; a server restart loses them all (reports already written stay on disk).
 
 ## Isolation and concurrency
 - One `CallController` (own `OrderSession`, transcript, lock) per session id; no module-level state.

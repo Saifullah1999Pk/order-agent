@@ -10,7 +10,7 @@ Each rule lists forbidden import prefixes (matched on dotted module names, so `p
 | `model/` | `pydantic`, `yaml` | `order_agent.model` | `pipecat`, `google`, `openai`, `groq`, `ollama`, `anthropic`, `fastapi`, `starlette`, `uvicorn`, `aiohttp`, `httpx`, `requests`, `websockets`, `loguru`, `dotenv`; `order_agent.controller`, `order_agent.heads`, `order_agent.evaltools`, `order_agent.config` |
 | `controller/` | `loguru` | `order_agent.model`, `order_agent.controller` | same third-party list as model (except `loguru`); `order_agent.heads`, `order_agent.evaltools`, `order_agent.config` |
 | `heads/voice/` | `pipecat`, `google`, `loguru`, `dotenv` | `model`, `controller`, `config`, `heads.voice` | `fastapi`, `starlette`, `uvicorn` (the Pipecat runner owns the web server); `order_agent.heads.http_api`; `order_agent.evaltools` |
-| `heads/http_api/` | `fastapi`, `starlette`, `uvicorn`, `pydantic`, `loguru` | `model`, `controller`, `heads.http_api` (and `config` only in `__main__`) | `pipecat`, `torch`, `faster_whisper`, `kokoro`, `google`, `openai`, `groq`, `ollama`; `order_agent.heads.voice`; `order_agent.evaltools` |
+| `heads/http_api/` | `fastapi`, `starlette`, `uvicorn`, `pydantic`, `loguru` | `model`, `controller`, `heads.http_api` (and `config`: the checker allows it in any `http_api` module; in practice only `__main__` uses it) | `pipecat`, `torch`, `faster_whisper`, `kokoro`, `google`, `openai`, `groq`, `ollama`; `order_agent.heads.voice`; `order_agent.evaltools` |
 | `evaltools/` | `pipecat` (eval classes), `yaml`, `dotenv`, `loguru` | `model`, `config`, `evaltools` | `order_agent.controller`, `order_agent.heads` |
 
 Rules the table encodes:
