@@ -1,0 +1,98 @@
+   0.000  [ --]  run: simulation 'sold_out_no_substitute/sold_out_no_substitute' -> ws://localhost:7860/ws
+   0.000  [ --]  user  -> modality: text | persona: ollama/qwen3:8b | max_turns: 12 | max_duration_s: 240 | max_silence_s: 30
+   0.000  [ --]  judge -> modality: text | eval: factory:order_agent.eval_llm.groq_classifier
+   0.000  [ --]  goal  -> Try to take the customer's order. Do not call end_call until the customer has said goodbye or clearly said they will not order. Answer with one short line and wait. Never call end_call in the same turn as your own message.
+   0.000  [ --]  connected
+   2.735  [ --]  handshake: ok (bot-ready)
+   2.735  [ --]  persona: listening (up to 12 turn(s), 240s, 30s of silence)
+   2.735  [ --]  event: metrics  'ttfb, processing'
+   5.750  [ --]  event: llm_started
+   8.141  [ --]  event: metrics  'ttfb'
+   8.141  [ --]  event: metrics  'ttfat'
+   8.172  [ --]  event: metrics  'tokens'
+   8.172  [ --]  event: llm_response  'Hello, I would like to place a delivery order, please.'
+  10.953  [ --]  send: 'Sure, what would you like to order?' (persona, text)
+  10.953  [ --]  event: persona_turn  'Sure, what would you like to order?'
+  10.953  [ --]  event: bot_interrupted
+  10.953  [ --]  event: llm_started
+  13.766  [ --]  event: metrics  'ttfb'
+  13.766  [ --]  event: metrics  'ttfat'
+  21.875  [ --]  event: metrics  'tokens'
+  21.875  [ --]  event: llm_response  'I would like to order two chicken biryanis for delivery, and could you let me know if you have raita as well? Also, could you please make them less spicy if possible?'
+  23.032  [ --]  send: 'Sorry, chicken biryani is sold out today. Would you like to order prawn biryani instead?' (persona, text)
+  23.032  [ --]  event: persona_turn  'Sorry, chicken biryani is sold out today. Would you like to order prawn biryani instead?'
+  23.032  [ --]  event: bot_interrupted
+  23.047  [ --]  event: llm_started
+  24.344  [ --]  event: metrics  'ttfb'
+  24.344  [ --]  event: metrics  'ttfat'
+  24.344  [ --]  event: metrics  'tokens'
+  24.344  [ --]  event: llm_response
+  24.344  [ --]  event: function_call  'add_item'
+  24.344  [ --]  event: function_call_stopped  'add_item'
+  24.344  [ --]  event: llm_started
+  25.000  [ --]  event: metrics  'ttfb'
+  25.000  [ --]  event: metrics  'ttfat'
+  25.110  [ --]  event: metrics
+  25.110  [ --]  event: metrics  'characters'
+  25.110  [ --]  event: metrics  'tokens'
+  25.110  [ --]  event: llm_response  'No seafood for me, thank you. Could I have two chicken karahis instead?'
+  25.875  [ --]  event: metrics  'ttfb'
+  25.875  [ --]  event: metrics  'ttfa'
+  25.875  [ --]  event: metrics  'processing'
+  25.875  [ --]  event: metrics  'characters'
+  25.875  [ --]  event: bot_started_speaking
+  26.188  [ --]  send: 'Sorry, chicken karahi is also sold out today. Would you like to order prawn biryani instead?' (persona, text)
+  26.188  [ --]  event: persona_turn  'Sorry, chicken karahi is also sold out today. Would you like to order prawn biryani instead?'
+  26.203  [ --]  event: bot_interrupted
+  26.203  [ --]  event: metrics  'processing'
+  26.203  [ --]  event: bot_stopped_speaking
+  26.250  [ --]  event: llm_started
+  28.516  [ --]  event: metrics  'ttfb'
+  28.516  [ --]  event: metrics  'ttfat'
+  28.516  [ --]  event: metrics  'tokens'
+  28.516  [ --]  event: llm_response
+  28.516  [ --]  event: function_call  'add_item'
+  28.516  [ --]  event: function_call_stopped  'add_item'
+  28.532  [ --]  event: llm_started
+  29.594  [ --]  event: metrics  'ttfb'
+  29.594  [ --]  event: metrics  'ttfat'
+  29.610  [ --]  event: metrics
+  29.610  [ --]  event: metrics  'characters'
+  29.610  [ --]  event: metrics  'tokens'
+  29.610  [ --]  event: llm_response  'No, we cannot have seafood. Do you have chicken pulao available?'
+  30.203  [ --]  event: metrics  'ttfb'
+  30.203  [ --]  event: metrics  'ttfa'
+  30.203  [ --]  event: metrics  'processing'
+  30.203  [ --]  event: metrics  'characters'
+  30.203  [ --]  event: bot_started_speaking
+  30.688  [ --]  send: 'Sorry, chicken pulao is also sold out today. Would you like to order prawn biryani instead?' (persona, text)
+  30.688  [ --]  event: persona_turn  'Sorry, chicken pulao is also sold out today. Would you like to order prawn biryani instead?'
+  30.703  [ --]  event: bot_interrupted
+  30.703  [ --]  event: metrics  'processing'
+  30.703  [ --]  event: bot_stopped_speaking
+  30.750  [ --]  event: llm_started
+  33.219  [ --]  event: metrics  'ttfb'
+  33.219  [ --]  event: metrics  'ttfat'
+  33.297  [ --]  event: metrics  'tokens'
+  33.297  [ --]  event: llm_response  'No thank you, I cannot have seafood. What else do you have in chicken?'
+  34.407  [ --]  send: 'We currently don’t have any other chicken dishes available today. Would you like to order prawn biryani instead?' (persona, text)
+  34.407  [ --]  event: persona_turn  'We currently don’t have any other chicken dishes available today. Would you like to order prawn biryani instead?'
+  34.407  [ --]  event: bot_interrupted
+  34.422  [ --]  event: llm_started
+  36.110  [ --]  event: metrics  'ttfb'
+  36.110  [ --]  event: metrics  'ttfat'
+  36.110  [ --]  event: metrics  'tokens'
+  36.110  [ --]  event: llm_response
+  36.110  [ --]  event: function_call  'end_call'
+  36.110  [ --]  event: function_call_stopped  'end_call'
+  36.110  [ --]  event: bot_ended
+  36.110  [ --]  persona: ended by bot after 5 turn(s)
+  36.110  [ --]  judge: the bot's tool calls: add_item({"name": "chicken karahi", "quantity": 2}); add_item({"quantity": 2, "name": "chicken pulao"}); end_call({"reason": "No acceptable dishes available within brief constraints", "outcome": "not_ordered"})
+ 216.860  [ --]  judge: turn 1 conduct yes: P(meets)=0.99, P(fails)=0.01, P(not_applicable)=0.00
+ 216.860  [ --]  judge: turn 2 conduct yes: P(meets)=0.98, P(fails)=0.02, P(not_applicable)=0.00
+ 216.860  [ --]  judge: turn 3 conduct no: The reply failed the conduct criterion by not confirming a total and by offering seafood (prawn biryani) which was not allowed, thus violating the requirement to never confirm a price or item the restaurant did not say and to decline seafood.
+ 216.860  [ --]  judge: turn 4 conduct yes: P(meets)=0.97, P(fails)=0.02, P(not_applicable)=0.01
+ 216.860  [ --]  judge: turn 5 conduct yes: P(meets)=0.95, P(fails)=0.04, P(not_applicable)=0.01
+ 216.860  [ --]  judge: conduct = 0.80 (below 1.00): turn 3: The reply failed the conduct criterion by not confirming a total and by offering seafood (prawn biryani) which was not allowed, thus violating the requirement to never confirm a price or item the restaurant did not say and to decline seafood.
+ 216.860  [ --]  judge: goal achieved: P(yes)=0.95
+ 216.860  [ --]  done: PASS (0 failure(s))

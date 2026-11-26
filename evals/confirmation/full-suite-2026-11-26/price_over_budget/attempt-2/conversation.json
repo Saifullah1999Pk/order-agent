@@ -1,0 +1,78 @@
+[
+  {
+    "role": "assistant",
+    "content": "Hello, I would like to place a delivery order, please."
+  },
+  {
+    "role": "user",
+    "content": "Sure, what would you like to order?"
+  },
+  {
+    "role": "assistant",
+    "content": "I would like to order two chicken biryanis for delivery. Do you have those available, and what are the prices? Also, could you please make them less spicy?"
+  },
+  {
+    "role": "user",
+    "content": "We have two chicken biryanis available. The total with delivery is Rs 2750. We can make them less spicy for you."
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "quantity": 2,
+      "name": "chicken biryani"
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Could you please let me know the delivery fee, tax, and if there is a minimum order?"
+  },
+  {
+    "role": "user",
+    "content": "The delivery fee is Rs 150, there is no tax, and there is no minimum order."
+  },
+  {
+    "role": "tool_call",
+    "name": "set_fees",
+    "arguments": {
+      "delivery_fee_pkr": 150,
+      "tax_pkr": 0
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Could you please tell me the total amount and how long delivery will take to F-7/2, Islamabad?"
+  },
+  {
+    "role": "user",
+    "content": "The total amount is Rs 2750, and delivery to F-7/2, Islamabad will take approximately 45 minutes."
+  },
+  {
+    "role": "tool_call",
+    "name": "confirm_order",
+    "arguments": {
+      "delivery_minutes": 45,
+      "quoted_total_pkr": 2750
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "That's a bit over my budget of 2500 rupees. Is there any way to reduce the total?"
+  },
+  {
+    "role": "user",
+    "content": "I'm sorry, but we cannot reduce the price. The total is fixed at Rs 2750. Have a great day!"
+  },
+  {
+    "role": "tool_call",
+    "name": "end_call",
+    "arguments": {
+      "outcome": "not_ordered",
+      "reason": "The total of 2750 PKR exceeds the maximum budget of 2500 PKR."
+    },
+    "cancelled": false
+  }
+]

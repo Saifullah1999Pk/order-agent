@@ -1,0 +1,120 @@
+[
+  {
+    "role": "assistant",
+    "content": "Hello, I would like to place a delivery order, please."
+  },
+  {
+    "role": "user",
+    "content": "Sure, what would you like to order?"
+  },
+  {
+    "role": "assistant",
+    "content": "I would like two chicken biryanis, please. Also, if you have raita, I'll take one of those as well. Could you let me know if these are available and what the prices are? And please make them less spicy if possible."
+  },
+  {
+    "role": "user",
+    "content": "We currently have chicken biryani available, and raita is also available. The total for two chicken biryanis and one raita with delivery is Rs 2900. Let me know if you'd like to proceed."
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "name": "chicken biryani",
+      "quantity": 2
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "name": "raita",
+      "quantity": 1
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Wait, twenty-nine hundred rupees seems a bit over my budget. Could you tell me what the delivery fee, tax, and any minimum order requirements are? Also, my address is House 12, Street 4, F-7/2, Islamabad, and my callback number is 0300-0000000."
+  },
+  {
+    "role": "user",
+    "content": "The delivery fee is Rs 150, there is no tax, and there is no minimum order requirement. Your order for two chicken biryanis and one raita will be delivered to House 12, Street 4, F-7/2, Islamabad. Is that correct?"
+  },
+  {
+    "role": "tool_call",
+    "name": "set_fees",
+    "arguments": {
+      "tax_pkr": 0,
+      "delivery_fee_pkr": 150
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Yes, that delivery address is correct. Could you please confirm the total and when it will be delivered?"
+  },
+  {
+    "role": "user",
+    "content": "The total for your order is Rs 2900, and it will be delivered in 45 minutes. Is there anything else I can assist you with?"
+  },
+  {
+    "role": "tool_call",
+    "name": "confirm_order",
+    "arguments": {
+      "delivery_minutes": 45,
+      "quoted_total_pkr": 2900
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "data\nThe total is two thousand nine hundred rupees, which unfortunately goes over my budget of twenty-five hundred rupees. Since I cannot exceed that amount, could we check if we can remove the raita or adjust anything to fit within twenty-five hundred rupees?"
+  },
+  {
+    "role": "user",
+    "content": "The total for two chicken biryanis without raita is Rs 2750, which is within your budget. Would you like to proceed with that?"
+  },
+  {
+    "role": "tool_call",
+    "name": "remove_item",
+    "arguments": {
+      "name": "raita"
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "confirm_order",
+    "arguments": {
+      "quoted_total_pkr": 2750,
+      "delivery_minutes": 45
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "That is still a bit over my budget of twenty-five hundred rupees. Is there any way we can make it cheaper, or is there another dish within that price?"
+  },
+  {
+    "role": "user",
+    "content": "We currently don\u2019t have any other dishes available besides chicken biryani and raita. The total for two chicken biryanis is Rs 2750, which is the lowest price we can offer. Is there anything else I can assist you with?"
+  },
+  {
+    "role": "assistant",
+    "content": "I'm sorry, but that is a bit over my budget. I won't be able to place the order today. Thank you, goodbye."
+  },
+  {
+    "role": "user",
+    "content": "You're welcome! Have a great day. Goodbye."
+  },
+  {
+    "role": "tool_call",
+    "name": "end_call",
+    "arguments": {
+      "outcome": "not_ordered",
+      "reason": "Over budget (quoted total 2750 PKR exceeds 2500 PKR budget)"
+    },
+    "cancelled": false
+  }
+]

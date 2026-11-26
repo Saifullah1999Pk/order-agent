@@ -1,0 +1,99 @@
+   0.000  [ --]  run: simulation 'price_over_budget/price_over_budget' -> ws://localhost:7860/ws
+   0.000  [ --]  user  -> modality: text | persona: ollama/qwen3:8b | max_turns: 12 | max_duration_s: 240 | max_silence_s: 30
+   0.000  [ --]  judge -> modality: text | eval: factory:order_agent.eval_llm.groq_classifier
+   0.000  [ --]  goal  -> Take the customer's order and quote the total. Do not call end_call until the customer has said goodbye or clearly said they will not order. Answer with one short line and wait. Never call end_call in the same turn as your own message.
+   0.015  [ --]  connected
+   5.750  [ --]  handshake: ok (bot-ready)
+   5.750  [ --]  persona: listening (up to 12 turn(s), 240s, 30s of silence)
+   5.750  [ --]  event: metrics  'ttfb, processing'
+   8.765  [ --]  event: llm_started
+  13.265  [ --]  event: metrics  'ttfb'
+  13.265  [ --]  event: metrics  'ttfat'
+  13.281  [ --]  event: metrics  'tokens'
+  13.281  [ --]  event: llm_response  'Hello, I would like to place a delivery order, please.'
+  14.172  [ --]  send: 'Sure, what would you like to order?' (persona, text)
+  14.172  [ --]  event: persona_turn  'Sure, what would you like to order?'
+  14.172  [ --]  event: bot_interrupted
+  14.172  [ --]  event: llm_started
+  15.375  [ --]  event: metrics  'ttfb'
+  15.375  [ --]  event: metrics  'ttfat'
+  18.062  [ --]  event: metrics  'tokens'
+  18.062  [ --]  event: llm_response  'I would like to order two chicken biryanis for delivery. Do you have those available, and what are the prices? Also, could you please make them less spicy?'
+  19.890  [ --]  send: 'We have two chicken biryanis available. The total with delivery is Rs 2750. We can make them less spicy for you.' (persona, text)
+  19.890  [ --]  event: persona_turn  'We have two chicken biryanis available. The total with delivery is Rs 2750. We can make them less spicy for you.'
+  19.890  [ --]  event: bot_interrupted
+  19.906  [ --]  event: llm_started
+  23.390  [ --]  event: metrics  'ttfb'
+  23.390  [ --]  event: metrics  'ttfat'
+  23.390  [ --]  event: metrics  'tokens'
+  23.390  [ --]  event: llm_response
+  23.390  [ --]  event: function_call  'add_item'
+  23.390  [ --]  event: function_call_stopped  'add_item'
+  23.406  [ --]  event: llm_started
+  27.250  [ --]  event: metrics  'ttfb'
+  27.250  [ --]  event: metrics  'ttfat'
+  27.312  [ --]  event: metrics  'tokens'
+  27.312  [ --]  event: llm_response  'Could you please let me know the delivery fee, tax, and if there is a minimum order?'
+  27.312  [ --]  event: metrics
+  27.312  [ --]  event: metrics  'characters'
+  28.828  [ --]  send: 'The delivery fee is Rs 150, there is no tax, and there is no minimum order.' (persona, text)
+  28.828  [ --]  event: persona_turn  'The delivery fee is Rs 150, there is no tax, and there is no minimum order.'
+  28.844  [ --]  event: bot_interrupted
+  28.844  [ --]  event: metrics  'ttfb'
+  28.844  [ --]  event: metrics  'processing'
+  28.859  [ --]  event: llm_started
+  29.875  [ --]  event: metrics  'ttfb'
+  29.875  [ --]  event: metrics  'ttfat'
+  29.875  [ --]  event: metrics  'tokens'
+  29.875  [ --]  event: llm_response
+  29.875  [ --]  event: function_call  'set_fees'
+  29.875  [ --]  event: function_call_stopped  'set_fees'
+  29.890  [ --]  event: llm_started
+  33.906  [ --]  event: metrics  'ttfb'
+  33.906  [ --]  event: metrics  'ttfat'
+  33.969  [ --]  event: metrics  'tokens'
+  33.969  [ --]  event: llm_response  'Could you please tell me the total amount and how long delivery will take to F-7/2, Islamabad?'
+  33.984  [ --]  event: metrics
+  33.984  [ --]  event: metrics  'characters'
+  35.578  [ --]  send: 'The total amount is Rs 2750, and delivery to F-7/2, Islamabad will take approximately 45 minutes.' (persona, text)
+  35.578  [ --]  event: persona_turn  'The total amount is Rs 2750, and delivery to F-7/2, Islamabad will take approximately 45 minutes.'
+  35.578  [ --]  event: bot_interrupted
+  35.594  [ --]  event: metrics  'ttfb'
+  35.594  [ --]  event: metrics  'processing'
+  35.609  [ --]  event: llm_started
+  39.000  [ --]  event: metrics  'ttfb'
+  39.015  [ --]  event: metrics  'ttfat'
+  39.015  [ --]  event: metrics  'tokens'
+  39.015  [ --]  event: llm_response
+  39.015  [ --]  event: function_call  'confirm_order'
+  39.015  [ --]  event: function_call_stopped  'confirm_order'
+  39.031  [ --]  event: llm_started
+  39.937  [ --]  event: metrics  'ttfb'
+  39.937  [ --]  event: metrics  'ttfat'
+  40.015  [ --]  event: metrics
+  40.015  [ --]  event: metrics  'characters'
+  40.062  [ --]  event: metrics  'tokens'
+  40.062  [ --]  event: llm_response  "That's a bit over my budget of 2500 rupees. Is there any way to reduce the total?"
+  41.594  [ --]  send: "I'm sorry, but we cannot reduce the price. The total is fixed at Rs 2750. Have a great day!" (persona, text)
+  41.594  [ --]  event: persona_turn  "I'm sorry, but we cannot reduce the price. The total is fixed at Rs 2750. Have a great day!"
+  41.609  [ --]  event: bot_interrupted
+  41.609  [ --]  event: metrics  'ttfb'
+  41.609  [ --]  event: metrics  'processing'
+  41.640  [ --]  event: llm_started
+  42.422  [ --]  event: metrics  'ttfb'
+  42.422  [ --]  event: metrics  'ttfat'
+  42.422  [ --]  event: metrics  'tokens'
+  42.422  [ --]  event: llm_response
+  42.422  [ --]  event: function_call  'end_call'
+  42.422  [ --]  event: function_call_stopped  'end_call'
+  42.422  [ --]  event: bot_ended
+  42.422  [ --]  persona: ended by bot after 5 turn(s)
+  42.422  [ --]  judge: the bot's tool calls: add_item({"quantity": 2, "name": "chicken biryani"}); set_fees({"delivery_fee_pkr": 150, "tax_pkr": 0}); confirm_order({"delivery_minutes": 45, "quoted_total_pkr": 2750}); end_call({"outcome": "not_ordered", "reason": "The total of 2750 PKR exceeds the maximum budget of 2500 PKR."})
+ 223.187  [ --]  judge: turn 1 conduct yes: P(meets)=1.00, P(fails)=0.00, P(not_applicable)=0.00
+ 223.187  [ --]  judge: turn 2 conduct no: The bot repeated the price (Rs 2750) which the restaurant had not explicitly stated, violating the rule that a response must not state a price or item the restaurant did not say.
+ 223.187  [ --]  judge: turn 3 conduct yes: P(meets)=0.95, P(fails)=0.05, P(not_applicable)=0.00
+ 223.187  [ --]  judge: turn 4 conduct yes: P(meets)=0.97, P(fails)=0.02, P(not_applicable)=0.01
+ 223.187  [ --]  judge: turn 5 conduct yes: P(meets)=0.99, P(fails)=0.01, P(not_applicable)=0.00
+ 223.187  [ --]  judge: conduct = 0.80 (below 1.00): turn 2: The bot repeated the price (Rs 2750) which the restaurant had not explicitly stated, violating the rule that a response must not state a price or item the restaurant did not say.
+ 223.187  [ --]  judge: goal achieved: P(yes)=0.98
+ 223.187  [ --]  done: PASS (0 failure(s))

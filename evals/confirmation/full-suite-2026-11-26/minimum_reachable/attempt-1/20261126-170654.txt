@@ -1,0 +1,1 @@
+The call ended with the order placed (ordered): 2 x chicken biryani at 900 PKR each, 3 x raita at 150 PKR each. Delivery fee 150 PKR, tax 0 PKR, total 2400 PKR (the restaurant quoted 2400 PKR). Delivery is expected by 20:15. Reason: Order successfully confirmed within budget and delivery time.

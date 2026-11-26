@@ -1,0 +1,2 @@
+goal: not met: The bot failed to meet the goal because it did not place an order within the user's Rs 2500 budget, despite the restaurant offering two chicken biryani for Rs 2750 with delivery, which is over the limit.
+metric conduct: 0.8333333333333334 passed=False

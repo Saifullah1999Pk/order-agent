@@ -1,0 +1,101 @@
+{
+  "outcome": "call_dropped",
+  "reason": "call ended without end_call",
+  "items": [
+    {
+      "name": "chicken biryani",
+      "line_item": "chicken biryani",
+      "quantity": 1,
+      "unit_price_pkr": "1450"
+    },
+    {
+      "name": "raita",
+      "line_item": "raita",
+      "quantity": 1,
+      "unit_price_pkr": null
+    }
+  ],
+  "delivery_fee_pkr": "0",
+  "tax_pkr": "0",
+  "cart_total_pkr": null,
+  "quoted_total_pkr": null,
+  "delivery_eta": null,
+  "fees_set": false,
+  "total_only": false,
+  "tool_events": [
+    {
+      "tool": "add_item",
+      "args": {
+        "name": "chicken biryani",
+        "quantity": 1,
+        "unit_price_pkr": null,
+        "price_corrected": false
+      },
+      "ok": true,
+      "message": "Added 1 x chicken biryani with no price recorded (the restaurant has not given one). Do not guess a price: if they only give a total, confirm with their total.",
+      "at": "2026-11-26T16:46:40.579375"
+    },
+    {
+      "tool": "set_price",
+      "args": {
+        "name": "chicken biryani",
+        "unit_price_pkr": "1450",
+        "price_corrected": false
+      },
+      "ok": true,
+      "message": "Price recorded: chicken biryani at 1450 PKR each. Known so far: 1450 PKR; the full cart total is not known yet (an item has no price or the fees are not recorded).",
+      "at": "2026-11-26T16:46:40.579375"
+    },
+    {
+      "tool": "add_item",
+      "args": {
+        "name": "raita",
+        "quantity": 1,
+        "unit_price_pkr": null,
+        "price_corrected": false
+      },
+      "ok": true,
+      "message": "Added 1 x raita with no price recorded (the restaurant has not given one). Do not guess a price: if they only give a total, confirm with their total.",
+      "at": "2026-11-26T16:46:40.579375"
+    }
+  ],
+  "transcript": [
+    {
+      "role": "agent",
+      "text": "Hello, I'd like to place a delivery order please.",
+      "at": "2026-11-26T16:46:47.028265"
+    },
+    {
+      "role": "agent",
+      "text": "I'd like two chicken biryani, please, and it's for delivery. Can you tell me if they're available and what the prices are? Also, could I get a raita with that, if it fits the budget? Less spicy on the biryani if possible.",
+      "at": "2026-11-26T16:46:51.169288"
+    },
+    {
+      "role": "agent",
+      "text": "That sounds a bit over my budget. Could you tell me the price of a single chicken biryani? And also, if chicken karahi or chicken pulao are available as substitutes, and their prices? I'm trying to keep the total under two thousand five hundred rupees.",
+      "at": "2026-11-26T16:46:55.024659"
+    },
+    {
+      "role": "agent",
+      "text": "Okay, so two chicken biryani would be two thousand nine hundred rupees, which is still over my budget. I'll just take one chicken biryani then.",
+      "at": "2026-11-26T16:46:59.963380"
+    },
+    {
+      "role": "agent",
+      "text": "Yes, one chicken biryani for one thousand four hundred and fifty rupees, including delivery.",
+      "at": "2026-11-26T16:47:02.682846"
+    },
+    {
+      "role": "agent",
+      "text": "So, with the raita, the total would be one thousand six hundred rupees? Yes, I'd like to add the raita then, please.",
+      "at": "2026-11-26T16:47:04.595469"
+    },
+    {
+      "role": "agent",
+      "text": "So that would be one chicken biryani and one raita, for a total of one thousand six hundred rupees. Less spicy on the biryani, please. What is the delivery fee and tax, and is there any minimum order? My address is House 12, Street 4, F-7/2, Islamabad, and my number is 0300-0000000.",
+      "at": "2026-11-26T16:47:41.255455"
+    }
+  ],
+  "started_at": "2026-11-26T16:46:40.579375",
+  "ended_at": "2026-11-26T16:50:36.678758"
+}

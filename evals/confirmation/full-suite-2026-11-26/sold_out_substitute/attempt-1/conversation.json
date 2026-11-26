@@ -1,0 +1,70 @@
+[
+  {
+    "role": "assistant",
+    "content": "Hello, I would like to place a delivery order, please."
+  },
+  {
+    "role": "user",
+    "content": "Sure, what would you like to order?"
+  },
+  {
+    "role": "assistant",
+    "content": "I would like two chicken biryanis, and less spicy if possible, for delivery. Do you have these available, and what are the prices?"
+  },
+  {
+    "role": "user",
+    "content": "We're sorry, but chicken biryani is sold out today. Would you like to order chicken karahi instead?"
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "name": "chicken karahi",
+      "quantity": 2
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Yes, chicken karahi will do. Could you also let me know about the delivery fee, tax, and any minimum order?"
+  },
+  {
+    "role": "user",
+    "content": "The delivery fee is Rs 150, there's no tax, and there's no minimum order. Would you like to proceed with your order?"
+  },
+  {
+    "role": "tool_call",
+    "name": "set_fees",
+    "arguments": {
+      "delivery_fee_pkr": 150,
+      "tax_pkr": 0
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Yes, please. Could you also tell me the total amount for the order and how long delivery will take?"
+  },
+  {
+    "role": "user",
+    "content": "The total for two chicken karahis is Rs 2350, and delivery will take 45 minutes. Would you like to confirm your order?"
+  },
+  {
+    "role": "tool_call",
+    "name": "confirm_order",
+    "arguments": {
+      "delivery_minutes": 45,
+      "quoted_total_pkr": 2500
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "end_call",
+    "arguments": {
+      "outcome": "ordered",
+      "reason": "Order for 2 chicken karahis confirmed successfully within budget."
+    },
+    "cancelled": false
+  }
+]

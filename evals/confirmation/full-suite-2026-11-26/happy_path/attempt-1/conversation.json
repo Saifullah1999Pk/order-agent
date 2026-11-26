@@ -1,0 +1,79 @@
+[
+  {
+    "role": "assistant",
+    "content": "Hello, I would like to place a delivery order, please."
+  },
+  {
+    "role": "user",
+    "content": "Sure, what would you like to order?"
+  },
+  {
+    "role": "assistant",
+    "content": "I'd like two chicken biryanis and one raita for delivery. Are those available, and what are their prices?"
+  },
+  {
+    "role": "user",
+    "content": "Yes, we have two chicken biryanis and one raita available. The total for your order will be Rs 2100, and delivery takes 45 minutes."
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "quantity": 2,
+      "name": "chicken biryani"
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "name": "raita",
+      "quantity": 1
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Could you please let me know the delivery fee, any tax, and if there is a minimum order? Also, could you please make it less spicy if possible?"
+  },
+  {
+    "role": "user",
+    "content": "The delivery fee is Rs 150, there is no tax, and there is no minimum order. Your order will be less spicy as requested."
+  },
+  {
+    "role": "tool_call",
+    "name": "set_fees",
+    "arguments": {
+      "delivery_fee_pkr": 150,
+      "tax_pkr": 0
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Could you please let me know the delivery fee, tax, and any minimum order details? Also, could you confirm the final total?"
+  },
+  {
+    "role": "user",
+    "content": "The delivery fee is Rs 150, there is no tax, and there is no minimum order. The final total for your order is Rs 2100."
+  },
+  {
+    "role": "tool_call",
+    "name": "confirm_order",
+    "arguments": {
+      "delivery_minutes": 45,
+      "quoted_total_pkr": 2100
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "end_call",
+    "arguments": {
+      "reason": "Order placed successfully within budget and delivered by the requested time.",
+      "outcome": "ordered"
+    },
+    "cancelled": false
+  }
+]

@@ -1,0 +1,189 @@
+[
+  {
+    "role": "assistant",
+    "content": "Hello, I would like to place a delivery order, please."
+  },
+  {
+    "role": "user",
+    "content": "Sure, what would you like to order?"
+  },
+  {
+    "role": "assistant",
+    "content": "I would like two chicken biryanis, please. Could you let me know if those are available and how much they cost? Also, do you have raita?"
+  },
+  {
+    "role": "user",
+    "content": "We have chicken biryani available. Two chicken biryanis will cost you Rs 1950. Yes, we have raita. Would you like to add some?"
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "name": "chicken biryani",
+      "unit_price_pkr": 975,
+      "quantity": 2
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Yes, please add one raita if it's available. Could you also let me know the price for the raita, the delivery fee, tax, and if there is a minimum order?"
+  },
+  {
+    "role": "user",
+    "content": "One raita will cost you Rs 150. The delivery fee is Rs 150. There is a minimum order of Rs 2200 on the food (before delivery fee). Your total with the raita will be Rs 2100, which is below the minimum. Would you like to add more items to meet the minimum?"
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "quantity": 1,
+      "unit_price_pkr": 150,
+      "name": "raita"
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "set_fees",
+    "arguments": {
+      "delivery_fee_pkr": 150,
+      "tax_pkr": 0
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "set_minimum_order",
+    "arguments": {
+      "minimum_pkr": 2200
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Could I please add one more raita to meet the minimum? Also, is it possible to make it less spicy?"
+  },
+  {
+    "role": "user",
+    "content": "Sure, adding one more raita will bring your total to Rs 2250, which meets the minimum. We can make the raita less spicy for you. Would you like to proceed with the order?"
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "quantity": 1,
+      "name": "raita",
+      "unit_price_pkr": 150
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Could you please make everything less spicy if possible? What is the total and how long will the delivery take? Also, my delivery address is House 12, Street 4, F-7/2, Islamabad, and my callback number is 0300-0000000."
+  },
+  {
+    "role": "user",
+    "content": "Your order will be prepared with everything less spicy. The total is Rs 2250, which includes the delivery fee. Delivery will take 45 minutes. We have your address and callback number. Is there anything else you need?"
+  },
+  {
+    "role": "tool_call",
+    "name": "confirm_order",
+    "arguments": {
+      "quoted_total_pkr": 2250,
+      "delivery_minutes": 45
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Could you please itemise the total for me? Each item with its price, plus the delivery fee and tax."
+  },
+  {
+    "role": "user",
+    "content": "Sure, here's the breakdown:  \n- 2 chicken biryanis: Rs 1800  \n- 3 raitas: Rs 450  \n- Delivery fee: Rs 150  \n- Tax: Rs 0  \nTotal: Rs 2250. Is there anything else you need?"
+  },
+  {
+    "role": "tool_call",
+    "name": "remove_item",
+    "arguments": {
+      "name": "raita"
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "quantity": 2,
+      "name": "raita",
+      "unit_price_pkr": 150
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "set_price",
+    "arguments": {
+      "price_corrected": true,
+      "name": "chicken biryani",
+      "unit_price_pkr": 900
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "set_fees",
+    "arguments": {
+      "tax_pkr": 0,
+      "corrected": true,
+      "delivery_fee_pkr": 150
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "quantity": 1,
+      "unit_price_pkr": 150,
+      "name": "raita"
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "confirm_order",
+    "arguments": {
+      "delivery_minutes": 45,
+      "quoted_total_pkr": 2250
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Could you please check the total? The breakdown comes to twenty-four hundred rupees with the items and delivery fee."
+  },
+  {
+    "role": "user",
+    "content": "The total is Rs 2400, including the delivery fee. Is there anything else you need?"
+  },
+  {
+    "role": "tool_call",
+    "name": "confirm_order",
+    "arguments": {
+      "quoted_total_pkr": 2400,
+      "delivery_minutes": 45
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "end_call",
+    "arguments": {
+      "outcome": "ordered",
+      "reason": "Order successfully placed and confirmed."
+    },
+    "cancelled": false
+  }
+]

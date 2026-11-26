@@ -1,0 +1,164 @@
+{
+  "outcome": "ordered",
+  "reason": "Order successfully confirmed within budget and delivered by 21:00.",
+  "items": [
+    {
+      "name": "chicken biryani",
+      "line_item": "chicken biryani",
+      "quantity": 2,
+      "unit_price_pkr": "900"
+    },
+    {
+      "name": "raita",
+      "line_item": "raita",
+      "quantity": 3,
+      "unit_price_pkr": "150"
+    }
+  ],
+  "delivery_fee_pkr": "150",
+  "tax_pkr": "0",
+  "cart_total_pkr": "2400",
+  "quoted_total_pkr": "2400",
+  "delivery_eta": "2026-11-23T20:15:00",
+  "fees_set": true,
+  "total_only": false,
+  "tool_events": [
+    {
+      "tool": "add_item",
+      "args": {
+        "name": "chicken biryani",
+        "quantity": 2,
+        "unit_price_pkr": null,
+        "price_corrected": false
+      },
+      "ok": true,
+      "message": "Added 2 x chicken biryani with no price recorded (the restaurant has not given one). Do not guess a price: if they only give a total, confirm with their total.",
+      "at": "2026-11-26T17:18:45.688401"
+    },
+    {
+      "tool": "add_item",
+      "args": {
+        "name": "raita",
+        "quantity": 1,
+        "unit_price_pkr": null,
+        "price_corrected": false
+      },
+      "ok": true,
+      "message": "Added 1 x raita with no price recorded (the restaurant has not given one). Do not guess a price: if they only give a total, confirm with their total.",
+      "at": "2026-11-26T17:18:45.688401"
+    },
+    {
+      "tool": "set_minimum_order",
+      "args": {
+        "minimum_pkr": "2200"
+      },
+      "ok": true,
+      "message": "Minimum order recorded: 2200 PKR of food (before delivery fee and tax). Food subtotal is now 0 PKR.",
+      "at": "2026-11-26T17:18:45.688401"
+    },
+    {
+      "tool": "set_fees",
+      "args": {
+        "delivery_fee_pkr": "150",
+        "tax_pkr": "0",
+        "corrected": false
+      },
+      "ok": true,
+      "message": "Fees recorded: delivery 150 PKR, tax 0 PKR. Known so far: 150 PKR; the full cart total is not known yet (an item has no price or the fees are not recorded).",
+      "at": "2026-11-26T17:18:45.688401"
+    },
+    {
+      "tool": "set_price",
+      "args": {
+        "name": "chicken biryani",
+        "unit_price_pkr": "900",
+        "price_corrected": false
+      },
+      "ok": true,
+      "message": "Price recorded: chicken biryani at 900 PKR each. Known so far: 1950 PKR; the full cart total is not known yet (an item has no price or the fees are not recorded).",
+      "at": "2026-11-26T17:18:45.688401"
+    },
+    {
+      "tool": "set_price",
+      "args": {
+        "name": "raita",
+        "unit_price_pkr": "150",
+        "price_corrected": false
+      },
+      "ok": true,
+      "message": "Price recorded: raita at 150 PKR each. Cart total is now 2100 PKR. The food is 1950 PKR, 250 PKR short of the 2200 PKR minimum: add 2 more raita (300 PKR) to reach it. The total would then be 2400 PKR, within your 2500 PKR budget.",
+      "at": "2026-11-26T17:18:45.688401"
+    },
+    {
+      "tool": "add_item",
+      "args": {
+        "name": "raita",
+        "quantity": 2,
+        "unit_price_pkr": null,
+        "price_corrected": false
+      },
+      "ok": true,
+      "message": "Added 2 x raita at 150 PKR each. Cart total is now 2400 PKR.",
+      "at": "2026-11-26T17:18:45.688401"
+    },
+    {
+      "tool": "confirm_order",
+      "args": {
+        "quoted_total_pkr": "2250",
+        "delivery_minutes": 45
+      },
+      "ok": false,
+      "message": "Refused: the restaurant quoted 2250 PKR but the cart total is 2400 PKR (items 2250, delivery 150, tax 0). Do not edit the cart or the fees to make the totals match. Ask the restaurant to itemise the total: each item with its price, then the delivery fee and tax. Only if they clearly state a changed price or fee, correct it (add_item with price_corrected=true, or set_fees with corrected=true); if they cannot explain it, end the call as not_ordered.",
+      "at": "2026-11-26T17:18:45.688401"
+    },
+    {
+      "tool": "confirm_order",
+      "args": {
+        "quoted_total_pkr": "2250",
+        "delivery_minutes": 45
+      },
+      "ok": false,
+      "message": "Refused: the restaurant quoted 2250 PKR but the cart total is 2400 PKR (items 2250, delivery 150, tax 0). Do not edit the cart or the fees to make the totals match. Ask the restaurant to itemise the total: each item with its price, then the delivery fee and tax. Only if they clearly state a changed price or fee, correct it (add_item with price_corrected=true, or set_fees with corrected=true); if they cannot explain it, end the call as not_ordered.",
+      "at": "2026-11-26T17:18:45.688401"
+    },
+    {
+      "tool": "confirm_order",
+      "args": {
+        "quoted_total_pkr": "2400",
+        "delivery_minutes": 45
+      },
+      "ok": true,
+      "message": "Order confirmed at 2400 PKR, delivery by about 20:15. Thank the restaurant and call end_call with outcome 'ordered'.",
+      "at": "2026-11-26T17:18:45.688401"
+    },
+    {
+      "tool": "end",
+      "args": {
+        "outcome": "ordered",
+        "reason": "Order successfully confirmed within budget and delivered by 21:00."
+      },
+      "ok": true,
+      "message": "Call ended as ordered: Order successfully confirmed within budget and delivered by 21:00.",
+      "at": "2026-11-26T17:18:45.688401"
+    }
+  ],
+  "transcript": [
+    {
+      "role": "agent",
+      "text": "Hello! I would like to place a delivery order, please.",
+      "at": "2026-11-26T17:18:52.078835"
+    },
+    {
+      "role": "agent",
+      "text": "I would like to order two chicken biryani and one raita, for delivery. Are they available, and what are their prices?",
+      "at": "2026-11-26T17:18:53.775209"
+    },
+    {
+      "role": "agent",
+      "text": "Could you please check the total?",
+      "at": "2026-11-26T17:19:35.937326"
+    }
+  ],
+  "started_at": "2026-11-26T17:18:45.688401",
+  "ended_at": "2026-11-26T17:19:54.975603"
+}

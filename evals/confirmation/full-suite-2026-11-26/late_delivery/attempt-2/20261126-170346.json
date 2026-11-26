@@ -1,0 +1,101 @@
+{
+  "outcome": "not_ordered",
+  "reason": "Delivery time of 2 hours exceeds the 21:00 deadline.",
+  "items": [
+    {
+      "name": "chicken biryani",
+      "line_item": "chicken biryani",
+      "quantity": 2,
+      "unit_price_pkr": null
+    },
+    {
+      "name": "raita",
+      "line_item": "raita",
+      "quantity": 1,
+      "unit_price_pkr": null
+    }
+  ],
+  "delivery_fee_pkr": "0",
+  "tax_pkr": "0",
+  "cart_total_pkr": null,
+  "quoted_total_pkr": null,
+  "delivery_eta": null,
+  "fees_set": true,
+  "total_only": false,
+  "tool_events": [
+    {
+      "tool": "add_item",
+      "args": {
+        "name": "chicken biryani",
+        "quantity": 2,
+        "unit_price_pkr": null,
+        "price_corrected": false
+      },
+      "ok": true,
+      "message": "Added 2 x chicken biryani with no price recorded (the restaurant has not given one). Do not guess a price: if they only give a total, confirm with their total.",
+      "at": "2026-11-26T17:03:46.414603"
+    },
+    {
+      "tool": "add_item",
+      "args": {
+        "name": "raita",
+        "quantity": 1,
+        "unit_price_pkr": null,
+        "price_corrected": false
+      },
+      "ok": true,
+      "message": "Added 1 x raita with no price recorded (the restaurant has not given one). Do not guess a price: if they only give a total, confirm with their total.",
+      "at": "2026-11-26T17:03:46.414603"
+    },
+    {
+      "tool": "set_fees",
+      "args": {
+        "delivery_fee_pkr": "0",
+        "tax_pkr": "0",
+        "corrected": false
+      },
+      "ok": true,
+      "message": "Fees recorded: delivery 0 PKR, tax 0 PKR. Known so far: 0 PKR; the full cart total is not known yet (an item has no price or the fees are not recorded).",
+      "at": "2026-11-26T17:03:46.414603"
+    },
+    {
+      "tool": "confirm_order",
+      "args": {
+        "quoted_total_pkr": "2100",
+        "delivery_minutes": 120
+      },
+      "ok": false,
+      "message": "Refused: delivery in 120 minutes means 21:30, after the 21:00 deadline. Ask whether it can be faster; if not, end the call as not_ordered.",
+      "at": "2026-11-26T17:03:46.414603"
+    },
+    {
+      "tool": "end",
+      "args": {
+        "outcome": "not_ordered",
+        "reason": "Delivery time of 2 hours exceeds the 21:00 deadline."
+      },
+      "ok": true,
+      "message": "Call ended as not_ordered: Delivery time of 2 hours exceeds the 21:00 deadline.",
+      "at": "2026-11-26T17:03:46.414603"
+    }
+  ],
+  "transcript": [
+    {
+      "role": "agent",
+      "text": "Hello, I would like to place a delivery order, please.",
+      "at": "2026-11-26T17:03:53.055414"
+    },
+    {
+      "role": "agent",
+      "text": "I'd like to order two chicken biryanis and one raita, for delivery. Do you have these available, and what are their prices?",
+      "at": "2026-11-26T17:03:56.000150"
+    },
+    {
+      "role": "agent",
+      "text": "Ah, I see. Unfortunately, I need it delivered by 21:00, so I won't be able to place the order today. Thank you anyway.",
+      "at": "2026-11-26T17:04:19.790165"
+    }
+  ],
+  "started_at": "2026-11-26T17:03:46.414603",
+  "ended_at": "2026-11-26T17:04:24.891172"
+}

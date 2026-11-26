@@ -1,0 +1,2 @@
+goal: not met: The bot did not place the requested order of two chicken biryanis; it repeatedly declined the fish special and failed to confirm a total within Rs 2500, so the goal was not achieved.
+metric conduct: 1.0 passed=True
