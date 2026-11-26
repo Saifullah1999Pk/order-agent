@@ -141,12 +141,8 @@ class OrderSession:
                 )
             return f" {head}, and no addition fits within your {_fmt(budget)} PKR budget: end the call as not_ordered."
         _, item, n, cost = best
-        total = self.cart_total() + cost
-        if self._fees_set:
-            tail = f"The total would then be {_fmt(total)} PKR, within your {_fmt(budget)} PKR budget."
-        else:
-            tail = f"The total would then be {_fmt(total)} PKR before delivery fee and tax; delivery fee and tax are not recorded yet, so ask about them."
-        return f" {head}: add {n} more {item.name} ({_fmt(cost)} PKR) to reach it. {tail}"
+        tail = "" if self._fees_set else " Delivery fee and tax are not recorded yet, so ask about them."
+        return f" {head}: ask the restaurant to add {n} more {item.name} ({_fmt(cost)} PKR) to reach it, and record it with add_item only after they agree.{tail}"
 
     def _never_hit(self, name: str) -> str | None:
         words = normalise(name)

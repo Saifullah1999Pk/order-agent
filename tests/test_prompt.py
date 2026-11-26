@@ -77,7 +77,8 @@ def test_prompt_follows_named_minimum_shortfall(brief):
     from order_agent.controller.prompt import build_system_prompt
 
     text = build_system_prompt(brief)
-    assert "add exactly that" in text
+    assert "ask the restaurant for exactly that, then record it with add_item after they agree" in text
+    assert "add exactly that" not in text
 
 
 def test_prompt_minimum_guidance_is_honest_about_budget(brief):
