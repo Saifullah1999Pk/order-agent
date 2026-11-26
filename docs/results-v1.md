@@ -1,5 +1,7 @@
 # order-agent v1 results
 
+> Note (2026-11-26): paths below predate the Headless MVC restructure (e.g. `order_agent/rules.py` is now `order_agent/model/rules.py`); the README module map lists the current layout.
+
 For: Awais Qureshi. Written 2026-11-23. All evidence is under [evals/confirmation/task10/](../evals/confirmation/task10/) and, for the bot on Groq, [evals/confirmation/task10b/](../evals/confirmation/task10b/).
 
 ## 1. Summary

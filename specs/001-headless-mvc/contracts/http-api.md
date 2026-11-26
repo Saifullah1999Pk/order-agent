@@ -17,7 +17,7 @@ Start a call from a brief. Body (exactly one of the two brief fields):
 ```json
 { "brief": { ...OrderBrief fields... }, "brief_name": "example", "call_time": "2026-11-23T19:30:00" }
 ```
-`brief_name` loads `briefs/<name>.yaml` (name must match `^[A-Za-z0-9_-]+$`; no path separators).
+`brief_name` loads `briefs/<name>.yaml` (name must match `^[A-Za-z0-9_-]+$`; no path separators). `brief_dir` defaults to the cwd-relative `Path("briefs")`, so start the server from the repo root when using `brief_name`.
 `call_time` optional (same override as `ORDER_CALL_TIME`).
 `201`:
 ```json

@@ -46,7 +46,7 @@ green and never weakens a test.
 
 ## Phase 1: Setup
 
-- [ ] T001 Record the baseline and confirm the branch (no file changes)
+- [x] T001 Record the baseline and confirm the branch (no file changes)
   - Verify: `git branch --show-current` prints `feat/headless-mvc`, `git status --short` is clean,
     `uv run pytest -q` prints `366 passed`. Stop and report if not.
 
@@ -57,7 +57,7 @@ green and never weakens a test.
 **Purpose**: the boundary test must exist before any code moves, so every later move is checked.
 Blocking for all stories.
 
-- [ ] T002 Create the boundary checker and its tests in `tests/architecture.py` (helper) and
+- [x] T002 Create the boundary checker and its tests in `tests/architecture.py` (helper) and
   `tests/test_architecture.py`
   - RED: `tests/test_architecture.py` imports `architecture` (the helper in `tests/`, missing; `tests/` has no
     `__init__.py` and pytest puts it on `sys.path`, so do NOT add `tests/__init__.py`, research R8) and asserts: (a) `violations(src, "model")`
@@ -75,7 +75,7 @@ Blocking for all stories.
     `uv run` does this (editable install), so state this assumption in the test docstring.
   - Verify: `uv run pytest tests/test_architecture.py -q` then `uv run pytest -q`.
 
-- [ ] T003 Move `brief.py` to `order_agent/model/brief.py` and leave a shim
+- [x] T003 Move `brief.py` to `order_agent/model/brief.py` and leave a shim
   - RED: `tests/test_model_package.py::test_brief_lives_in_model` asserts `order_agent.model.brief.OrderBrief`
     imports and `order_agent.brief.OrderBrief is order_agent.model.brief.OrderBrief`; and
     `tests/test_architecture.py` real-tree param for `model/brief.py` exists. Fails: package missing.
@@ -85,20 +85,20 @@ Blocking for all stories.
     [data-model.md](data-model.md).
   - Verify: `uv run pytest -q` (all green, unchanged count plus the new tests).
 
-- [ ] T004 Move `matching.py` to `order_agent/model/matching.py` and leave a shim
+- [x] T004 Move `matching.py` to `order_agent/model/matching.py` and leave a shim
   - RED: `tests/test_model_package.py::test_matching_lives_in_model` (path import plus identity of
     `normalise` and `match_line` through the old path).
   - GREEN: `git mv`, update its import to `order_agent.model.brief`, shim at `order_agent/matching.py`.
   - Verify: `uv run pytest -q`.
 
-- [ ] T005 Move `rules.py` to `order_agent/model/rules.py` and leave a shim
+- [x] T005 Move `rules.py` to `order_agent/model/rules.py` and leave a shim
   - RED: `tests/test_model_package.py::test_rules_live_in_model` (identity of `OrderSession`, `ToolResult`,
     `ToolEvent`, `CartItem` through the old path).
   - GREEN: `git mv`, update its imports to `order_agent.model.brief` and `order_agent.model.matching`,
     shim at `order_agent/rules.py` re-exporting the four public names. No logic edit.
   - Verify: `uv run pytest -q`.
 
-- [ ] T006 Move `report.py` to `order_agent/model/report.py` and leave a shim
+- [x] T006 Move `report.py` to `order_agent/model/report.py` and leave a shim
   - RED: `tests/test_model_package.py::test_report_lives_in_model` (identity of `CallReport`,
     `TranscriptLine`, `build_report`, `summarise`, `write_report`). Report schema fields
     (`CallReport.*`) are unchanged per [data-model.md](data-model.md), so saved reports and `--rescore`
@@ -121,7 +121,7 @@ and a browser call (T034).
 
 ### Step 2: controller tool layer (additive; old `tools.py` untouched)
 
-- [ ] T007 [US1] Add the controller layer to the boundary check and create `order_agent/controller/__init__.py`
+- [x] T007 [US1] Add the controller layer to the boundary check and create `order_agent/controller/__init__.py`
   - RED: in `tests/test_architecture.py` snippets: `import pipecat`, `from fastapi import FastAPI`,
     `from order_agent.heads.voice import x`, `from order_agent.config import Settings` and
     `from order_agent.evaltools import x` each give a violation for layer `controller`; `loguru` and
@@ -130,7 +130,7 @@ and a browser call (T034).
     [contracts/boundaries.md](contracts/boundaries.md)) and the empty package.
   - Verify: `uv run pytest -q`.
 
-- [ ] T008 [US1] Create `order_agent/controller/toolspecs.py` with `ToolSpec` and `TOOL_SPECS`
+- [x] T008 [US1] Create `order_agent/controller/toolspecs.py` with `ToolSpec` and `TOOL_SPECS`
   - RED: `tests/test_controller_toolspecs.py`: names are unique (`ToolSpec.name`, per
     [data-model.md](data-model.md)) and equal to `[add_item, set_price, remove_item, set_fees,
     set_minimum_order, confirm_order, end_call]`; for each spec, `description`, `properties` and `required`
@@ -139,7 +139,7 @@ and a browser call (T034).
   - GREEN: frozen dataclass plus the seven specs copied verbatim from `tools.py`.
   - Verify: `uv run pytest tests/test_controller_toolspecs.py -q` then `uv run pytest -q`.
 
-- [ ] T009 [US1] Create `order_agent/controller/tools.py`: argument converters and `ToolDispatcher` for the six non-end tools
+- [x] T009 [US1] Create `order_agent/controller/tools.py`: argument converters and `ToolDispatcher` for the six non-end tools
   - RED: `tests/test_controller_tools.py`: an async matrix mirroring the cases in `tests/test_tools.py`
     (valid call, missing or blank text, non-number money, bool as money, 2.5 as a whole number, bad flag,
     optional price omitted) for `add_item set_price remove_item set_fees set_minimum_order confirm_order`,
@@ -152,7 +152,7 @@ and a browser call (T034).
     type.
   - Verify: `uv run pytest tests/test_controller_tools.py -q` then `uv run pytest -q`.
 
-- [ ] T010 [US1] Extend `ToolDispatcher` in `order_agent/controller/tools.py` with `end_call` and the never-raise shield
+- [x] T010 [US1] Extend `ToolDispatcher` in `order_agent/controller/tools.py` with `end_call` and the never-raise shield
   - RED: `tests/test_controller_tools.py`: successful `end_call` gives `ToolOutcome.run_llm is False` and
     `ToolOutcome.ended is True`; a refused `end_call` (for example outcome `ordered` before confirm) keeps
     `run_llm True`, `ended False`; non-dict arguments, `None` arguments, an unknown tool name, and a
@@ -165,7 +165,7 @@ and a browser call (T034).
 
 ### Step 3: nudge, prompt and `CallController`
 
-- [ ] T011 [US1] Move nudge logic to `order_agent/controller/nudge.py` (`should_nudge`, `NudgeTracker`, `NudgeScheduler`, `NUDGE_TEXT`, `MAX_NUDGES`, `NUDGE_DELAY_SECS`)
+- [x] T011 [US1] Move nudge logic to `order_agent/controller/nudge.py` (`should_nudge`, `NudgeTracker`, `NudgeScheduler`, `NUDGE_TEXT`, `MAX_NUDGES`, `NUDGE_DELAY_SECS`)
   - RED: `tests/test_controller_nudge.py`: names import from `order_agent.controller.nudge`;
     `order_agent.call.should_nudge is order_agent.controller.nudge.should_nudge` (and the same for the
     other five names). Fails: module missing.
@@ -173,7 +173,7 @@ and a browser call (T034).
     is added in T017, not here.
   - Verify: `uv run pytest -q` (existing `tests/test_call.py` unchanged and green).
 
-- [ ] T012 [US1] Move `prompt.py` to `order_agent/controller/prompt.py` (instructions for the LLM belong to the Controller) and leave a shim
+- [x] T012 [US1] Move `prompt.py` to `order_agent/controller/prompt.py` (instructions for the LLM belong to the Controller) and leave a shim
   - RED: `tests/test_controller_prompt.py`: `build_system_prompt` imports from
     `order_agent.controller.prompt`, `order_agent.prompt.build_system_prompt` is the same object, and the
     prompt for the `brief` fixture equals the output of the legacy function (identity covers it).
@@ -181,7 +181,7 @@ and a browser call (T034).
   - GREEN: `git mv`, update import to `order_agent.model.brief`, shim at `order_agent/prompt.py`.
   - Verify: `uv run pytest -q` (existing `tests/test_prompt.py` unchanged and green).
 
-- [ ] T013 [US1] Create `order_agent/controller/session.py`: `CallController` core (constructor, `session`, `transcript`, `add_line`, `instructions`, `opening_text`, `tool_specs`) plus `CallHooks`, `NudgeDecision`, re-export of `ToolOutcome`
+- [x] T013 [US1] Create `order_agent/controller/session.py`: `CallController` core (constructor, `session`, `transcript`, `add_line`, `instructions`, `opening_text`, `tool_specs`) plus `CallHooks`, `NudgeDecision`, re-export of `ToolOutcome`
   - RED: `tests/test_controller_session.py`: `CallController(brief, reports_dir=tmp_path, now=NOW)` exposes
     `session` (an `OrderSession` built with `now`), empty `transcript`, `instructions == build_system_prompt(brief)`,
     `opening_text` equal to today's string ("Nobody has spoken yet. Open the call: greet, say you'd like to
@@ -192,7 +192,7 @@ and a browser call (T034).
   - GREEN: implement per [contracts/controller-api.md](contracts/controller-api.md).
   - Verify: `uv run pytest -q`.
 
-- [ ] T014 [US1] `CallController.attach_hooks(hooks)`: late binding of channel hooks (resolves the voice head's construction cycle)
+- [x] T014 [US1] `CallController.attach_hooks(hooks)`: late binding of channel hooks (resolves the voice head's construction cycle)
   - RED: `tests/test_controller_session.py`: (a) a controller built with `hooks=None` schedules no nudge and
     no opening and `perform("end_call")` does not fail; after `attach_hooks(fake)` the same events inject
     through `fake` and a successful `end_call` calls `fake.hangup()` (use fake sleep); (b) calling
@@ -203,7 +203,7 @@ and a browser call (T034).
     time (not at construction), so no event is lost or double-fired by late attachment.
   - Verify: `uv run pytest -q`.
 
-- [ ] T015 [US1] `CallController.finish` and `drop`: one report, idempotent, concurrency safe, `report` and `report_path` attributes
+- [x] T015 [US1] `CallController.finish` and `drop`: one report, idempotent, concurrency safe, `report` and `report_path` attributes
   - RED: in `tests/test_controller_session.py`, port the cases of `tests/test_call.py` (write once, same
     path on second call, safe under `asyncio.gather` of `finish`, `drop`, `finish`, drop writes
     `call_dropped` with reason `call ended without end_call`, drop after a confirmed order uses
@@ -214,7 +214,7 @@ and a browser call (T034).
     `on_disconnect`.
   - Verify: `uv run pytest -q`.
 
-- [ ] T016 [US1] `CallController.perform`: dispatch, reply-before-end ordering, end-of-call sequence
+- [x] T016 [US1] `CallController.perform`: dispatch, reply-before-end ordering, end-of-call sequence
   - RED: `tests/test_controller_session.py` with a fake `CallHooks` that records calls in a shared list:
     (a) `perform("add_item", ...)` returns the dispatcher outcome and never calls hooks;
     (b) successful `perform("end_call", ..., reply=fake_reply)` records, in this order, `reply`,
@@ -226,7 +226,7 @@ and a browser call (T034).
     pending nudge before `hangup`. `ToolOutcome.run_llm` and `.ended` per [data-model.md](data-model.md).
   - Verify: `uv run pytest -q`.
 
-- [ ] T017 [US1] `CallController` conversation events and nudge scheduling: `restaurant_spoke`, `llm_turn_started`, `function_calls_started`, `llm_turn_ended`
+- [x] T017 [US1] `CallController` conversation events and nudge scheduling: `restaurant_spoke`, `llm_turn_started`, `function_calls_started`, `llm_turn_ended`
   - RED: `tests/test_controller_session.py` with a fake `sleep` and fake hooks:
     (a) empty non-interrupted turn with nothing else returns `NudgeDecision(nudge=True)` and, after the fake
     sleep, `hooks.inject(NUDGE_TEXT)` runs once; (b) a turn with a function call, a non-blank turn, an
@@ -240,7 +240,7 @@ and a browser call (T034).
     handlers. `NudgeDecision.delay_secs` per [data-model.md](data-model.md).
   - Verify: `uv run pytest -q`.
 
-- [ ] T018 [US1] `CallController.channel_opened` (opening timer)
+- [x] T018 [US1] `CallController.channel_opened` (opening timer)
   - RED: `tests/test_controller_session.py` with fake sleep and hooks: (a) after `opening_wait_secs`
     `hooks.inject(opening_text)` runs once; (b) if `restaurant_spoke()` is called first, nothing is
     injected; (c) if the call finished first, nothing is injected; (d) `hooks=None` is a no-op; (e) calling
@@ -248,7 +248,7 @@ and a browser call (T034).
   - GREEN: asyncio task with generation check, like `NudgeScheduler`.
   - Verify: `uv run pytest -q`.
 
-- [ ] T019 [US1] Turn `order_agent/call.py` into a compatibility shim: `CallState` subclasses `CallController`
+- [x] T019 [US1] Turn `order_agent/call.py` into a compatibility shim: `CallState` subclasses `CallController`
   - RED: `tests/test_controller_session.py::test_callstate_shim`: `CallState(brief, Settings(reports_dir=tmp_path), NOW)`
     is a `CallController`, exposes `.settings` and the same `finish`, `on_disconnect`, `add_line`,
     `transcript`, `report_path`; `make_on_end` still importable. The existing `tests/test_call.py` must pass
@@ -260,7 +260,7 @@ and a browser call (T034).
 
 ### Step 4: voice tools (Pipecat schema adapter) with parity proof
 
-- [ ] T020 [US1] Add the voice-head layer to the boundary check; create `order_agent/heads/__init__.py` and `order_agent/heads/voice/__init__.py`
+- [x] T020 [US1] Add the voice-head layer to the boundary check; create `order_agent/heads/__init__.py` and `order_agent/heads/voice/__init__.py`
   - RED: snippets for layer `heads/voice`: `from fastapi import FastAPI`,
     `from order_agent.heads.http_api import x`, `from order_agent.evaltools import x`, and (task-specific
     narrowing for SC-005) `from order_agent.model.rules import OrderSession` and
@@ -272,7 +272,7 @@ and a browser call (T034).
     [contracts/boundaries.md](contracts/boundaries.md), which has no such row yet.
   - Verify: `uv run pytest -q`.
 
-- [ ] T021 [US1] Create `order_agent/heads/voice/tools.py`: `build_tools(controller) -> ToolsSchema` (schemas only)
+- [x] T021 [US1] Create `order_agent/heads/voice/tools.py`: `build_tools(controller) -> ToolsSchema` (schemas only)
   - RED: `tests/test_voice_tools.py`: for a `CallController`, `build_tools(controller).standard_tools` has
     seven `FunctionSchema`s whose `name`, `description`, `properties`, `required` equal both
     `TOOL_SPECS` and the legacy `order_agent.tools.build_tools` output; every schema has a callable handler.
@@ -280,7 +280,7 @@ and a browser call (T034).
     `controller.perform`.
   - Verify: `uv run pytest -q`.
 
-- [ ] T022 [US1] Voice tool handlers: call `controller.perform` with a `reply` that maps `run_llm=False` to `FunctionCallResultProperties`
+- [x] T022 [US1] Voice tool handlers: call `controller.perform` with a `reply` that maps `run_llm=False` to `FunctionCallResultProperties`
   - RED: `tests/test_voice_tools.py` using the `Harness` pattern from `tests/test_tools.py` (SimpleNamespace
     `params` with `arguments` and `result_callback`): exactly one `result_callback` call per tool call
     (including bad args), payload equals `{"ok":..., "message":...}`, successful `end_call` passes
@@ -289,7 +289,7 @@ and a browser call (T034).
   - GREEN: handler per [contracts/controller-api.md](contracts/controller-api.md) "Pipecat schema building".
   - Verify: `uv run pytest -q`.
 
-- [ ] T023 [US1] Parity test between the legacy `order_agent/tools.py` and the new voice tools
+- [x] T023 [US1] Parity test between the legacy `order_agent/tools.py` and the new voice tools
   - RED: `tests/test_tools_parity.py`: build both for identical briefs, run one shared argument matrix
     (every tool, valid and invalid arguments, a refusal such as a forbidden item, an over-budget add, a
     full happy-path sequence ending in `end_call`) through both and assert identical result payloads,
@@ -301,7 +301,7 @@ and a browser call (T034).
 
 ### Step 5: voice pipeline
 
-- [ ] T024 [US1] Move `llm_factory.py` to `order_agent/heads/voice/llm_factory.py` and `llm_http_options` with it; leave shims
+- [x] T024 [US1] Move `llm_factory.py` to `order_agent/heads/voice/llm_factory.py` and `llm_http_options` with it; leave shims
   - RED: `tests/test_voice_llm_factory_home.py`: `build_bot_llm`, `groq_reasoning_effort`, `llm_http_options`
     import from `order_agent.heads.voice.llm_factory`, and the old names (`order_agent.llm_factory.build_bot_llm`,
     `order_agent.call.llm_http_options`) are the same objects.
@@ -309,21 +309,21 @@ and a browser call (T034).
     `order_agent/llm_factory.py` re-export. `tests/test_llm_factory.py` unchanged here.
   - Verify: `uv run pytest -q`.
 
-- [ ] T025 [US1] Move `make_probe` and `PROBE_TIMEOUT_SECS` from `bot.py` to `order_agent/heads/voice/probe.py`
+- [x] T025 [US1] Move `make_probe` and `PROBE_TIMEOUT_SECS` from `bot.py` to `order_agent/heads/voice/probe.py`
   - RED: `tests/test_voice_probe.py`: `make_probe` imports from the new module, `PROBE_TIMEOUT_SECS == 10.0`,
     and `make_probe(Settings(google_api_key=None))` raises `RuntimeError` mentioning `GOOGLE_API_KEY`
     (existing `require_google_key` behaviour; no network, the genai import is lazy).
   - GREEN: move verbatim; `bot.py` imports it from the new location.
   - Verify: `uv run pytest -q`.
 
-- [ ] T026 [US1] Create `order_agent/heads/voice/hooks.py`: `PipecatHooks(context, worker, llm)` implementing `CallHooks`
+- [x] T026 [US1] Create `order_agent/heads/voice/hooks.py`: `PipecatHooks(context, worker, llm)` implementing `CallHooks`
   - RED: `tests/test_voice_hooks.py` with fakes: `await hooks.inject("x")` calls
     `context.add_message({"role": "developer", "content": "x"})` then `worker.queue_frames([...])` with one
     `LLMRunFrame`; `await hooks.hangup()` calls `llm.push_frame` with an `EndWorkerFrame`.
   - GREEN: implement per [contracts/controller-api.md](contracts/controller-api.md) "Voice-head `CallHooks`".
   - Verify: `uv run pytest -q`.
 
-- [ ] T027 [US1] Create `order_agent/heads/voice/bridge.py`: `register_events(transport, user_aggregator, assistant_aggregator, llm, controller, runner, ...)` mapping each Pipecat event to one controller call
+- [x] T027 [US1] Create `order_agent/heads/voice/bridge.py`: `register_events(transport, user_aggregator, assistant_aggregator, llm, controller, runner, ...)` mapping each Pipecat event to one controller call
   - RED: `tests/test_voice_bridge.py` with fake objects whose `event_handler(name)` returns a decorator that
     stores the function, and a fake controller recording calls. Assert the exact mapping of
     [contracts/controller-api.md](contracts/controller-api.md) "Voice head mapping": `on_client_connected`
@@ -336,7 +336,7 @@ and a browser call (T034).
   - GREEN: register the handlers; keep the `logger.info("Transcript ...")` lines as today.
   - Verify: `uv run pytest -q`.
 
-- [ ] T028 [US1] Create `order_agent/heads/voice/pipeline.py` (`run_bot`, `bot`, `transport_params`) built on the controller; reduce root `bot.py` to an entry shim
+- [x] T028 [US1] Create `order_agent/heads/voice/pipeline.py` (`run_bot`, `bot`, `transport_params`) built on the controller; reduce root `bot.py` to an entry shim
   - RED: `tests/test_bot_entry.py`: `import bot` exposes `bot` (coroutine function), `run_bot`,
     `transport_params` with keys `webrtc` and `eval`, `OPENING_WAIT_SECS` no longer defined in `bot.py`
     (controller owns it); `bot.run_bot is order_agent.heads.voice.pipeline.run_bot`; and the pipeline module
@@ -355,7 +355,7 @@ and a browser call (T034).
   - Verify: `uv run pytest -q`, then `uv run python bot.py --help` exits 0 (loads the entry point, no API
     call, no model download).
 
-- [ ] T029 [US1] Migrate `tests/test_tools.py`, `tests/test_tool_registration.py`, `tests/test_llm_factory.py` to the new APIs (stated reason: `build_tools(session, on_end)` is replaced by `build_tools(controller)`; assertions unchanged)
+- [x] T029 [US1] Migrate `tests/test_tools.py`, `tests/test_tool_registration.py`, `tests/test_llm_factory.py` to the new APIs (stated reason: `build_tools(session, on_end)` is replaced by `build_tools(controller)`; assertions unchanged)
   - RED: edit the three files first so they import `order_agent.heads.voice.tools.build_tools` and construct
     a `CallController` in the `Harness` (replace the `on_end` recording with a fake `CallHooks` whose
     `hangup` records into `self.ended`-equivalent). Same assertions, same cases. Run them: they pass
@@ -367,7 +367,7 @@ and a browser call (T034).
   - GREEN: none beyond the test edits.
   - Verify: `uv run pytest -q` (count at least the pre-task count).
 
-- [ ] T030 [US1] Port the two `make_on_end` tests in `tests/test_call.py` to `CallController.perform("end_call")` (stated reason: `make_on_end` is replaced by the controller's end-of-call sequence; research.md R9)
+- [x] T030 [US1] Port the two `make_on_end` tests in `tests/test_call.py` to `CallController.perform("end_call")` (stated reason: `make_on_end` is replaced by the controller's end-of-call sequence; research.md R9)
   - RED: write the ported tests first in `tests/test_controller_session.py` (they may already be partly
     covered by T016; add what is missing): (a) a successful end writes the report and `hooks.hangup()`
     runs; (b) when the report write fails (reports_dir is an existing file), `hangup()` still runs and
@@ -377,20 +377,20 @@ and a browser call (T034).
   - GREEN: none expected; fix `perform` if a case is not yet met.
   - Verify: `uv run pytest -q`; `grep -n make_on_end tests` returns nothing.
 
-- [ ] T031 [US1] Delete legacy voice code: `order_agent/tools.py`, `tests/test_tools_parity.py`, `make_on_end` in `call.py`, and unused imports
+- [x] T031 [US1] Delete legacy voice code: `order_agent/tools.py`, `tests/test_tools_parity.py`, `make_on_end` in `call.py`, and unused imports
   - RED: `tests/test_architecture.py::test_legacy_tools_module_gone` asserts `order_agent/tools.py` does not
     exist and `order_agent.call` has no `make_on_end`; fails until the deletion.
   - GREEN: delete them; `grep -rn "order_agent.tools\|make_on_end" .` must return nothing outside specs and docs.
   - Verify: `uv run pytest -q`.
 
-- [ ] T032 [US1] Review checkpoint (SC-005, no code): voice head contains zero business rules
+- [x] T032 [US1] Review checkpoint (SC-005, no code): voice head contains zero business rules
   - Verify: `grep -rnE "Decimal|OrderSession|match_line|should_nudge|NudgeTracker" order_agent/heads/voice bot.py`
     returns no logic hits (type-only mentions in comments are acceptable and must be listed in the review
     note); the boundary test passes; the reviewer ticks each row of the mapping table in
     [contracts/controller-api.md](contracts/controller-api.md) against `bridge.py`. Findings go to the PR
     description, not to a new file.
 
-- [ ] T033 [US1] LIVE VERIFICATION, REQUIRES THE USER'S EXPLICIT GO-AHEAD (uses API quota; do not run without it): `happy_path` eval with the default setup (SC-004)
+- [x] T033 [US1] LIVE VERIFICATION, REQUIRES THE USER'S EXPLICIT GO-AHEAD (uses API quota; do not run without it): `happy_path` eval with the default setup (SC-004)
   - Prerequisite: T001 to T032 merged on the branch with a green suite. Ask the user and wait for a yes.
   - Run: `PYTHONIOENCODING=utf-8 uv run python run_suite.py --only happy_path` (see
     [quickstart.md](quickstart.md) section 5).
@@ -418,7 +418,7 @@ and a browser call (T034).
 **Independent Test**: scripted `happy_path`-equivalent through the HTTP head with the import-budget test
 proving no speech stack loaded (SC-003).
 
-- [ ] T035 [US2] Declare `fastapi` and `uvicorn` in `pyproject.toml` at the versions already in `uv.lock` (research R5)
+- [x] T035 [US2] Declare `fastapi` and `uvicorn` in `pyproject.toml` at the versions already in `uv.lock` (research R5)
   - RED: `tests/test_http_deps.py`: `fastapi.testclient.TestClient` and `uvicorn` import; and
     `pyproject.toml` text lists `fastapi` and `uvicorn` under `dependencies` (parse with `tomllib`).
   - GREEN: add `"fastapi==0.165.0"` and `"uvicorn"` (match the locked uvicorn version) to `dependencies`;
@@ -426,7 +426,7 @@ proving no speech stack loaded (SC-003).
   - Verify: `git diff uv.lock` shows only project-metadata dependency lines (no new or upgraded packages),
     `uv run pytest -q`.
 
-- [ ] T036 [US2] Create `order_agent/heads/http_api/store.py` and `schemas.py` (`SessionStore`, request and response models)
+- [x] T036 [US2] Create `order_agent/heads/http_api/store.py` and `schemas.py` (`SessionStore`, request and response models)
   - RED: `tests/test_http_store.py`: `create` returns a 32-char hex id and a `CallController`; `get` of an
     unknown id raises the store's `NotFound`; `delete` removes; two creates yield different controllers with
     different `OrderSession` objects; creating beyond `max_sessions` raises `TooManySessions`; pydantic
@@ -435,7 +435,7 @@ proving no speech stack loaded (SC-003).
   - GREEN: implement `SessionStore(max_sessions=100)` and the models in `schemas.py`.
   - Verify: `uv run pytest -q`.
 
-- [ ] T037 [US2] Create `order_agent/heads/http_api/app.py` skeleton: `create_app`, `GET /health`, uniform error body; add the `heads/http_api` rules to the boundary check
+- [x] T037 [US2] Create `order_agent/heads/http_api/app.py` skeleton: `create_app`, `GET /health`, uniform error body; add the `heads/http_api` rules to the boundary check
   - RED: `tests/test_http_head.py`: `GET /health` returns 200 `{"status":"ok"}`; an invalid body to any
     route returns 422 with `{"error":{"code":"validation_error","message":...}}`; architecture snippets for
     layer `heads/http_api`: `import pipecat`, `import torch`, `from order_agent.heads.voice import x`,
@@ -446,7 +446,7 @@ proving no speech stack loaded (SC-003).
     ready (409 `report_not_ready`), too many (429 `too_many_sessions`), request validation (422).
   - Verify: `uv run pytest -q`.
 
-- [ ] T038 [US2] `POST /sessions` in `order_agent/heads/http_api/app.py`
+- [x] T038 [US2] `POST /sessions` in `order_agent/heads/http_api/app.py`
   - RED: `tests/test_http_head.py`: inline `brief` returns 201 with `session_id`, `instructions` equal to
     `build_system_prompt(brief)`, `opening_text`, and 7 `tools`; `brief_name: "example"` loads
     `briefs/example.yaml`; `call_time` overrides; 422 for both or neither brief field, for an unknown or
@@ -454,14 +454,14 @@ proving no speech stack loaded (SC-003).
   - GREEN: implement with `load_brief` from the model layer and the controller built with `hooks=None`.
   - Verify: `uv run pytest -q`.
 
-- [ ] T039 [US2] `GET /sessions/{id}`
+- [x] T039 [US2] `GET /sessions/{id}`
   - RED: `tests/test_http_head.py`: returns `state` `live`, `order_state` `open`, `transcript_lines` 0,
     `report_ready` false for a new session; `confirmed` after a confirm action; 404 with the error body for
     an unknown id.
   - GREEN: implement from controller attributes only.
   - Verify: `uv run pytest -q`.
 
-- [ ] T040 [US2] `POST /sessions/{id}/actions`
+- [x] T040 [US2] `POST /sessions/{id}/actions`
   - RED: `tests/test_http_head.py`: a valid `add_item` returns 200 `{"ok":true,...,"ended":false}`; a
     forbidden item and an over-budget add return 200 with `ok:false` and the same message text the
     dispatcher gives; bad arguments return 200 `ok:false` `Refused: ...`; unknown `tool` returns 422; unknown
@@ -470,13 +470,13 @@ proving no speech stack loaded (SC-003).
   - GREEN: delegate to `controller.perform(tool, arguments)`; validate the tool name against `tool_specs()`.
   - Verify: `uv run pytest -q`.
 
-- [ ] T041 [US2] `POST /sessions/{id}/transcript`
+- [x] T041 [US2] `POST /sessions/{id}/transcript`
   - RED: `tests/test_http_head.py`: 204 and `transcript_lines` increments; blank text or bad role 422;
     unknown 404; closed 409.
   - GREEN: delegate to `controller.add_line`.
   - Verify: `uv run pytest -q`.
 
-- [ ] T042 [US2] `POST /sessions/{id}/end`, `GET /sessions/{id}/report`, `DELETE /sessions/{id}`
+- [x] T042 [US2] `POST /sessions/{id}/end`, `GET /sessions/{id}/report`, `DELETE /sessions/{id}`
   - RED: `tests/test_http_head.py`: `end` on a live session writes a `call_dropped` report and returns the
     report body (same shape as `GET .../report`: `report`, `summary`, `report_path`, where `report_path` is
     relative to the reports dir and never absolute, `ReportResponse.report_path` in
@@ -487,7 +487,7 @@ proving no speech stack loaded (SC-003).
   - GREEN: delegate to `controller.drop()`, `controller.report`, `summarise`.
   - Verify: `uv run pytest -q`.
 
-- [ ] T043 [US2] Isolation test for concurrent sessions (FR-007)
+- [x] T043 [US2] Isolation test for concurrent sessions (FR-007)
   - RED: `tests/test_http_head.py::test_two_sessions_do_not_leak`: create two sessions from different
     briefs, interleave actions (add items to A, lock a price in B, set fees in A), run both to a report with
     `asyncio.gather`/`httpx.AsyncClient`, assert carts, price locks, transcripts and report files are
@@ -497,7 +497,7 @@ proving no speech stack loaded (SC-003).
   - GREEN: should pass if the earlier tasks are correct; if not, fix the store or controller (no shared state).
   - Verify: `uv run pytest -q`.
 
-- [ ] T044 [US2] Scripted `happy_path`-equivalent order through the HTTP head (SC-003)
+- [x] T044 [US2] Scripted `happy_path`-equivalent order through the HTTP head (SC-003)
   - RED: `tests/test_http_happy_path.py`: read the `happy_path` brief and expected order from
     `evals/expected.yaml` and `evals/scenarios/happy_path.yaml`, start a session, send the actions an LLM
     would (add items with stated prices, `set_fees`, `confirm_order` with the quoted total and minutes,
@@ -509,7 +509,7 @@ proving no speech stack loaded (SC-003).
   - GREEN: fix any gap found.
   - Verify: `uv run pytest -q`.
 
-- [ ] T045 [US2] Import-budget test: the HTTP head loads no speech or Pipecat modules (FR-007)
+- [x] T045 [US2] Import-budget test: the HTTP head loads no speech or Pipecat modules (FR-007)
   - RED: `tests/test_http_import_budget.py` runs `python -I -c "import order_agent.heads.http_api.app, sys; ..."`
     in a subprocess (`sys.executable`) and asserts none of `pipecat`, `torch`, `faster_whisper`, `kokoro`,
     `google.genai`, `openai` is in `sys.modules`. If it passes at once, first run it against a throwaway
@@ -518,7 +518,7 @@ proving no speech stack loaded (SC-003).
     `store.py`).
   - Verify: `uv run pytest -q`.
 
-- [ ] T046 [US2] `order_agent/heads/http_api/__main__.py`: run with uvicorn on `127.0.0.1`, `--port` option
+- [x] T046 [US2] `order_agent/heads/http_api/__main__.py`: run with uvicorn on `127.0.0.1`, `--port` option
   - RED: `tests/test_http_main.py`: `build_parser().parse_args([])` gives `host == "127.0.0.1"` and port 8000;
     `main(["--port","9001"], serve=fake)` calls `fake(app, host="127.0.0.1", port=9001)`; there is no
     `--host` option (local-only, spec assumption). Reports dir comes from `load_settings().reports_dir`
@@ -541,7 +541,7 @@ proving no speech stack loaded (SC-003).
 **Independent Test**: add a forbidden import on a scratch edit and watch the check fail (T055); remove it
 and watch it pass.
 
-- [ ] T048 [US3] Move `eval_config.py` and `preflight.py` to `order_agent/evaltools/`; update importers
+- [x] T048 [US3] Move `eval_config.py` and `preflight.py` to `order_agent/evaltools/`; update importers
   - RED: add the `evaltools` layer to the boundary check (snippets: `from order_agent.controller import x`,
     `from order_agent.heads.voice import x` violate; `import pipecat`, `import yaml`,
     `from order_agent.model.report import CallReport` do not), and `tests/test_evaltools_home.py` asserting
@@ -551,7 +551,7 @@ and watch it pass.
     `tests/test_preflight.py` imports (stated reason: module moved; no assertion changed). No shim.
   - Verify: `uv run pytest -q` and `uv run python run_suite.py --help` exits 0.
 
-- [ ] T049 [US3] Move `throttle.py` and `eval_llm.py` to `order_agent/evaltools/`; update importers
+- [x] T049 [US3] Move `throttle.py` and `eval_llm.py` to `order_agent/evaltools/`; update importers
   - RED: `tests/test_evaltools_home.py` extended: `Throttle`, `is_rate_limit_error`, `gemini_llm` import from
     the new paths; and a compat test (FR-010): for every `factory:` value in `evals/judge*.yaml` and
     `evals/simulator*.yaml` (parse with `yaml`), `importlib` resolves it (module `order_agent.eval_llm`,
@@ -564,13 +564,13 @@ and watch it pass.
     any, `tests/test_eval_llm.py`, `tests/test_throttle.py`) to the new paths (stated reason: module moved).
   - Verify: `uv run pytest -q`.
 
-- [ ] T050 [US3] Move `suite.py` to `order_agent/evaltools/suite.py`; update importers
+- [x] T050 [US3] Move `suite.py` to `order_agent/evaltools/suite.py`; update importers
   - RED: `tests/test_evaltools_home.py` extended for `load_expected`, `rescore_run`, `render_summary` etc.
   - GREEN: `git mv`, update `run_suite.py`, `tests/test_suite.py`, `tests/test_persona_totals.py` imports
     (stated reason: module moved), and its imports of `brief`, `matching`, `report` to `order_agent.model.*`.
   - Verify: `uv run pytest -q`.
 
-- [ ] T051 [US3] Point every remaining consumer at the new module paths (no shim users left)
+- [x] T051 [US3] Point every remaining consumer at the new module paths (no shim users left)
   - RED: `tests/test_architecture.py::test_no_imports_of_legacy_shims` fails while any file under `tests/`,
     `run_suite.py`, `bot.py` or `order_agent/` imports `order_agent.{brief,matching,rules,report,prompt,call,llm_factory}`
     (ast scan of the repo, excluding the shim files themselves).
@@ -580,7 +580,7 @@ and watch it pass.
     `order_agent/**`. Stated reason in the commit: modules moved; no assertion edited.
   - Verify: `uv run pytest -q`.
 
-- [ ] T052 [US3] Delete the shims and make classification strict
+- [x] T052 [US3] Delete the shims and make classification strict
   - RED: set `LEGACY_FLAT = set()` in `tests/architecture.py`, allow only `order_agent/eval_llm.py` as a
     compat module and add a test that it contains only re-export `ImportFrom` statements and `__all__`
     (ast); `test_every_module_is_classified` now fails because the shim files
@@ -591,7 +591,7 @@ and watch it pass.
   - Verify: `uv run pytest -q`; `ls order_agent` shows only `__init__.py`, `config.py`, `eval_llm.py` (compat),
     `model/`, `controller/`, `heads/`, `evaltools/`.
 
-- [ ] T053 [US3] Runtime import-graph test for Model and Controller
+- [x] T053 [US3] Runtime import-graph test for Model and Controller
   - RED: `tests/test_architecture.py::test_runtime_import_graph`: a `python -I` subprocess imports
     `order_agent.model` modules and `order_agent.controller` and asserts none of `pipecat`, `fastapi`,
     `starlette`, `uvicorn`, `google`, `openai`, `torch` is in `sys.modules`
@@ -599,14 +599,14 @@ and watch it pass.
   - GREEN: fix any transitive leak found (should be none).
   - Verify: `uv run pytest -q`.
 
-- [ ] T054 [US3] Rescore verification on a copy of committed evidence (no API calls, FR-010)
+- [x] T054 [US3] Rescore verification on a copy of committed evidence (no API calls, FR-010)
   - Run: copy the most recent directory in `evals/results/` that has attempt report JSON to the scratchpad,
     run `uv run python run_suite.py --rescore <copy>`, diff the regenerated `summary.md` against the
     original (it rewrites in place, hence the copy). Expect identical classifications; only the title line
     mentioning "rescored" may differ. Report any other difference and stop. No commit unless a code fix is
     needed.
 
-- [ ] T055 [US3] Demonstrate the boundary check failing (acceptance scenario for US3), uncommitted
+- [x] T055 [US3] Demonstrate the boundary check failing (acceptance scenario for US3), uncommitted
   - Steps: add `import pipecat` to `order_agent/model/rules.py`, run `uv run pytest tests/test_architecture.py -q`,
     expect a failure naming `order_agent/model/rules.py` and `pipecat`; repeat with `import fastapi` in
     `order_agent/controller/session.py`; revert both with `git checkout -- <file>`; rerun and expect pass.
@@ -618,7 +618,7 @@ and watch it pass.
 
 ## Phase 6: Polish and cross-cutting (Step 8)
 
-- [ ] T056 Add the architecture section to `README.md` (FR-011, SC-006)
+- [x] T056 Add the architecture section to `README.md` (FR-011, SC-006)
   - RED: `tests/test_readme_architecture.py`: README contains the headings "Architecture", "Add a new head",
     mentions each of `order_agent/model`, `order_agent/controller`, `order_agent/heads/voice`,
     `order_agent/heads/http_api`, `order_agent/evaltools`, and names every `.py` file under those
@@ -627,7 +627,7 @@ and watch it pass.
     head run command, and "how to add a head" (steps from [contracts/boundaries.md](contracts/boundaries.md)).
   - Verify: `uv run pytest -q`.
 
-- [ ] T057 Update README "Project layout", "Unit tests" and command lines to match the new tree; update only numbers that changed
+- [x] T057 Update README "Project layout", "Unit tests" and command lines to match the new tree; update only numbers that changed
   - RED: extend `tests/test_readme_architecture.py`: the old layout block lines (`rules.py  the rules engine`
     at the flat path, `call.py`) are gone, and the README's "Unit tests" row (currently `285 passing`, stale
     against the 366 baseline) equals the count from `uv run pytest --collect-only -q` after all tasks
@@ -636,7 +636,7 @@ and watch it pass.
   - GREEN: edit `README.md` only; leave results tables and other evidence numbers untouched.
   - Verify: `uv run pytest -q`.
 
-- [ ] T058 Final verification and requirement checklist (no new code)
+- [x] T058 Final verification and requirement checklist (no new code)
   - Verify: `uv run pytest -q` all green and count at least 366 plus the new tests; `uv run python bot.py --help`
     and `uv run python run_suite.py --help` exit 0; `git diff main...HEAD | grep -nE 'gsk_|AIza|org_[A-Za-z0-9]{16,}'`
     empty; `git log --oneline` shows only green, single-purpose commits; list the changed existing tests with

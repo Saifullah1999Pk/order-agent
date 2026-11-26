@@ -58,3 +58,8 @@ def test_readme_unit_test_count_matches_collection():
     ).stdout
     count = int(re.search(r"(\d+) tests? collected", out).group(1))
     assert f"| Unit tests | {count} passing |" in README
+
+
+def test_readme_names_modules_outside_the_layers():
+    assert "order_agent/config.py" in README
+    assert "order_agent/eval_llm.py" in README

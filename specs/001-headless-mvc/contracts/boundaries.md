@@ -65,4 +65,4 @@ table is applied only to directories that exist; step 7 requires all of them.
 1. Create `order_agent/heads/<name>/`.
 2. Build a `CallController(brief, reports_dir=..., hooks=<your CallHooks or None>)`.
 3. Translate channel events into the controller calls listed in `controller-api.md`.
-4. Add the head to `LAYERS` in `tests/test_architecture.py` with its allowed third-party packages.
+4. Add the head to `LAYERS` in `tests/architecture.py` with its allowed third-party packages.

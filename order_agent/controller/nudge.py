@@ -28,7 +28,7 @@ NUDGE_DELAY_SECS = 3.0
 
 
 class NudgeTracker:
-    """The flags behind the empty-reply nudge. bot.py calls these from its event handlers.
+    """The flags behind the empty-reply nudge. CallController calls these from its event handlers.
 
     "Restaurant spoke" means: after the current LLM run started. A restaurant turn that this
     run is answering does not count, so an empty answer to their question is still nudged.

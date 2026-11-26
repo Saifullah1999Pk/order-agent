@@ -59,7 +59,7 @@ Each test call involves three roles:
 | Since then | Fixed the simulated restaurant hanging up early and the agent's minimum-order handling. In the 2026-11-25 hybrid run ([evidence](evals/confirmation/hybrid-2026-11-25/README.md)), `minimum_reachable` and `staff_asks_details` passed on their first attempt, judged by the throttled Gemini judge (`evals/judge-gemini-throttled.yaml`) because the default Groq judge timed out on Groq's per-minute token cap. In the same run `happy_path` failed on the judge's conduct score (correct order, no rule violations) and `terse_staff` did not pass (a bot bug: it rewrote its order to match a wrong total the restaurant insisted on). |
 | Latency (end of speech to bot speaking) | Median 2.73 s, P90 3.64 s (n=28, bot on Groq, audio runs) |
 | Local LLM (Ollama, `qwen3:8b`) | Good as the simulated restaurant (2 wrong-total slips in 7 calls, never hung up early). Not reliable as the bot (it invented prices) or the judge. |
-| Unit tests | 673 passing |
+| Unit tests | 674 passing |
 
 Full write-up, with every number linked to its evidence: [docs/results-v1.md](docs/results-v1.md).
 
@@ -215,7 +215,7 @@ The code is split into layers so the rules and the conversation logic can be use
 | `order_agent/controller/nudge.py` | Controller | When to nudge the agent after an empty reply |
 | `order_agent/heads/voice/pipeline.py` | Voice head | Pipecat pipeline: speech to text, LLM, text to speech |
 | `order_agent/heads/voice/bridge.py` | Voice head | Maps each Pipecat event to one Controller call |
-| `order_agent/heads/voice/hooks.py` | Voice head | The two things only the pipeline can do (speak, nudge) |
+| `order_agent/heads/voice/hooks.py` | Voice head | The two things only the pipeline can do (`inject`: speak a developer message and run the LLM, used for the opening and nudges; `hangup`) |
 | `order_agent/heads/voice/tools.py` | Voice head | Pipecat tool schemas built from the Controller's specs |
 | `order_agent/heads/voice/llm_factory.py` | Voice head | Builds the agent's LLM (Gemini, Groq or Ollama) |
 | `order_agent/heads/voice/probe.py` | Voice head | Gemini availability probe run before the call |
@@ -247,6 +247,8 @@ No voice, no API keys, no LLM: you play the agent by sending requests. It listen
 uv run python -m order_agent.heads.http_api
 ```
 
+Start it from the repo root: `brief_name` loads `briefs/<name>.yaml` relative to the current directory.
+
 The endpoints are described in [specs/001-headless-mvc/contracts/http-api.md](specs/001-headless-mvc/contracts/http-api.md).
 
 ### Add a new head
@@ -273,6 +275,7 @@ order_agent/
   (every module is listed in the Architecture section above)
 briefs/                order briefs
 evals/                 scenarios, expected outcomes, model configs, committed evidence
+specs/                 feature spec, plan, tasks and contracts (specs/001-headless-mvc/); .specify/ holds the spec tooling
 docs/                  design spec, implementation plan, results write-up
 spike/                 early go/no-go experiment (kept as evidence)
 tests/                 unit tests
