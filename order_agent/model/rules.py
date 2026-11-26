@@ -332,17 +332,40 @@ class OrderSession:
                 out.append(f"{line.item}: need {line.quantity}, have {have}")
         return out
 
-    def confirm_order(self, quoted_total_pkr: Decimal, delivery_minutes: int) -> ToolResult:
+    def confirm_order(self, quoted_total_pkr: Decimal, delivery_minutes: int, restaurant_items: list[tuple[str, int]] | None = None) -> ToolResult:
         args = {"quoted_total_pkr": quoted_total_pkr, "delivery_minutes": delivery_minutes}
-        return self._record("confirm_order", args, self._confirm_order(quoted_total_pkr, delivery_minutes))
+        if restaurant_items is not None:
+            args["restaurant_items"] = restaurant_items
+        return self._record("confirm_order", args, self._confirm_order(quoted_total_pkr, delivery_minutes, restaurant_items))
 
-    def _confirm_order(self, quoted: Decimal, minutes: int) -> ToolResult:
+    def _readback_differences(self, restaurant_items: list[tuple[str, int]]) -> list[str]:
+        """Differences between what the restaurant read back and the cart, as '<item>: restaurant n, order m'."""
+        said: dict[frozenset[str], list] = {}  # matched name -> [display name, quantity]
+        for name, quantity in restaurant_items:
+            said.setdefault(normalise(name), [name, 0])[1] += quantity
+        held: dict[frozenset[str], list] = {}
+        for item in self.items:
+            held.setdefault(normalise(item.name), [item.name, 0])[1] += item.quantity
+        out = []
+        for key in [*held, *(k for k in said if k not in held)]:
+            name = held[key][0] if key in held else said[key][0]
+            heard, ordered = said.get(key, [name, 0])[1], held.get(key, [name, 0])[1]
+            if heard != ordered:
+                out.append(f"{name}: restaurant {heard}, order {ordered}")
+        return out
+
+    def _confirm_order(self, quoted: Decimal, minutes: int, restaurant_items: list[tuple[str, int]] | None = None) -> ToolResult:
         if self.state != "open":
             return _closed(self.state, "the order")
         if not isinstance(quoted, Decimal) or not quoted.is_finite() or quoted <= 0:
             return ToolResult(False, "Refused: the quoted total must be a number greater than zero. Ask the restaurant to repeat the total.")
         if not isinstance(minutes, int) or isinstance(minutes, bool) or minutes < 1:
             return ToolResult(False, "Refused: delivery time must be a whole number of minutes, at least 1 (use the latest end of a range). Ask the restaurant how long it will take.")
+
+        if restaurant_items is not None:
+            differences = self._readback_differences(restaurant_items)
+            if differences:
+                return ToolResult(False, f"Refused: the restaurant's read-back does not match your order ({'; '.join(differences)}). Politely correct the restaurant with your order's items and quantities. Do not change the order to match; then confirm again with their read-back.")
 
         missing = self.missing_lines()
         if missing:
