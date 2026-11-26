@@ -1606,9 +1606,11 @@ name = "order-agent"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "fastapi" },
     { name = "pipecat-ai", extra = ["cli", "google", "kokoro", "openai", "runner", "webrtc", "whisper"] },
     { name = "python-dotenv" },
     { name = "pyyaml" },
+    { name = "uvicorn" },
 ]
 
 [package.dev-dependencies]
@@ -1619,9 +1621,11 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "fastapi", specifier = "==0.165.0" },
     { name = "pipecat-ai", extras = ["google", "openai", "webrtc", "runner", "silero", "whisper", "kokoro", "cli"], specifier = "==1.17.0" },
     { name = "python-dotenv" },
     { name = "pyyaml" },
+    { name = "uvicorn", specifier = "==0.54.0" },
 ]
 
 [package.metadata.requires-dev]
