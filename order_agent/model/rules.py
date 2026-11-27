@@ -94,6 +94,16 @@ class OrderSession:
     def _has_unpriced(self) -> bool:
         return any(i.unit_price_pkr is None for i in self.items)
 
+    def _stated_floor(self) -> Decimal:
+        """What is known plus, for unpriced cart items, the price the restaurant stated but that was refused
+        as over budget (FR-015). The restaurant's total can be no lower than this."""
+        stated = Decimal(0)
+        for item in self.items:
+            locked = self._price_lock.get(normalise(item.name))
+            if item.unit_price_pkr is None and locked:
+                stated += item.quantity * locked[1]
+        return self.cart_total() + stated
+
     def cart_total_known(self) -> bool:
         """The cart total is only honest to sum when every item has a price and the fees were set."""
         return self._fees_set and not self._has_unpriced()
@@ -241,11 +251,13 @@ class OrderSession:
 
         # Budget: only what is known. An unpriced add costs nothing we can count yet.
         new_total = self.cart_total() + reprice + (quantity * eff if eff is not None else Decimal(0))
+        if price is not None:
+            # Lock the stated price before the budget check (FR-015): an over-budget price is still the
+            # price, and must not be replaced by one worked out from the budget.
+            self._price_lock[key] = (name, price)
         if new_total > self.brief.budget_pkr:
             return self._over_budget(f"adding {quantity} x {name}", new_total, line, name)
 
-        if price is not None and (locked is None or locked[1] != price):
-            self._price_lock[key] = (name, price)
         if existing:
             existing.unit_price_pkr = eff
             existing.quantity += quantity
@@ -272,12 +284,12 @@ class OrderSession:
         locked = self._price_lock.get(key)
         if locked and locked[1] != price and not corrected:
             return ToolResult(False, f"Refused: The restaurant already said {locked[0]} is {_fmt(locked[1])} PKR. Do not change prices to make a total match. Ask the restaurant to read out each item's price; if they clearly say the price changed, call set_price with price_corrected=true.")
+        self._price_lock[key] = (item.name, price)  # locked even if refused as over budget below (FR-015)
         old = item.unit_price_pkr
         new_total = self.cart_total() + item.quantity * (price - (old or Decimal(0)))
         if new_total > self.brief.budget_pkr:
             return self._over_budget(f"pricing {item.name} at {_fmt(price)} PKR each", new_total, None, item.name)
         item.unit_price_pkr = price
-        self._price_lock[key] = (item.name, price)
         return ToolResult(True, f"Price recorded: {item.name} at {_fmt(price)} PKR each. " + self._total_text() + self._minimum_hint())
 
     def remove_item(self, name: str) -> ToolResult:
@@ -407,6 +419,9 @@ class OrderSession:
             # and it cannot be lower than what is already recorded.
             if quoted < total:
                 return ToolResult(False, f"Refused: The restaurant's total (Rs {_fmt(quoted)}) is less than the prices already recorded. Ask them to check the total.")
+            floor = self._stated_floor()
+            if quoted < floor:
+                return ToolResult(False, f"Refused: Rs {_fmt(quoted)} is less than the prices the restaurant already stated ({_fmt(floor)} PKR with the recorded fees). Never confirm a total the restaurant did not say. If they will not lower the price, end the call as not_ordered.")
             if quoted > self.brief.budget_pkr:
                 return ToolResult(False, f"Refused: the restaurant's total of {_fmt(quoted)} PKR is over your budget of {_fmt(self.brief.budget_pkr)} PKR. Ask whether something can be cheaper; otherwise end the call as not_ordered.")
         elif quoted != total:

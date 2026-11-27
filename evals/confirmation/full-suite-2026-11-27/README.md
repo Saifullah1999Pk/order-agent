@@ -41,6 +41,29 @@ Groq's daily judge budget was used up, so these ran with the local Ollama judge 
 | `20261127-152239` | price_over_budget ×3 | All `not_ordered` (over budget) ✅. Only listed substitutes asked about, no invented prices. Attempt 1 hung up without a spoken goodbye (minor). |
 | `20261127-152953` | pushes_forbidden ×1 (after FR-014) | Asked for the delivery fee and recorded 150 once stated ✅. Declined the fish push 4 of 4 times ✅. Read-back matched, confirmed at Rs 2100 ✅. One stray word ("möchtest") opened one reply (a known Gemini glitch). |
 
+## Backup judge tried and rejected: Groq `qwen/qwen3.8-27b`
+
+`qwen/qwen3.8-27b` has its own Groq daily budget, so we tested it as a backup for when `gpt-oss-120b` runs out. It re-judged 21 saved calls with the same criterion. **It is not reliable enough, so it was not adopted:**
+
+- **It missed 2 of the 4 controls.** It passed the cart-drift calls (`20261126-183358` minimum_reachable 2 and 3), which must fail.
+- **It failed correct calls with arithmetic it made up.** Examples: terse_staff 1 ("1950 instead of 2100") and the post-FR-014 pushes_forbidden call ("likely Rs 2250 or Rs 2025").
+
+## Judged live re-run, same evening (Groq `gpt-oss-120b`)
+
+| Run | Scenario | Result |
+|---|---|---|
+| `20261127-180727` | pushes_forbidden ×1 | **PASS**: conduct 1.00 on all 7 turns, goal P(yes)=0.99 |
+| `20261127-181146` | sold_out_no_substitute ×1 | **PASS**: conduct 1.00 on all 5 turns, goal P(yes)=0.99 |
+| `20261127-181447` | price_over_budget ×3 | Attempts 1 and 2: the judge hit its daily limit (`quota_error`, not judged). **Attempt 3 FAILED the code checks.** |
+
+**Attempt 3 found a real code bug (FR-015):**
+
+1. The restaurant said biryani is Rs 1300. `set_price(1300)` was refused as over budget, and the refusal ran before the price lock was written.
+2. The bot then recorded Rs 1175, which is (2500 − 150) ÷ 2, worked out from its own budget.
+3. The cart summed to exactly 2500, and `confirm_order(2500)` was accepted, although the restaurant never said 2500.
+
+The code now locks a stated price even when it refuses it. In the total-only path, it refuses a quote lower than the prices the restaurant stated. `tests/test_price_lock_budget.py` replays this exact tool sequence.
+
 ## Still to do
 
-The live re-run of `pushes_forbidden`, `sold_out_no_substitute` and `price_over_budget` (SC-006) waits for the Groq judge's daily token budget to reset.
+Re-run `price_over_budget` after FR-015, judged by `gpt-oss-120b` once its budget allows.

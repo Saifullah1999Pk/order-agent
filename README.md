@@ -62,7 +62,7 @@ Each test call involves three roles:
 | Full suite 2026-11-27 (spec 002, order fidelity) | **10 of 11 passed** ([evidence](evals/confirmation/full-suite-2026-11-27/README.md)). `minimum_reachable` now passes, and nothing regressed. Of the 12 failed attempts, 7 were the judge misreading the conduct rule, which has since been reworded and checked against known-bad calls. 4 were agent weaknesses: ignoring a pushed item, inventing a delivery fee of 0, and asking for dishes outside its brief. 1 was the simulated restaurant hanging up. The agent weaknesses were fixed and re-tested live, with transcripts read by hand. A judged re-run waits for Groq's daily token budget. |
 | Latency (end of speech to bot speaking) | Median 2.73 s, P90 3.64 s (n=28, bot on Groq, audio runs) |
 | Local LLM (Ollama, `qwen3:8b`) | Good as the simulated restaurant (2 wrong-total slips in 7 calls, never hung up early). Not reliable as the bot (it invented prices) or the judge. |
-| Unit tests | 736 passing |
+| Unit tests | 740 passing |
 
 Full write-up, with every number linked to its evidence: [docs/results-v1.md](docs/results-v1.md).
 

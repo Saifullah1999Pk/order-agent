@@ -112,11 +112,20 @@ The full live run on this branch (`evals/results/20261127-130223`) passed 10 of 
 - **FR-014**: `set_fees` MUST accept the delivery fee and the tax each on its own; neither is required, and giving neither is one refusal. A fee that is not given stays unknown: the fees count as set only once both are known, so the cart total stays unknown until then. The tool description MUST NOT say "use 0 if none". It tells the bot to give only the fees the restaurant stated and that "including delivery" is not a fee. A stated fee still cannot change without `corrected=true`.
   - Root cause: the live re-test of `pushes_forbidden` (`evals/results/20261127-151755`, attempt 1) recorded fee 0 again after the prompt fix.
   - The old schema required both values and said "use 0 if none", so a bot that knew only the tax had to invent a fee.
+- **FR-015**: A price the restaurant stated MUST be locked even when the tool call is refused as over budget (`set_price`, and `add_item` when its refusal is the budget). In the total-only path, `confirm_order` MUST refuse a quote lower than the known total plus the stated, locked price of each unpriced item. A genuine price change still works with `price_corrected=true`.
+  - Root cause: in the judged re-run (`evals/results/20261127-181447/price_over_budget`, attempt 3), the restaurant said chicken biryani is Rs 1300. `set_price(1300)` was refused as over budget before the lock was written.
+  - The bot then set Rs 1175 (= (2500 − 150) ÷ 2, worked out from the budget). The cart summed to exactly 2500, and `confirm_order(2500)` was accepted. The restaurant never said 2500. The suite's code check caught it.
+  - Tests: `tests/test_price_lock_budget.py`, which includes a replay of that call's exact tool sequence.
 - **SC-005**: Re-judging saved attempts offline with the FR-013 criterion MUST still fail every known-bad control attempt: the two total-anchoring attempts (`20261126-162641` minimum_reachable 2 and 3) and the two cart-drift attempts (`20261126-183358` minimum_reachable 2 and 3).
   - Result: all four still fail.
   - Of the seven misjudged attempts, five now pass; one remaining failure is the out-of-brief question that FR-012 addresses.
   - Evidence: `evals/confirmation/full-suite-2026-11-27/`.
 - **SC-006**: A live re-run of `pushes_forbidden`, `sold_out_no_substitute` and `price_over_budget` with the FR-010 to FR-013 changes. This needs the Groq judge's daily token budget, which the run and the re-judge exhausted on 2026-11-27, so it waits for the next window.
+  - Partial result, 2026-11-27 evening (`gpt-oss-120b`):
+    - `pushes_forbidden` 1/1 PASS (`20261127-180727`).
+    - `sold_out_no_substitute` 1/1 PASS (`20261127-181146`).
+    - `price_over_budget` 3 attempts (`20261127-181447`): attempts 1 and 2 hit the judge's daily limit (`quota_error`, unjudged); attempt 3 FAILED the code checks and led to FR-015.
+  - `price_over_budget` must be re-run after FR-015.
 
 ### Known limitations (recorded, not fixed)
 
