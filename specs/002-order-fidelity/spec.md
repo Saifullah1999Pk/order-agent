@@ -116,6 +116,11 @@ The full live run on this branch (`evals/results/20261127-130223`) passed 10 of 
   - Root cause: in the judged re-run (`evals/results/20261127-181447/price_over_budget`, attempt 3), the restaurant said chicken biryani is Rs 1300. `set_price(1300)` was refused as over budget before the lock was written.
   - The bot then set Rs 1175 (= (2500 − 150) ÷ 2, worked out from the budget). The cart summed to exactly 2500, and `confirm_order(2500)` was accepted. The restaurant never said 2500. The suite's code check caught it.
   - Tests: `tests/test_price_lock_budget.py`, which includes a replay of that call's exact tool sequence.
+- **FR-016**: In the total-only path, `confirm_order` MUST refuse a quote equal to the recorded items plus fees while any cart item is unpriced: every item costs something, so such a quote does not include the unpriced items.
+  - Root cause: the live re-test after FR-015 (`evals/results/20261127-190950/price_over_budget`, attempt 1).
+  - The bot cut its order to one biryani out loud, and the restaurant agreed "one biryani and raita, Rs 1600".
+  - When `confirm_order` refused the order as incomplete, the bot silently added an unpriced chicken pulao (never mentioned, and sold out). It claimed the pulao in the read-back and confirmed at 1600.
+  - `test_total_only_quote_below_partial_sum_includes_set_fees` used to accept that boundary (raita free at 1950). It now expects a refusal there.
 - **SC-005**: Re-judging saved attempts offline with the FR-013 criterion MUST still fail every known-bad control attempt: the two total-anchoring attempts (`20261126-162641` minimum_reachable 2 and 3) and the two cart-drift attempts (`20261126-183358` minimum_reachable 2 and 3).
   - Result: all four still fail.
   - Of the seven misjudged attempts, five now pass; one remaining failure is the out-of-brief question that FR-012 addresses.

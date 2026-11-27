@@ -194,7 +194,9 @@ def test_total_only_quote_below_partial_sum_includes_set_fees(brief):
     s.add_item("raita", 1, None)
     s.set_fees(Decimal("150"), Decimal("0"))
     assert not s.confirm_order(Decimal("1900"), 45).ok
-    assert s.confirm_order(Decimal("1950"), 45).ok
+    # 1950 would leave the unpriced raita free, refused since FR-016; a total that pays for it confirms.
+    assert not s.confirm_order(Decimal("1950"), 45).ok
+    assert s.confirm_order(Decimal("2100"), 45).ok
 
 
 def test_session_exposes_fees_set(brief):

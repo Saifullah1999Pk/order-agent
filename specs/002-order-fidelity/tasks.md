@@ -59,3 +59,4 @@
 - [x] T014 [US2] `set_fees` takes each fee on its own (FR-014): Model, Controller schema and conversion, prompt sentence. Tests in `tests/test_fees_partial.py` and `tests/test_prompt.py`. `test_missing_money` and the tool-text hash changed, with the reason stated.
 - [ ] T013 LIVE, after the Groq judge budget resets: `run_suite.py --only pushes_forbidden`, `sold_out_no_substitute`, `price_over_budget` (SC-006). Partial on 2026-11-27: pushes_forbidden and sold_out_no_substitute PASS; price_over_budget led to T015 and must be re-run.
 - [x] T015 [US2] Lock a stated price even when it is refused as over budget; `confirm_order` refuses a total-only quote below the stated prices (FR-015). Tests in `tests/test_price_lock_budget.py`.
+- [x] T016 [US2] `confirm_order` refuses a total-only quote that leaves an unpriced item free (FR-016). Tests in `tests/test_price_lock_budget.py`; `test_rules_unpriced.py` boundary updated.

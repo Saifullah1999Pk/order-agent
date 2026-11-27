@@ -419,6 +419,11 @@ class OrderSession:
             # and it cannot be lower than what is already recorded.
             if quoted < total:
                 return ToolResult(False, f"Refused: The restaurant's total (Rs {_fmt(quoted)}) is less than the prices already recorded. Ask them to check the total.")
+            unpriced = [i.name for i in self.items if i.unit_price_pkr is None]
+            if unpriced and quoted == total:
+                # FR-016: every item costs something, so a total equal to what is already recorded leaves the
+                # unpriced items free: the restaurant's total does not include them.
+                return ToolResult(False, f"Refused: Rs {_fmt(quoted)} is exactly what the other items and fees already add up to, so it does not include {', '.join(unpriced)}. Ask the restaurant whether {', '.join(unpriced)} is part of the order and for the total including it; if it is not available, remove it (remove_item).")
             floor = self._stated_floor()
             if quoted < floor:
                 return ToolResult(False, f"Refused: Rs {_fmt(quoted)} is less than the prices the restaurant already stated ({_fmt(floor)} PKR with the recorded fees). Never confirm a total the restaurant did not say. If they will not lower the price, end the call as not_ordered.")

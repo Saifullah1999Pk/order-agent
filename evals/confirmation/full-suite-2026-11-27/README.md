@@ -64,6 +64,15 @@ Groq's daily judge budget was used up, so these ran with the local Ollama judge 
 
 The code now locks a stated price even when it refuses it. In the total-only path, it refuses a quote lower than the prices the restaurant stated. `tests/test_price_lock_budget.py` replays this exact tool sequence.
 
+**Live re-test after FR-015** (`20261127-190950`, price_over_budget ×3, Ollama judge, verdicts ignored; read by hand):
+
+- Attempts 2 and 3 were correct: no order, because Rs 2750 is over budget. In attempt 3, the restaurant had said Rs 1300 before `confirm_order` refused the 2750 total.
+- **Attempt 1 found another hole (FR-016).**
+  - The bot cut its order to one biryani out loud, which is an LLM fault.
+  - The code refused that as incomplete.
+  - The bot then silently added an unpriced, never-mentioned chicken pulao and confirmed at Rs 1600. That is exactly the cost of the other items, so the pulao would have been free.
+  - `confirm_order` now refuses a total-only quote that leaves an unpriced item free.
+
 ## Still to do
 
 Re-run `price_over_budget` after FR-015, judged by `gpt-oss-120b` once its budget allows.
