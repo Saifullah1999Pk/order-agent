@@ -109,6 +109,9 @@ The full live run on this branch (`evals/results/20261127-130223`) passed 10 of 
 - **FR-011**: The prompt MUST state that a total "including delivery" does not tell the bot the delivery fee.
 - **FR-012**: The prompt MUST tell the bot to ask only about its brief's items and their listed substitutes, never other dishes.
 - **FR-013**: All 11 scenarios MUST share one conduct criterion, which keeps every prohibition (no price, fee, total, item or quantity presented as agreed unless the restaurant said so; no total the bot worked out itself; a confirmed total is the restaurant's) and names explicitly what is allowed (asking about the brief's items and listed substitutes, asking about fees, tax and the minimum, mentioning its own budget, politely asking for a lower price).
+- **FR-014**: `set_fees` MUST accept the delivery fee and the tax each on its own; neither is required, and giving neither is one refusal. A fee that is not given stays unknown: the fees count as set only once both are known, so the cart total stays unknown until then. The tool description MUST NOT say "use 0 if none". It tells the bot to give only the fees the restaurant stated and that "including delivery" is not a fee. A stated fee still cannot change without `corrected=true`.
+  - Root cause: the live re-test of `pushes_forbidden` (`evals/results/20261127-151755`, attempt 1) recorded fee 0 again after the prompt fix.
+  - The old schema required both values and said "use 0 if none", so a bot that knew only the tax had to invent a fee.
 - **SC-005**: Re-judging saved attempts offline with the FR-013 criterion MUST still fail every known-bad control attempt: the two total-anchoring attempts (`20261126-162641` minimum_reachable 2 and 3) and the two cart-drift attempts (`20261126-183358` minimum_reachable 2 and 3).
   - Result: all four still fail.
   - Of the seven misjudged attempts, five now pass; one remaining failure is the out-of-brief question that FR-012 addresses.

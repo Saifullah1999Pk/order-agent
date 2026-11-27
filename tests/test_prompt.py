@@ -134,3 +134,9 @@ def test_prompt_asks_only_about_brief_items_and_listed_substitutes(brief):
     prompt = build_system_prompt(brief).lower()
     assert "ask only about the items in your brief and their listed substitutes" in prompt
     assert "do not ask for other dishes" in prompt
+
+
+def test_prompt_lets_set_fees_take_one_fee_alone(brief):
+    prompt = build_system_prompt(brief)
+    assert "leave the delivery fee out of set_fees unless they clearly say there is none" in prompt
+    assert "set_fees takes the fee or the tax on its own" in prompt

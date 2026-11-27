@@ -45,13 +45,13 @@ TOOL_SPECS: tuple[ToolSpec, ...] = (
     ),
     ToolSpec(
         name="set_fees",
-        description="Record the delivery fee and tax the restaurant stated (use 0 if none).",
+        description="Record the delivery fee and tax the restaurant stated. Give only the ones they said: leave out the delivery fee if they have not stated it ('including delivery' is not a fee). Use 0 only when they clearly said there is none.",
         properties={
-            "delivery_fee_pkr": {"type": "number", "description": "Delivery fee in PKR."},
-            "tax_pkr": {"type": "number", "description": "Tax in PKR."},
+            "delivery_fee_pkr": {"type": "number", "description": "Delivery fee in PKR, only if the restaurant stated it."},
+            "tax_pkr": {"type": "number", "description": "Tax in PKR, only if the restaurant stated it."},
             "corrected": {"type": "boolean", "description": "Only true if the restaurant clearly said a fee changed from what they said before. Never use it to make a total match."},
         },
-        required=["delivery_fee_pkr", "tax_pkr"],
+        required=[],
     ),
     ToolSpec(
         name="set_minimum_order",

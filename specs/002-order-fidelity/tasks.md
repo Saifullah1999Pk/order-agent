@@ -56,4 +56,5 @@
 - [x] T010 [US2] Prompt: decline pushed items out loud (FR-010), and "including delivery" is not a fee (FR-011). Tests in `tests/test_prompt.py`.
 - [x] T011 [US2] Prompt: ask only about brief items and listed substitutes (FR-012). Test in `tests/test_prompt.py`.
 - [x] T012 Eval: one shared, clarified conduct criterion in all 11 scenarios (FR-013), guarded by `tests/test_conduct_criterion.py`; offline re-judge evidence for SC-005.
+- [x] T014 [US2] `set_fees` takes each fee on its own (FR-014): Model, Controller schema and conversion, prompt sentence. Tests in `tests/test_fees_partial.py` and `tests/test_prompt.py`. `test_missing_money` and the tool-text hash changed, with the reason stated.
 - [ ] T013 LIVE, after the Groq judge budget resets: `run_suite.py --only pushes_forbidden`, `sold_out_no_substitute`, `price_over_budget` (SC-006).

@@ -61,6 +61,8 @@ class OrderSession:
         self.tax_pkr: Decimal = Decimal(0)
         self.minimum_order_pkr: Decimal | None = None
         self._fees_set = False
+        self._fee_known = False  # set_fees may record the fee and the tax separately (FR-014)
+        self._tax_known = False
         # What the restaurant first said, kept for the whole call (even after remove_item).
         self._price_lock: dict[frozenset[str], tuple[str, Decimal]] = {}
         self.state: Literal["open", "confirmed", "ended"] = "open"
@@ -292,26 +294,40 @@ class OrderSession:
         in_cart = ", ".join(i.name for i in self.items) or "nothing yet"
         return ToolResult(False, f"Refused: '{name}' is not in the cart. The cart holds: {in_cart}.")
 
-    def set_fees(self, delivery_fee_pkr: Decimal, tax_pkr: Decimal, corrected: bool = False) -> ToolResult:
+    def set_fees(self, delivery_fee_pkr: Decimal | None, tax_pkr: Decimal | None, corrected: bool = False) -> ToolResult:
         args = {"delivery_fee_pkr": delivery_fee_pkr, "tax_pkr": tax_pkr, "corrected": corrected}
         return self._record("set_fees", args, self._set_fees(delivery_fee_pkr, tax_pkr, corrected))
 
-    def _set_fees(self, fee: Decimal, tax: Decimal, corrected: bool = False) -> ToolResult:
+    def _set_fees(self, fee: Decimal | None, tax: Decimal | None, corrected: bool = False) -> ToolResult:
         if self.state != "open":
             return _closed(self.state, "fees")
+        if fee is None and tax is None:
+            return ToolResult(False, "Refused: Give the delivery fee, the tax, or both, as the restaurant stated them. Leave out one they have not said.")
         for value in (fee, tax):
+            if value is None:
+                continue
             if not isinstance(value, Decimal) or not value.is_finite() or value < 0:
                 return ToolResult(False, "Refused: fees must be numbers of zero or more. Ask the restaurant to repeat the delivery fee and tax (use 0 if there is none).")
         if not corrected:
             for label, old, new in (("delivery fee", self.delivery_fee_pkr, fee), ("tax", self.tax_pkr, tax)):
-                if old != 0 and new != old:
+                if new is not None and old != 0 and new != old:
                     return ToolResult(False, f"Refused: The restaurant already said the {label} is {_fmt(old)} PKR. Do not change fees to make a total match. Ask the restaurant to read out the delivery fee and tax; if they clearly say a fee changed, call set_fees with corrected=true.")
-        new_total = self._items_total() + fee + tax
+        new_fee = self.delivery_fee_pkr if fee is None else fee
+        new_tax = self.tax_pkr if tax is None else tax
+        new_total = self._items_total() + new_fee + new_tax
         if new_total > self.brief.budget_pkr:
-            return self._over_budget(f"a delivery fee of {_fmt(fee)} and tax of {_fmt(tax)}", new_total)
-        self.delivery_fee_pkr, self.tax_pkr = fee, tax
-        self._fees_set = True
-        return ToolResult(True, f"Fees recorded: delivery {_fmt(fee)} PKR, tax {_fmt(tax)} PKR. " + self._total_text() + self._minimum_hint())
+            return self._over_budget(f"a delivery fee of {_fmt(new_fee)} and tax of {_fmt(new_tax)}", new_total)
+        self.delivery_fee_pkr, self.tax_pkr = new_fee, new_tax
+        self._fee_known = self._fee_known or fee is not None
+        self._tax_known = self._tax_known or tax is not None
+        self._fees_set = self._fee_known and self._tax_known
+        recorded = ", ".join(f"{label} {_fmt(value)} PKR" for label, value in (("delivery", fee), ("tax", tax)) if value is not None)
+        missing = ""
+        if not self._fee_known:
+            missing = "The delivery fee is not recorded yet: ask the restaurant for it ('including delivery' is not a fee). "
+        elif not self._tax_known:
+            missing = "The tax is not recorded yet: ask the restaurant whether there is any. "
+        return ToolResult(True, f"Fees recorded: {recorded}. " + missing + self._total_text() + self._minimum_hint())
 
     def set_minimum_order(self, minimum_pkr: Decimal) -> ToolResult:
         return self._record("set_minimum_order", {"minimum_pkr": minimum_pkr}, self._set_minimum_order(minimum_pkr))

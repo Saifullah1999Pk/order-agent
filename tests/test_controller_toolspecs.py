@@ -30,7 +30,7 @@ def test_specs_match_voice_function_schemas(brief, tmp_path):
 
 # sha256 of the LLM-visible tool text (was identical to main's tools.py 9c38b8f until feature 002 added confirm_order.restaurant_items).
 # A deliberate change to a tool description or schema must update this hash on purpose.
-TOOL_TEXT_SHA256 = "9e9c17bfa07e2c28db687ab492d8bd68c5882b2bd08bc54f887def2b94323bce"
+TOOL_TEXT_SHA256 = "1dc7c245db01caa7abaac500417cea9a69aead71d03a05eca628e8cfb5e09127"
 
 
 def test_tool_text_is_pinned():

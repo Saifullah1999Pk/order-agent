@@ -56,6 +56,11 @@ def _optional_money(arguments: dict, key: str) -> Decimal | None:
     return _money(arguments, key)
 
 
+def _optional_money(arguments: dict, key: str) -> Decimal | None:
+    """An optional amount; absent (or null) means the restaurant has not stated it."""
+    return None if arguments.get(key) is None else _money(arguments, key)
+
+
 def _flag(arguments: dict, key: str) -> bool:
     """An optional true/false argument; absent means false."""
     value = arguments.get(key)
@@ -123,7 +128,7 @@ class ToolDispatcher:
             ),
             "remove_item": (lambda a: (_text(a, "name"),), session.remove_item),
             "set_fees": (
-                lambda a: (_money(a, "delivery_fee_pkr"), _money(a, "tax_pkr"), _flag(a, "corrected")),
+                lambda a: (_optional_money(a, "delivery_fee_pkr"), _optional_money(a, "tax_pkr"), _flag(a, "corrected")),
                 session.set_fees,
             ),
             "set_minimum_order": (lambda a: (_money(a, "minimum_pkr"),), session.set_minimum_order),

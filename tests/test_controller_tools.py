@@ -74,9 +74,10 @@ async def test_bool_money_message(dispatcher):
 
 
 async def test_missing_money(dispatcher):
-    outcome = await dispatcher.dispatch("set_fees", {"delivery_fee_pkr": 100})
+    # set_fees no longer requires both fees (FR-014), so a required money argument elsewhere is used.
+    outcome = await dispatcher.dispatch("set_minimum_order", {})
     assert outcome.ok is False
-    assert "Missing or invalid 'tax_pkr'" in outcome.message
+    assert "Missing or invalid 'minimum_pkr'" in outcome.message
 
 
 async def test_whole_number_float_ok_fraction_refused(dispatcher, session):
