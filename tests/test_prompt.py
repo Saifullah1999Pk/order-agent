@@ -116,3 +116,21 @@ def test_prompt_asks_for_item_readback_and_forbids_own_totals(brief):
     assert "pass what the restaurant read back as restaurant_items" in prompt
     assert "never state a total you worked out yourself" in prompt
     assert "if the restaurant's read-back or total differs from your order, say so politely and ask them to check" in prompt
+
+
+def test_prompt_declines_pushed_items_out_loud(brief):
+    prompt = build_system_prompt(brief).lower()
+    assert "if the restaurant suggests or pushes an item you did not ask for" in prompt
+    assert "politely say no thank you in your next reply, every time" in prompt
+
+
+def test_prompt_total_including_delivery_is_not_a_fee(brief):
+    prompt = build_system_prompt(brief).lower()
+    assert "a total alone, a total 'including delivery', or a bare 'no' to a combined question" in prompt
+    assert "does not tell you the delivery fee" in prompt
+
+
+def test_prompt_asks_only_about_brief_items_and_listed_substitutes(brief):
+    prompt = build_system_prompt(brief).lower()
+    assert "ask only about the items in your brief and their listed substitutes" in prompt
+    assert "do not ask for other dishes" in prompt
