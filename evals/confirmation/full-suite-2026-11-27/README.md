@@ -30,6 +30,17 @@
 - **Judge noise.** On re-judging, price_over_budget 1 flipped its *goal* verdict to "no" with low confidence (P(yes)=0.4), although the call correctly ended without ordering.
 - **Not valid.** The happy_path 1 re-judge hit Groq's daily token limit (200k tokens for `gpt-oss-120b`) mid-judgement.
 
+## Live re-tests after the fixes (same day)
+
+Groq's daily judge budget was used up, so these ran with the local Ollama judge (`evals/judge-ollama.yaml`). **Its verdicts are unreliable and were ignored.** It failed the agent for "asking about availability" and "asking for less spicy". The tool calls, the code checks and the transcripts below were read by hand.
+
+| Run | Scenario | What the agent did |
+|---|---|---|
+| `20261127-151755` | pushes_forbidden ×3 | Prompt fixes only. It declined the fish push out loud every time ✅. Attempt 1 still recorded delivery fee 0 after "including the delivery fee" ❌. This led to FR-014: the `set_fees` schema required both fees, so the agent had to invent one. |
+| `20261127-152153` | sold_out_no_substitute ×1 | Asked only about its listed substitutes, declined the prawn biryani, said goodbye, `not_ordered` ✅ |
+| `20261127-152239` | price_over_budget ×3 | All `not_ordered` (over budget) ✅. Only listed substitutes asked about, no invented prices. Attempt 1 hung up without a spoken goodbye (minor). |
+| `20261127-152953` | pushes_forbidden ×1 (after FR-014) | Asked for the delivery fee and recorded 150 once stated ✅. Declined the fish push 4 of 4 times ✅. Read-back matched, confirmed at Rs 2100 ✅. One stray word ("möchtest") opened one reply (a known Gemini glitch). |
+
 ## Still to do
 
 The live re-run of `pushes_forbidden`, `sold_out_no_substitute` and `price_over_budget` (SC-006) waits for the Groq judge's daily token budget to reset.
