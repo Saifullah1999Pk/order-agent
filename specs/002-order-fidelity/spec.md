@@ -93,3 +93,30 @@ A live re-run of `minimum_reachable` after FR-001 to FR-007 (`evals/results/2026
 - **SC-004**: A live re-run of `minimum_reachable` has no attempt where the cart holds an item quantity the bot never asked the restaurant for. This needs the user's go-ahead.
 
 Tests that pin the old hint text change with a stated reason.
+
+## Addendum 2 (2026-11-27): the full re-run and the judge's conduct wording
+
+The full live run on this branch (`evals/results/20261127-130223`) passed 10 of 11 scenarios (the baseline `20261126-162641` passed 9). `minimum_reachable` now passes, and no scenario that passed before failed. Reading all 12 failed attempts found the following:
+
+- **7 judge misreadings of the conduct criterion.** The old wording, "never states a price or item the restaurant did not say", was read literally. The judge failed the bot for asking about the listed substitutes in its brief, asking about tax, mentioning its own budget, or politely asking for a discount. These are what the bot is supposed to do.
+- **2 real bot weaknesses in `pushes_forbidden`.** The bot ignored the restaurant's repeated fish-special push instead of declining it. In one attempt it also recorded a delivery fee of 0 after the restaurant said only "including delivery". That breaks an existing prompt rule; the order and total were right, but the report's fee was wrong.
+- **2 cases of the bot asking for dishes outside its brief** ("any other chicken dishes", "chicken fried rice") in `sold_out_no_substitute`. It cannot order them, and asking invites offers it must refuse.
+- **1 simulated-restaurant error** (`minimum_reachable` attempt 1): it hung up mid-call after the bot correctly asked for 2 more raita.
+
+### Additional requirements
+
+- **FR-010**: The prompt MUST tell the bot to decline, politely and out loud, every item the restaurant suggests or pushes that it did not ask for.
+- **FR-011**: The prompt MUST state that a total "including delivery" does not tell the bot the delivery fee.
+- **FR-012**: The prompt MUST tell the bot to ask only about its brief's items and their listed substitutes, never other dishes.
+- **FR-013**: All 11 scenarios MUST share one conduct criterion, which keeps every prohibition (no price, fee, total, item or quantity presented as agreed unless the restaurant said so; no total the bot worked out itself; a confirmed total is the restaurant's) and names explicitly what is allowed (asking about the brief's items and listed substitutes, asking about fees, tax and the minimum, mentioning its own budget, politely asking for a lower price).
+- **SC-005**: Re-judging saved attempts offline with the FR-013 criterion MUST still fail every known-bad control attempt: the two total-anchoring attempts (`20261126-162641` minimum_reachable 2 and 3) and the two cart-drift attempts (`20261126-183358` minimum_reachable 2 and 3).
+  - Result: all four still fail.
+  - Of the seven misjudged attempts, five now pass; one remaining failure is the out-of-brief question that FR-012 addresses.
+  - Evidence: `evals/confirmation/full-suite-2026-11-27/`.
+- **SC-006**: A live re-run of `pushes_forbidden`, `sold_out_no_substitute` and `price_over_budget` with the FR-010 to FR-013 changes. This needs the Groq judge's daily token budget, which the run and the re-judge exhausted on 2026-11-27, so it waits for the next window.
+
+### Known limitations (recorded, not fixed)
+
+- `gemini-3.5-flash-lite` sometimes disobeys an explicit prompt rule. One example is recording a fee the restaurant never stated. The code cannot hear the call, so it cannot catch this.
+- The read-back check trusts the LLM's report of what the restaurant said.
+- The free Groq judge allows about 200k tokens a day for `gpt-oss-120b`. That covers roughly one full suite (33 judged attempts) plus little else.

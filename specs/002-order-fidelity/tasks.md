@@ -50,3 +50,10 @@
     - the refusal goes through `perform`, gives exactly one result, and is recorded as a tool event.
   - GREEN: implement in the controller, not in the heads.
 - [ ] T009 LIVE, NEEDS THE USER'S GO-AHEAD: `run_suite.py --only minimum_reachable` (SC-002, SC-004).
+
+## Addendum 2 tasks (FR-010 to FR-013)
+
+- [x] T010 [US2] Prompt: decline pushed items out loud (FR-010), and "including delivery" is not a fee (FR-011). Tests in `tests/test_prompt.py`.
+- [x] T011 [US2] Prompt: ask only about brief items and listed substitutes (FR-012). Test in `tests/test_prompt.py`.
+- [x] T012 Eval: one shared, clarified conduct criterion in all 11 scenarios (FR-013), guarded by `tests/test_conduct_criterion.py`; offline re-judge evidence for SC-005.
+- [ ] T013 LIVE, after the Groq judge budget resets: `run_suite.py --only pushes_forbidden`, `sold_out_no_substitute`, `price_over_budget` (SC-006).
