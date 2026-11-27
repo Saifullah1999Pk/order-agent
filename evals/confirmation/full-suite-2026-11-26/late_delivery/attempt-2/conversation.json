@@ -1,0 +1,79 @@
+[
+  {
+    "role": "assistant",
+    "content": "Hello, I would like to place a delivery order, please."
+  },
+  {
+    "role": "user",
+    "content": "Sure, what would you like to order?"
+  },
+  {
+    "role": "assistant",
+    "content": "I'd like to order two chicken biryanis and one raita, for delivery. Do you have these available, and what are their prices?"
+  },
+  {
+    "role": "user",
+    "content": "Yes, we have those available. The total for two chicken biryanis and one raita, including delivery, is Rs 2100. Delivery will take approximately 2 hours."
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "name": "chicken biryani",
+      "quantity": 2
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "quantity": 1,
+      "name": "raita"
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "set_fees",
+    "arguments": {
+      "tax_pkr": 0,
+      "delivery_fee_pkr": 0
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "confirm_order",
+    "arguments": {
+      "delivery_minutes": 120,
+      "quoted_total_pkr": 2100
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Can you please deliver it a bit earlier? It needs to be delivered by 9 PM at the latest."
+  },
+  {
+    "role": "user",
+    "content": "We\u2019re currently very busy, and delivery today will take at least 2 hours. Unfortunately, we can\u2019t guarantee an earlier time."
+  },
+  {
+    "role": "assistant",
+    "content": "Ah, I see. Unfortunately, I need it delivered by 21:00, so I won't be able to place the order today. Thank you anyway."
+  },
+  {
+    "role": "user",
+    "content": "You're welcome! If you change your mind, feel free to call back. Have a great day!"
+  },
+  {
+    "role": "tool_call",
+    "name": "end_call",
+    "arguments": {
+      "outcome": "not_ordered",
+      "reason": "Delivery time of 2 hours exceeds the 21:00 deadline."
+    },
+    "cancelled": false
+  }
+]

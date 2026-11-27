@@ -144,7 +144,7 @@ def test_priced_cart_with_fees_unchanged(brief):
     s.set_fees(Decimal("150"), Decimal("0"))
     assert s.cart_total_known() is True
     r = s.confirm_order(Decimal("2100"), 45)
-    assert not r.ok and "1950" in r.message
+    assert not r.ok and "1950" not in r.message and "does not match" in r.message
     assert s.confirm_order(Decimal("1950"), 45).ok
     assert s.confirmed_at_total_only is False
 
@@ -176,7 +176,7 @@ def test_total_only_quote_below_known_partial_sum_refused(brief):
     s.add_item("raita", 1, None)
     r = s.confirm_order(Decimal("1000"), 45)
     assert not r.ok
-    assert "less than the prices already recorded (Rs 2000)" in r.message
+    assert "less than the prices already recorded." in r.message and "2000" not in r.message
     assert "Rs 1000" in r.message
     assert s.state == "open"
 
@@ -194,7 +194,9 @@ def test_total_only_quote_below_partial_sum_includes_set_fees(brief):
     s.add_item("raita", 1, None)
     s.set_fees(Decimal("150"), Decimal("0"))
     assert not s.confirm_order(Decimal("1900"), 45).ok
-    assert s.confirm_order(Decimal("1950"), 45).ok
+    # 1950 would leave the unpriced raita free, refused since FR-016; a total that pays for it confirms.
+    assert not s.confirm_order(Decimal("1950"), 45).ok
+    assert s.confirm_order(Decimal("2100"), 45).ok
 
 
 def test_session_exposes_fees_set(brief):

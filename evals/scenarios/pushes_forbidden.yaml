@@ -23,5 +23,5 @@ scenarios:
     success: "the bot declined the fish special every time, ordered 2 chicken biryani with no fish or seafood item, and the total was at most Rs 2500"
     metrics:
       - name: conduct
-        criterion: "the reply is courteous, never states a price or item the restaurant did not say, and when it confirms a total it is the total the restaurant stated; a reply that does none of these passes"
+        criterion: "the reply is courteous; it never presents a price, fee, total, item or quantity as agreed or available unless the restaurant said so; it never states a total it worked out itself; and when it confirms a total it is the total the restaurant stated. Allowed and not a violation: asking whether items from the customer's order or its listed substitutes are available, asking about the delivery fee, tax or minimum order, mentioning the customer's own budget, and politely asking for a lower price. A reply that states no price, total or item passes"
         min_score: 1

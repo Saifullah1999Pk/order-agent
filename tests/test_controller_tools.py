@@ -74,9 +74,10 @@ async def test_bool_money_message(dispatcher):
 
 
 async def test_missing_money(dispatcher):
-    outcome = await dispatcher.dispatch("set_fees", {"delivery_fee_pkr": 100})
+    # set_fees no longer requires both fees (FR-014), so a required money argument elsewhere is used.
+    outcome = await dispatcher.dispatch("set_minimum_order", {})
     assert outcome.ok is False
-    assert "Missing or invalid 'tax_pkr'" in outcome.message
+    assert "Missing or invalid 'minimum_pkr'" in outcome.message
 
 
 async def test_whole_number_float_ok_fraction_refused(dispatcher, session):
@@ -195,3 +196,49 @@ async def test_end_call_session_exception_becomes_refusal(session, monkeypatch):
     outcome = await ToolDispatcher(session).dispatch("end_call", {"outcome": "not_ordered", "reason": "x"})
     assert outcome.ok is False and outcome.run_llm is True and outcome.ended is False
     assert outcome.message == "Refused: internal error (kaboom)."
+
+
+async def _cart_two_biryani(dispatcher):
+    dispatcher.session.add_item("chicken biryani", 2, Decimal("900"))
+
+
+async def test_restaurant_items_reach_the_session(dispatcher, session):
+    await _cart_two_biryani(dispatcher)
+    args = {"quoted_total_pkr": 1800, "delivery_minutes": 30}
+    bad = await dispatcher.dispatch("confirm_order", {**args, "restaurant_items": [{"name": "chicken biryani", "quantity": 3}]})
+    assert not bad.ok and "chicken biryani: restaurant 3, order 2" in bad.message
+    assert session.events[-1].args["restaurant_items"] == [("chicken biryani", 3)]
+    ok = await dispatcher.dispatch("confirm_order", {**args, "restaurant_items": [{"name": "chicken biryani", "quantity": 2.0}]})
+    assert ok.ok, ok.message
+
+
+async def test_restaurant_items_null_or_absent_is_as_before(dispatcher, session):
+    await _cart_two_biryani(dispatcher)
+    out = await dispatcher.dispatch("confirm_order", {"quoted_total_pkr": 1800, "delivery_minutes": 30, "restaurant_items": None})
+    assert out.ok
+    assert "restaurant_items" not in session.events[-1].args
+
+
+@pytest.mark.parametrize(
+    "bad",
+    [
+        "chicken biryani",
+        {"name": "chicken biryani", "quantity": 2},
+        [["chicken biryani", 2]],
+        [{"quantity": 2}],
+        [{"name": "chicken biryani"}],
+        [{"name": "  ", "quantity": 2}],
+        [{"name": "chicken biryani", "quantity": 0}],
+        [{"name": "chicken biryani", "quantity": -1}],
+        [{"name": "chicken biryani", "quantity": 1.5}],
+        [{"name": "chicken biryani", "quantity": "2"}],
+        [{"name": "chicken biryani", "quantity": True}],
+    ],
+)
+async def test_malformed_restaurant_items_one_refusal_session_untouched(dispatcher, session, bad):
+    await _cart_two_biryani(dispatcher)
+    before = len(session.events)
+    out = await dispatcher.dispatch("confirm_order", {"quoted_total_pkr": 1800, "delivery_minutes": 30, "restaurant_items": bad})
+    assert not out.ok
+    assert out.message == "Refused: restaurant_items must be a list of {name, quantity} with whole-number quantities of at least 1."
+    assert len(session.events) == before and session.state == "open"

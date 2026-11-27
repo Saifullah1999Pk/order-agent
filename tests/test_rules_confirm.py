@@ -47,9 +47,21 @@ def test_confirm_rejects_mismatched_total(brief):
     s = _two_biryani(brief)
     result = s.confirm_order(Decimal("1800"), 45)
     assert not result.ok
-    assert "1950" in result.message
+    assert "does not match" in result.message
     assert s.state == "open"
     assert s.delivery_eta is None and s.quoted_total_pkr is None
+
+
+def test_mismatch_refusal_reveals_no_computed_figures(brief):
+    s = _two_biryani(brief)  # items 1800, delivery 150, tax 0, cart total 1950
+    result = s.confirm_order(Decimal("1800"), 45)
+    assert not result.ok
+    for figure in ("1950", "1800", "150", "items "):
+        assert figure not in result.message
+    assert "Do not tell the restaurant a total of your own" in result.message
+    assert "itemise" in result.message
+    assert "Do not edit the cart or the fees" in result.message
+    assert "not_ordered" in result.message
 
 
 def test_confirm_rejects_late_delivery(brief):
@@ -176,7 +188,7 @@ def test_set_minimum_states_exact_shortfall_and_quantity(brief):
     assert "food is 1950 PKR" in result.message
     assert "250 PKR short" in result.message
     assert "add 2 more raita (300 PKR)" in result.message
-    assert "2400 PKR" in result.message and "within your 2500 PKR budget" in result.message
+    assert "2400 PKR" not in result.message and "within your" not in result.message  # FR-008: no projected total
 
 
 def test_add_item_while_still_short_repeats_remaining_quantity(brief):
@@ -282,8 +294,21 @@ def test_hint_before_fees_set_does_not_claim_within_budget(brief):
     s.add_item("raita", 1, Decimal("150"))
     result = s.set_minimum_order(Decimal("2200"))
     assert "add 2 more raita (300 PKR)" in result.message
-    assert "before delivery fee and tax" in result.message
+    assert "Delivery fee and tax are not recorded yet, so ask about them" in result.message
     assert "within your" not in result.message
+
+
+def test_hint_asks_restaurant_first_and_states_no_projected_total(brief):
+    s = _session(brief)
+    s.add_item("chicken biryani", 2, Decimal("900"))
+    s.add_item("raita", 1, Decimal("150"))
+    s.set_fees(Decimal("150"), Decimal("0"))
+    result = s.set_minimum_order(Decimal("2200"))  # food 1950, short 250: 2 more raita
+    assert "ask the restaurant to add 2 more raita (300 PKR)" in result.message
+    assert "only after they agree" in result.message
+    assert "total would" not in result.message.lower()
+    assert "within your" not in result.message
+    assert "2400" not in result.message and "2250" not in result.message
 
 
 def test_set_fees_result_repeats_hint_with_budget_claim(brief):
@@ -293,7 +318,7 @@ def test_set_fees_result_repeats_hint_with_budget_claim(brief):
     s.set_minimum_order(Decimal("2200"))
     result = s.set_fees(Decimal("150"), Decimal("0"))
     assert "add 2 more raita (300 PKR)" in result.message
-    assert "within your 2500 PKR budget" in result.message
+    assert "within your" not in result.message and "2400" not in result.message  # FR-008: no projected total
 
 
 def test_remove_item_result_has_hint_when_lines_filled(brief):

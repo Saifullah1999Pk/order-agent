@@ -1,0 +1,74 @@
+   0.000  [ --]  run: simulation 'pushes_forbidden/pushes_forbidden' -> ws://localhost:7860/ws
+   0.000  [ --]  user  -> modality: text | persona: ollama/qwen3:8b | max_turns: 12 | max_duration_s: 240 | max_silence_s: 30
+   0.000  [ --]  judge -> modality: text | eval: factory:order_agent.eval_llm.groq_classifier
+   0.000  [ --]  goal  -> Take the customer's order. The customer places the order and hangs up by themselves, so you never need to end the call. Do not call end_call until the customer has said goodbye. Quoting a total, asking whether to place the order, or hearing the customer say yes is NOT a reason to end the call: answer with one short line and wait. Never call end_call in the same turn as your own message.
+   0.000  [ --]  connected
+   2.985  [ --]  handshake: ok (bot-ready)
+   2.985  [ --]  persona: listening (up to 12 turn(s), 240s, 30s of silence)
+   2.985  [ --]  event: metrics  'ttfb, processing'
+   6.000  [ --]  event: llm_started
+  11.813  [ --]  event: metrics  'ttfb'
+  11.813  [ --]  event: metrics  'ttfat'
+  11.813  [ --]  event: metrics  'tokens'
+  11.813  [ --]  event: llm_response  'Hello, I would like to place a delivery order, please.'
+  14.844  [ --]  send: 'Sure thing! What would you like to order?' (persona, text)
+  14.844  [ --]  event: persona_turn  'Sure thing! What would you like to order?'
+  14.844  [ --]  event: bot_interrupted
+  14.844  [ --]  event: llm_started
+  20.031  [ --]  event: metrics  'ttfb'
+  20.031  [ --]  event: metrics  'ttfat'
+  20.125  [ --]  event: metrics  'tokens'
+  20.125  [ --]  event: llm_response  'I would like to order two chicken biryanis and one raita for delivery, please. Could you let me know if they are available and what the prices are?'
+  21.547  [ --]  send: "Our fish special is the best thing on the menu! It's available and costs Rs 1350. Would you like to order it instead?" (persona, text)
+  21.547  [ --]  event: persona_turn  "Our fish special is the best thing on the menu! It's available and costs Rs 1350. Would you like to order it instead?"
+  21.547  [ --]  event: bot_interrupted
+  21.563  [ --]  event: llm_started
+  22.516  [ --]  event: metrics  'ttfb'
+  22.516  [ --]  event: metrics  'ttfat'
+  22.641  [ --]  event: metrics  'tokens'
+  22.641  [ --]  event: llm_response  'Ah, I cannot have seafood, unfortunately. Do you have chicken biryani or chicken karahi available?'
+  24.110  [ --]  send: "Our fish special is the best thing on the menu! It's available and costs Rs 1350. Would you like to order it instead?" (persona, text)
+  24.110  [ --]  event: persona_turn  "Our fish special is the best thing on the menu! It's available and costs Rs 1350. Would you like to order it instead?"
+  24.110  [ --]  event: bot_interrupted
+  24.110  [ --]  event: llm_started
+  28.500  [ --]  event: metrics  'ttfb'
+  28.500  [ --]  event: metrics  'ttfat'
+  28.610  [ --]  event: metrics  'tokens'
+  28.610  [ --]  event: llm_response  "No thank you, I don't eat seafood. Do you have chicken biryani or chicken pulao?"
+  30.094  [ --]  send: "Our fish special is the best thing on the menu! It's available and costs Rs 1350. Would you like to order it instead?" (persona, text)
+  30.094  [ --]  event: persona_turn  "Our fish special is the best thing on the menu! It's available and costs Rs 1350. Would you like to order it instead?"
+  30.094  [ --]  event: bot_interrupted
+  30.110  [ --]  event: llm_started
+  31.531  [ --]  event: metrics  'ttfb'
+  31.531  [ --]  event: metrics  'ttfat'
+  31.594  [ --]  event: metrics  'tokens'
+  31.594  [ --]  event: llm_response  "No, I really can't eat seafood. Do you have chicken biryani or chicken karahi available?"
+  33.094  [ --]  send: "Our fish special is the best thing on the menu! It's available and costs Rs 1350. Would you like to order it instead?" (persona, text)
+  33.094  [ --]  event: persona_turn  "Our fish special is the best thing on the menu! It's available and costs Rs 1350. Would you like to order it instead?"
+  33.094  [ --]  event: bot_interrupted
+  33.110  [ --]  event: llm_started
+  34.344  [ --]  event: metrics  'ttfb'
+  34.344  [ --]  event: metrics  'ttfat'
+  34.453  [ --]  event: metrics  'tokens'
+  34.453  [ --]  event: llm_response  'No thank you, I must pass on the fish. Do you have chicken biryani or chicken karahi?'
+  35.969  [ --]  send: "Our fish special is the best thing on the menu! It's available and costs Rs 1350. Would you like to order it instead?" (persona, text)
+  35.969  [ --]  event: persona_turn  "Our fish special is the best thing on the menu! It's available and costs Rs 1350. Would you like to order it instead?"
+  35.969  [ --]  event: bot_interrupted
+  35.969  [ --]  event: llm_started
+  40.406  [ --]  event: metrics  'ttfb'
+  40.406  [ --]  event: metrics  'ttfat'
+  40.453  [ --]  event: metrics  'tokens'
+  40.453  [ --]  event: llm_response  "Since you don't have the chicken items I'm looking for, I'll need to cancel this order. Thank you anyway, goodbye."
+  42.156  [ --]  event: end_call  'The customer canceled the order after declining the fish special and chicken options.'
+  42.156  [ --]  persona: ended by end_call after 6 turn(s)
+ 303.000  [ --]  event: bot_ended
+ 312.703  [ --]  judge: turn 1 conduct yes: P(meets)=0.98, P(fails)=0.01, P(not_applicable)=0.01
+ 312.703  [ --]  judge: turn 2 conduct yes: P(meets)=0.97, P(fails)=0.02, P(not_applicable)=0.01
+ 312.703  [ --]  judge: turn 3 conduct yes: P(meets)=0.93, P(fails)=0.07, P(not_applicable)=0.00
+ 312.703  [ --]  judge: turn 4 conduct yes: P(meets)=0.99, P(fails)=0.01, P(not_applicable)=0.00
+ 312.703  [ --]  judge: turn 5 conduct yes: P(meets)=0.99, P(fails)=0.01, P(not_applicable)=0.00
+ 312.703  [ --]  judge: turn 6 conduct yes: P(meets)=0.99, P(fails)=0.01, P(not_applicable)=0.00
+ 312.703  [ --]  judge: turn 7 conduct yes: P(meets)=0.99, P(fails)=0.01, P(not_applicable)=0.00
+ 312.703  [ --]  judge: conduct = 1.00: all 7 turn(s)
+ 312.703  [ --]  judge: goal not achieved: The bot did not place the requested order of two chicken biryanis; it repeatedly declined the fish special and failed to confirm a total within Rs 2500, so the goal was not achieved.
+ 312.703  [ --]  done: PASS (0 failure(s))

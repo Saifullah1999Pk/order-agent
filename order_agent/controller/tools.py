@@ -50,7 +50,7 @@ def _money(arguments: dict, key: str) -> Decimal:
 
 
 def _optional_money(arguments: dict, key: str) -> Decimal | None:
-    """A price that may be left out (None or absent = not given). A present but unreadable value is refused."""
+    """An amount that may be left out (None or absent = not given). A present but unreadable value is refused."""
     if arguments.get(key) is None:
         return None
     return _money(arguments, key)
@@ -78,6 +78,30 @@ def _whole(arguments: dict, key: str) -> int:
     return int(value)
 
 
+_BAD_READBACK = "restaurant_items must be a list of {name, quantity} with whole-number quantities of at least 1."
+
+
+def _readback(arguments: dict, key: str) -> list[tuple[str, int]] | None:
+    """The restaurant's read-back as (name, quantity) pairs; None when absent."""
+    value = arguments.get(key)
+    if value is None:
+        return None
+    if not isinstance(value, list):
+        raise _BadArgument(_BAD_READBACK)
+    pairs = []
+    for entry in value:
+        if not isinstance(entry, dict):
+            raise _BadArgument(_BAD_READBACK)
+        try:
+            name, quantity = _text(entry, "name"), _whole(entry, "quantity")
+        except _BadArgument:
+            raise _BadArgument(_BAD_READBACK) from None
+        if quantity < 1:
+            raise _BadArgument(_BAD_READBACK)
+        pairs.append((name, quantity))
+    return pairs
+
+
 def _refusal(exc: _BadArgument) -> ToolOutcome:
     return ToolOutcome(ok=False, message=f"Refused: {exc}")
 
@@ -99,12 +123,12 @@ class ToolDispatcher:
             ),
             "remove_item": (lambda a: (_text(a, "name"),), session.remove_item),
             "set_fees": (
-                lambda a: (_money(a, "delivery_fee_pkr"), _money(a, "tax_pkr"), _flag(a, "corrected")),
+                lambda a: (_optional_money(a, "delivery_fee_pkr"), _optional_money(a, "tax_pkr"), _flag(a, "corrected")),
                 session.set_fees,
             ),
             "set_minimum_order": (lambda a: (_money(a, "minimum_pkr"),), session.set_minimum_order),
             "confirm_order": (
-                lambda a: (_money(a, "quoted_total_pkr"), _whole(a, "delivery_minutes")),
+                lambda a: (_money(a, "quoted_total_pkr"), _whole(a, "delivery_minutes"), _readback(a, "restaurant_items")),
                 session.confirm_order,
             ),
         }

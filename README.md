@@ -24,6 +24,7 @@ Built with [Pipecat](https://github.com/pipecat-ai/pipecat) as an internship pro
 - **Forbidden foods:** items matching a rule such as `seafood: [fish, prawn]` are refused.
 - **Completeness:** quantities never go down. A minimum order can only be met with items from the brief.
 - **Delivery deadline** and **quote fidelity**: the confirmed total must match the cart.
+- **Read-back check:** if the restaurant's read-back of items and quantities (`restaurant_items`) differs from the cart, `confirm_order` is refused until the bot has corrected the restaurant. A refused total never reveals the cart's own total.
 
 A refused tool call tells the agent why, and what it could try instead.
 
@@ -47,7 +48,7 @@ Each test call involves three roles:
 |---|---|---|
 | The agent (bot) | Gemini `gemini-3.5-flash-lite` | Cloud, free tier |
 | Simulated restaurant staff | `qwen3:8b` via Ollama | Your machine (GPU) |
-| Judge (scores the call) | Groq `openai/gpt-oss-20b`, throttled (one call at a time, 30 s apart) | Cloud, free tier |
+| Judge (scores the call) | Groq `openai/gpt-oss-120b`, throttled (one call at a time, 30 s apart) | Cloud, free tier |
 
 **Code checks override the judge.** After every call, deterministic checks on the agent's report decide the hard rules: outcome, budget, forbidden items, required items and minimum order. Of the four judge setups we tested, none agreed with these checks more than about 56% of the time. The judge is trusted only for soft qualities such as politeness. Each scenario gets up to 3 attempts (pass@3), and every attempt is recorded.
 
@@ -57,9 +58,11 @@ Each test call involves three roles:
 |---|---|
 | v1 suite (2026-11-23) | 8 of 11 scenarios passed within 3 attempts. **0 failures came from the agent breaking a rule.** Later, a price check showed bots sometimes invented prices. Of those 8 passes, 4 were re-checked and still pass. 4 have no saved report and cannot be re-checked: happy_path and price_drop_optional (orders placed), and late_delivery and minimum_unreachable (no order placed). See [section 16](docs/results-v1.md). |
 | Since then | Fixed the simulated restaurant hanging up early and the agent's minimum-order handling. In the 2026-11-25 hybrid run ([evidence](evals/confirmation/hybrid-2026-11-25/README.md)), `minimum_reachable` and `staff_asks_details` passed on their first attempt, judged by the throttled Gemini judge (`evals/judge-gemini-throttled.yaml`) because the default Groq judge timed out on Groq's per-minute token cap. In the same run `happy_path` failed on the judge's conduct score (correct order, no rule violations) and `terse_staff` did not pass (a bot bug: it rewrote its order to match a wrong total the restaurant insisted on). |
+| Full suite 2026-11-26 (after the MVC restructure) | 9 of 11 passed ([evidence](evals/confirmation/full-suite-2026-11-26/)). Failed: `price_over_budget` and `minimum_reachable`. In `minimum_reachable` the agent repeated a total our own refusal text had given it, and confirmed with quantities different from the restaurant's read-back. Both are fixed in spec 002. |
+| Full suite 2026-11-27 (spec 002, order fidelity) | **10 of 11 passed** ([evidence](evals/confirmation/full-suite-2026-11-27/README.md)). `minimum_reachable` now passes, and nothing regressed. Of the 12 failed attempts, 7 were the judge misreading the conduct rule, which has since been reworded and checked against known-bad calls. 4 were agent weaknesses: ignoring a pushed item, inventing a delivery fee of 0, and asking for dishes outside its brief. 1 was the simulated restaurant hanging up. The agent weaknesses were fixed and re-tested live, with transcripts read by hand. A judged re-run waits for Groq's daily token budget. |
 | Latency (end of speech to bot speaking) | Median 2.73 s, P90 3.64 s (n=28, bot on Groq, audio runs) |
 | Local LLM (Ollama, `qwen3:8b`) | Good as the simulated restaurant (2 wrong-total slips in 7 calls, never hung up early). Not reliable as the bot (it invented prices) or the judge. |
-| Unit tests | 674 passing |
+| Unit tests | 742 passing |
 
 Full write-up, with every number linked to its evidence: [docs/results-v1.md](docs/results-v1.md).
 
@@ -289,7 +292,12 @@ tests/                 unit tests
   - Running the simulated restaurant locally cut Gemini use by about 31% per test call (13.4 vs 19.6 requests).
 - **LLM judges are unreliable,** which is why the code checks decide pass or fail.
 - **Prices are now checked in two places.** The eval compares every price and fee in the report with the restaurant's menu in `evals/expected.yaml` (invented or off-menu items fail). At runtime the engine locks the first price it accepts for each item and the first non-zero fees, refuses later changes unless the bot flags a real correction (`price_corrected` / `corrected`), and tells the bot to ask the restaurant to itemise a total that does not match. The engine still cannot know a price is true. It trusts the first price the bot records, and the correction flags are the bot's own claim. The eval's menu check on final prices is the backstop. A correction reprices the whole line, and a tax of 0 is not locked.
-- **Unpriced items (restaurants that only give a total).** `add_item`'s price is optional; `set_price` fills one in later. With an unpriced item, or if `set_fees` was never called, the cart total is treated as unknown: `confirm_order` then checks the restaurant's quoted total against the budget, the delivery deadline, completeness and the forbidden items, and skips the cart-sum check (the report says the order was confirmed at the restaurant's total). If a minimum order applies, `confirm_order` refuses until every item has a price. Limits: in this mode the engine cannot detect a restaurant that quotes a wrong or inflated total within budget, and a delivery fee or tax the restaurant never mentions stays unknown. Also, if the bot leaves items unpriced or never records fees even though the restaurant stated them, the quote-fidelity, price-lock and eval menu checks are skipped and the eval cannot detect it (an accepted trade-off of total-only mode).
+- **Unpriced items (restaurants that only give a total).** `add_item`'s price is optional; `set_price` fills one in later. With an unpriced item, or if the delivery fee or tax was never recorded (`set_fees` takes each on its own, so the bot records only what the restaurant said), the cart total is treated as unknown: `confirm_order` then checks the restaurant's quoted total against the budget, the delivery deadline, completeness and the forbidden items, and skips the cart-sum check (the report says the order was confirmed at the restaurant's total). If a minimum order applies, `confirm_order` refuses until every item has a price. Limits: in this mode the engine cannot detect a restaurant that quotes a wrong or inflated total within budget, and a delivery fee or tax the restaurant never mentions stays unknown. Also, if the bot leaves items unpriced or never records fees even though the restaurant stated them, the quote-fidelity, price-lock and eval menu checks are skipped and the eval cannot detect it (an accepted trade-off of total-only mode).
+- **The agent's LLM sometimes ignores a rule or a refusal.**
+  - `gemini-3.5-flash-lite` occasionally loops after a refusal, or adds a stray word ("data", "möchtest") to the start of a reply: about once in 20 calls.
+  - The code still blocks a wrong order, but the conversation can suffer.
+- **The read-back check trusts the LLM.** `confirm_order` compares the restaurant's read-back (`restaurant_items`) with the cart. The code cannot hear the call, though, so an LLM that misreports what the restaurant said gets past this check.
+- **The judge budget is small.** Groq's free tier gives `gpt-oss-120b` about 200k tokens a day. That is roughly one full suite (33 judged calls) plus a little more.
 - **Not tested yet:** holding ("one minute please"), silence, real accents and noise. Ingredient claims ("the biryani has beef") can't be verified by code.
 
 ## Next steps

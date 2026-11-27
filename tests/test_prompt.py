@@ -77,7 +77,8 @@ def test_prompt_follows_named_minimum_shortfall(brief):
     from order_agent.controller.prompt import build_system_prompt
 
     text = build_system_prompt(brief)
-    assert "add exactly that" in text
+    assert "ask the restaurant for exactly that, then record it with add_item after they agree" in text
+    assert "add exactly that" not in text
 
 
 def test_prompt_minimum_guidance_is_honest_about_budget(brief):
@@ -107,3 +108,35 @@ def test_prompt_no_derived_prices_or_guessed_fees(brief):
     assert "never by dividing or subtracting from a total" in prompt
     assert "Only record fees the restaurant stated" in prompt
     assert "a bare 'no' to a combined question" in prompt
+
+
+def test_prompt_asks_for_item_readback_and_forbids_own_totals(brief):
+    prompt = build_system_prompt(brief).lower()
+    assert "read your items back with their quantities, together with the total and the delivery time" in prompt
+    assert "pass what the restaurant read back as restaurant_items" in prompt
+    assert "never state a total you worked out yourself" in prompt
+    assert "if the restaurant's read-back or total differs from your order, say so politely and ask them to check" in prompt
+
+
+def test_prompt_declines_pushed_items_out_loud(brief):
+    prompt = build_system_prompt(brief).lower()
+    assert "if the restaurant suggests or pushes an item you did not ask for" in prompt
+    assert "politely say no thank you in your next reply, every time" in prompt
+
+
+def test_prompt_total_including_delivery_is_not_a_fee(brief):
+    prompt = build_system_prompt(brief).lower()
+    assert "a total alone, a total 'including delivery', or a bare 'no' to a combined question" in prompt
+    assert "does not tell you the delivery fee" in prompt
+
+
+def test_prompt_asks_only_about_brief_items_and_listed_substitutes(brief):
+    prompt = build_system_prompt(brief).lower()
+    assert "ask only about the items in your brief and their listed substitutes" in prompt
+    assert "do not ask for other dishes" in prompt
+
+
+def test_prompt_lets_set_fees_take_one_fee_alone(brief):
+    prompt = build_system_prompt(brief)
+    assert "leave the delivery fee out of set_fees unless they clearly say there is none" in prompt
+    assert "set_fees takes the fee or the tax on its own" in prompt

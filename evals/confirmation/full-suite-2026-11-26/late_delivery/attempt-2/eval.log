@@ -1,0 +1,85 @@
+   0.000  [ --]  run: simulation 'late_delivery/late_delivery' -> ws://localhost:7860/ws
+   0.000  [ --]  user  -> modality: text | persona: ollama/qwen3:8b | max_turns: 12 | max_duration_s: 240 | max_silence_s: 30
+   0.000  [ --]  judge -> modality: text | eval: factory:order_agent.eval_llm.groq_classifier
+   0.000  [ --]  goal  -> Take the customer's order and quote the total and delivery time. Do not call end_call until the customer has said goodbye or clearly said they will not order. Answer with one short line and wait. Never call end_call in the same turn as your own message.
+   0.000  [ --]  connected
+   2.344  [ --]  handshake: ok (bot-ready)
+   2.344  [ --]  persona: listening (up to 12 turn(s), 240s, 30s of silence)
+   2.344  [ --]  event: metrics  'ttfb, processing'
+   5.360  [ --]  event: llm_started
+   7.360  [ --]  event: metrics  'ttfb'
+   7.360  [ --]  event: metrics  'ttfat'
+   7.375  [ --]  event: metrics  'tokens'
+   7.375  [ --]  event: llm_response  'Hello, I would like to place a delivery order, please.'
+   8.063  [ --]  send: 'Sure, what would you like to order?' (persona, text)
+   8.063  [ --]  event: persona_turn  'Sure, what would you like to order?'
+   8.063  [ --]  event: bot_interrupted
+   8.079  [ --]  event: llm_started
+  10.172  [ --]  event: metrics  'ttfb'
+  10.172  [ --]  event: metrics  'ttfat'
+  10.313  [ --]  event: metrics  'tokens'
+  10.313  [ --]  event: llm_response  "I'd like to order two chicken biryanis and one raita, for delivery. Do you have these available, and what are their prices?"
+  11.813  [ --]  send: 'Yes, we have those available. The total for two chicken biryanis and one raita, including delivery, is Rs 2100. Delivery will take approximately 2 hours.' (persona, text)
+  11.813  [ --]  event: persona_turn  'Yes, we have those available. The total for two chicken biryanis and one raita, including delivery, is Rs 2100. Delivery will take approximately 2 hours.'
+  11.813  [ --]  event: bot_interrupted
+  11.829  [ --]  event: llm_started
+  16.172  [ --]  event: metrics  'ttfb'
+  16.172  [ --]  event: metrics  'ttfat'
+  16.204  [ --]  event: metrics  'tokens'
+  16.204  [ --]  event: llm_response
+  16.204  [ --]  event: function_call  'add_item'
+  16.204  [ --]  event: function_call_stopped  'add_item'
+  16.204  [ --]  event: function_call  'add_item'
+  16.204  [ --]  event: function_call_stopped  'add_item'
+  16.204  [ --]  event: function_call  'set_fees'
+  16.204  [ --]  event: function_call_stopped  'set_fees'
+  16.204  [ --]  event: llm_started
+  21.485  [ --]  event: metrics  'ttfb'
+  21.485  [ --]  event: metrics  'ttfat'
+  21.485  [ --]  event: metrics  'tokens'
+  21.485  [ --]  event: llm_response
+  21.485  [ --]  event: function_call  'confirm_order'
+  21.485  [ --]  event: function_call_stopped  'confirm_order'
+  21.485  [ --]  event: llm_started
+  25.875  [ --]  event: metrics  'ttfb'
+  25.875  [ --]  event: metrics  'ttfat'
+  25.954  [ --]  event: metrics
+  25.954  [ --]  event: metrics  'characters'
+  26.000  [ --]  event: metrics  'tokens'
+  26.000  [ --]  event: llm_response  'Can you please deliver it a bit earlier? It needs to be delivered by 9 PM at the latest.'
+  26.657  [ --]  event: metrics  'ttfb'
+  26.657  [ --]  event: metrics  'ttfa'
+  26.657  [ --]  event: metrics  'processing'
+  26.657  [ --]  event: metrics
+  26.657  [ --]  event: metrics  'characters'
+  26.657  [ --]  event: bot_started_speaking
+  27.329  [ --]  send: 'We’re currently very busy, and delivery today will take at least 2 hours. Unfortunately, we can’t guarantee an earlier time.' (persona, text)
+  27.329  [ --]  event: persona_turn  'We’re currently very busy, and delivery today will take at least 2 hours. Unfortunately, we can’t guarantee an earlier time.'
+  27.344  [ --]  event: bot_interrupted
+  27.344  [ --]  event: metrics  'processing'
+  27.344  [ --]  event: bot_stopped_speaking
+  27.391  [ --]  event: llm_started
+  33.969  [ --]  event: metrics  'ttfb'
+  33.969  [ --]  event: metrics  'ttfat'
+  34.110  [ --]  event: metrics  'tokens'
+  34.110  [ --]  event: llm_response  "Ah, I see. Unfortunately, I need it delivered by 21:00, so I won't be able to place the order today. Thank you anyway."
+  35.282  [ --]  send: "You're welcome! If you change your mind, feel free to call back. Have a great day!" (persona, text)
+  35.282  [ --]  event: persona_turn  "You're welcome! If you change your mind, feel free to call back. Have a great day!"
+  35.282  [ --]  event: bot_interrupted
+  35.282  [ --]  event: llm_started
+  39.204  [ --]  event: metrics  'ttfb'
+  39.204  [ --]  event: metrics  'ttfat'
+  39.204  [ --]  event: metrics  'tokens'
+  39.204  [ --]  event: llm_response
+  39.204  [ --]  event: function_call  'end_call'
+  39.204  [ --]  event: function_call_stopped  'end_call'
+  39.219  [ --]  event: bot_ended
+  39.219  [ --]  persona: ended by bot after 4 turn(s)
+  39.219  [ --]  judge: the bot's tool calls: add_item({"name": "chicken biryani", "quantity": 2}); add_item({"quantity": 1, "name": "raita"}); set_fees({"tax_pkr": 0, "delivery_fee_pkr": 0}); confirm_order({"delivery_minutes": 120, "quoted_total_pkr": 2100}); end_call({"outcome": "not_ordered", "reason": "Delivery time of 2 hours exceeds the 21:00 deadline."})
+ 159.688  [ --]  judge: turn 1 conduct yes: P(meets)=0.97, P(fails)=0.02, P(not_applicable)=0.01
+ 159.688  [ --]  judge: turn 2 conduct yes: P(meets)=0.99, P(fails)=0.01, P(not_applicable)=0.00
+ 159.688  [ --]  judge: turn 3 conduct yes: P(meets)=0.99, P(fails)=0.01, P(not_applicable)=0.01
+ 159.688  [ --]  judge: turn 4 conduct yes: P(meets)=0.97, P(fails)=0.02, P(not_applicable)=0.01
+ 159.688  [ --]  judge: conduct = 1.00: all 4 turn(s)
+ 159.688  [ --]  judge: goal achieved: P(yes)=0.99
+ 159.688  [ --]  done: PASS (0 failure(s))

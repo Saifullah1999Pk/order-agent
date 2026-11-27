@@ -1,0 +1,122 @@
+[
+  {
+    "role": "assistant",
+    "content": "Hello, I would like to place a delivery order, please."
+  },
+  {
+    "role": "user",
+    "content": "Sure, what would you like to order?"
+  },
+  {
+    "role": "assistant",
+    "content": "I'd like to order two chicken biryani and one raita, for delivery please. Do you have these available, and what are their prices?"
+  },
+  {
+    "role": "user",
+    "content": "Yes, we have both available. The total for two chicken biryani and one raita is Rs 2250, including delivery. Would you like to proceed with this order?"
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "name": "chicken biryani",
+      "quantity": 2
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "name": "raita",
+      "quantity": 1
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Could you also let me know about your delivery fee, tax, and if there is any minimum order?"
+  },
+  {
+    "role": "user",
+    "content": "Our delivery fee is Rs 150, and there is no tax. The minimum order for food (before delivery fee) is Rs 3000. Your current order is Rs 2250, which is below the minimum. Would you like to add anything else to meet the minimum?"
+  },
+  {
+    "role": "tool_call",
+    "name": "set_fees",
+    "arguments": {
+      "delivery_fee_pkr": 150,
+      "tax_pkr": 0
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "set_minimum_order",
+    "arguments": {
+      "minimum_pkr": 3000
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Could you please tell me what other chicken dishes you have that I could add to reach the minimum?"
+  },
+  {
+    "role": "user",
+    "content": "We have chicken karahi available for Rs 1400. Would you like to add that to your order?"
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "quantity": 1,
+      "unit_price_pkr": 1400,
+      "name": "chicken karahi"
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Could you please tell me the price of the chicken biryani?"
+  },
+  {
+    "role": "user",
+    "content": "The chicken biryani is Rs 900. Would you like to add another one to meet the minimum order?"
+  },
+  {
+    "role": "tool_call",
+    "name": "set_price",
+    "arguments": {
+      "name": "chicken biryani",
+      "unit_price_pkr": 900
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "Could you tell me the price of the raita as well?"
+  },
+  {
+    "role": "user",
+    "content": "The raita is Rs 150. Would you like to add another raita to meet the minimum order?"
+  },
+  {
+    "role": "tool_call",
+    "name": "set_price",
+    "arguments": {
+      "unit_price_pkr": 150,
+      "name": "raita"
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "end_call",
+    "arguments": {
+      "reason": "Minimum order is too high for the budget",
+      "outcome": "not_ordered"
+    },
+    "cancelled": false
+  }
+]

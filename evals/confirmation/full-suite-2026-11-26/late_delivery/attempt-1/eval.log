@@ -1,0 +1,88 @@
+   0.000  [ --]  run: simulation 'late_delivery/late_delivery' -> ws://localhost:7860/ws
+   0.000  [ --]  user  -> modality: text | persona: ollama/qwen3:8b | max_turns: 12 | max_duration_s: 240 | max_silence_s: 30
+   0.000  [ --]  judge -> modality: text | eval: factory:order_agent.eval_llm.groq_classifier
+   0.000  [ --]  goal  -> Take the customer's order and quote the total and delivery time. Do not call end_call until the customer has said goodbye or clearly said they will not order. Answer with one short line and wait. Never call end_call in the same turn as your own message.
+   0.000  [ --]  connected
+   2.719  [ --]  handshake: ok (bot-ready)
+   2.719  [ --]  persona: listening (up to 12 turn(s), 240s, 30s of silence)
+   2.719  [ --]  event: metrics  'ttfb, processing'
+   5.750  [ --]  event: llm_started
+  10.344  [ --]  event: metrics  'ttfb'
+  10.344  [ --]  event: metrics  'ttfat'
+  10.406  [ --]  event: metrics  'tokens'
+  10.406  [ --]  event: llm_response  'Hello, I would like to place a delivery order, please.'
+  12.906  [ --]  send: 'Sure, what would you like to order?' (persona, text)
+  12.906  [ --]  event: persona_turn  'Sure, what would you like to order?'
+  12.906  [ --]  event: bot_interrupted
+  12.922  [ --]  event: llm_started
+  13.640  [ --]  event: metrics  'ttfb'
+  13.640  [ --]  event: metrics  'ttfat'
+  13.922  [ --]  event: metrics  'tokens'
+  13.922  [ --]  event: llm_response  "I'd like to order two chicken biryanis, and if it fits, one raita. Could you let me know if those are available and what the prices are? Also, could you tell me about the delivery fee, tax, and minimum order?"
+  16.109  [ --]  send: 'We have two chicken biryanis available for Rs 1950. One raita is Rs 150. The delivery fee is Rs 150, no tax, and there is no minimum order. Delivery today takes 2 hours due to high demand.' (persona, text)
+  16.109  [ --]  event: persona_turn  'We have two chicken biryanis available for Rs 1950. One raita is Rs 150. The delivery fee is Rs 150, no tax, and there is no minimum order. Delivery today takes 2 hours due to high demand.'
+  16.109  [ --]  event: bot_interrupted
+  16.125  [ --]  event: llm_started
+  17.422  [ --]  event: metrics  'ttfb'
+  17.422  [ --]  event: metrics  'ttfat'
+  17.469  [ --]  event: metrics  'tokens'
+  17.469  [ --]  event: llm_response
+  17.469  [ --]  event: function_call  'add_item'
+  17.469  [ --]  event: function_call_stopped  'add_item'
+  17.469  [ --]  event: function_call  'add_item'
+  17.469  [ --]  event: function_call_stopped  'add_item'
+  17.469  [ --]  event: function_call  'set_fees'
+  17.469  [ --]  event: function_call_stopped  'set_fees'
+  17.469  [ --]  event: llm_started
+  18.672  [ --]  event: metrics  'ttfb'
+  18.672  [ --]  event: metrics  'ttfat'
+  18.875  [ --]  event: metrics
+  18.875  [ --]  event: metrics  'characters'
+  18.953  [ --]  event: metrics  'tokens'
+  18.953  [ --]  event: llm_response  'My address is House 12, Street 4, F-7/2, Islamabad, and my callback number is 0300-0000000. Could I also request it to be less spicy if possible?'
+  21.015  [ --]  send: 'Your order for two chicken biryanis and one raita will be Rs 2100, including delivery. It will take 2 hours for delivery. Is there anything else you need?' (persona, text)
+  21.015  [ --]  event: persona_turn  'Your order for two chicken biryanis and one raita will be Rs 2100, including delivery. It will take 2 hours for delivery. Is there anything else you need?'
+  21.031  [ --]  event: bot_interrupted
+  21.031  [ --]  event: metrics  'ttfb'
+  21.031  [ --]  event: metrics  'processing'
+  21.047  [ --]  event: llm_started
+  21.890  [ --]  event: metrics  'ttfb'
+  21.890  [ --]  event: metrics  'ttfat'
+  21.890  [ --]  event: metrics  'tokens'
+  21.890  [ --]  event: llm_response
+  21.890  [ --]  event: function_call  'confirm_order'
+  21.890  [ --]  event: function_call_stopped  'confirm_order'
+  21.906  [ --]  event: llm_started
+  25.422  [ --]  event: metrics  'ttfb'
+  25.422  [ --]  event: metrics  'ttfat'
+  25.515  [ --]  event: metrics
+  25.515  [ --]  event: metrics  'characters'
+  25.515  [ --]  event: metrics  'tokens'
+  25.515  [ --]  event: llm_response  'Two hours will be a bit too late for us, as we need it by nine. Is there any way it can be delivered faster than that?'
+  26.687  [ --]  event: metrics  'ttfb'
+  26.687  [ --]  event: metrics  'ttfa'
+  26.687  [ --]  event: metrics  'processing'
+  26.687  [ --]  event: metrics  'characters'
+  26.687  [ --]  event: bot_started_speaking
+  27.219  [ --]  send: "We're currently very busy, and delivery today will take at least 2 hours. Unfortunately, we can't guarantee faster delivery. Is there anything else I can assist you with?" (persona, text)
+  27.219  [ --]  event: persona_turn  "We're currently very busy, and delivery today will take at least 2 hours. Unfortunately, we can't guarantee faster delivery. Is there anything else I can assist you with?"
+  27.234  [ --]  event: bot_interrupted
+  27.234  [ --]  event: metrics  'processing'
+  27.234  [ --]  event: bot_stopped_speaking
+  27.297  [ --]  event: llm_started
+  28.062  [ --]  event: metrics  'ttfb'
+  28.062  [ --]  event: metrics  'ttfat'
+  28.062  [ --]  event: metrics  'tokens'
+  28.062  [ --]  event: llm_response
+  28.062  [ --]  event: function_call  'end_call'
+  28.062  [ --]  event: function_call_stopped  'end_call'
+  28.062  [ --]  event: bot_ended
+  28.062  [ --]  persona: ended by bot after 4 turn(s)
+  28.062  [ --]  judge: the bot's tool calls: add_item({"unit_price_pkr": 975, "name": "chicken biryani", "quantity": 2}); add_item({"name": "raita", "unit_price_pkr": 150, "quantity": 1}); set_fees({"tax_pkr": 0, "delivery_fee_pkr": 150}); confirm_order({"quoted_total_pkr": 2250, "delivery_minutes": 120}); end_call({"outcome": "not_ordered", "reason": "Delivery time of 2 hours is past the 21:00 deadline"})
+ 149.406  [ --]  judge: turn 1 conduct yes: P(meets)=0.99, P(fails)=0.01, P(not_applicable)=0.00
+ 149.406  [ --]  judge: turn 2 conduct yes: P(meets)=0.97, P(fails)=0.02, P(not_applicable)=0.01
+ 149.406  [ --]  judge: turn 3 conduct yes: P(meets)=0.95, P(fails)=0.05, P(not_applicable)=0.00
+ 149.406  [ --]  judge: turn 4 conduct yes: P(meets)=0.95, P(fails)=0.04, P(not_applicable)=0.01
+ 149.406  [ --]  judge: conduct = 1.00: all 4 turn(s)
+ 149.406  [ --]  judge: goal achieved: P(yes)=0.99
+ 149.406  [ --]  done: PASS (0 failure(s))

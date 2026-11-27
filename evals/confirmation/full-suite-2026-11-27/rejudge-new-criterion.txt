@@ -1,0 +1,12 @@
+RESULT evals/results/20261126-162641/minimum_reachable/attempt-2 | goal=yes | conduct=0.86 passed=False
+RESULT evals/results/20261126-183358/minimum_reachable/attempt-2 | goal=yes | conduct=0.80 passed=False
+RESULT evals/results/20261127-130223/price_over_budget/attempt-1 | goal=no | conduct=1.00 passed=True
+RESULT evals/results/20261127-130223/price_over_budget/attempt-2 | goal=yes | conduct=0.83 passed=False
+RESULT evals/results/20261127-130223/price_over_budget/attempt-3 | goal=yes | conduct=1.00 passed=True
+RESULT evals/results/20261127-130223/sold_out_no_substitute/attempt-1 | goal=yes | conduct=1.00 passed=True
+RESULT evals/results/20261127-130223/sold_out_no_substitute/attempt-2 | goal=yes | conduct=0.75 passed=False
+RESULT evals/results/20261127-130223/price_drop_optional/attempt-1 | goal=yes | conduct=1.00 passed=True
+RESULT evals/results/20261127-130223/minimum_unreachable/attempt-1 | goal=yes | conduct=1.00 passed=True
+RESULT evals/results/20261126-162641/minimum_reachable/attempt-3 | goal=yes | conduct=0.86 passed=False
+RESULT evals/results/20261126-183358/minimum_reachable/attempt-3 | goal=yes | conduct=0.83 passed=False
+RESULT evals/results/20261127-130223/happy_path/attempt-1 | goal=none | conduct=0.60 passed=False

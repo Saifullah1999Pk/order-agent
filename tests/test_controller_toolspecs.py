@@ -28,11 +28,21 @@ def test_specs_match_voice_function_schemas(brief, tmp_path):
         assert spec.required == schema.required
 
 
-# sha256 of the LLM-visible tool text, verified identical to main's order_agent/tools.py (9c38b8f).
+# sha256 of the LLM-visible tool text (was identical to main's tools.py 9c38b8f until feature 002 added confirm_order.restaurant_items).
 # A deliberate change to a tool description or schema must update this hash on purpose.
-TOOL_TEXT_SHA256 = "435f0ac703d61bc705f2d03ca3d5202556c107b6ca8b09db2022940ae79be8c8"
+TOOL_TEXT_SHA256 = "1dc7c245db01caa7abaac500417cea9a69aead71d03a05eca628e8cfb5e09127"
 
 
 def test_tool_text_is_pinned():
     text = json.dumps([asdict(spec) for spec in TOOL_SPECS], sort_keys=True)
     assert hashlib.sha256(text.encode("utf-8")).hexdigest() == TOOL_TEXT_SHA256
+
+
+def test_confirm_order_has_optional_restaurant_items_array():
+    spec = next(s for s in TOOL_SPECS if s.name == "confirm_order")
+    prop = spec.properties["restaurant_items"]
+    assert prop["type"] == "array"
+    assert prop["items"]["type"] == "object"
+    assert prop["items"]["properties"] == {"name": {"type": "string"}, "quantity": {"type": "integer"}}
+    assert prop["items"]["required"] == ["name", "quantity"]
+    assert spec.required == ["quoted_total_pkr", "delivery_minutes"]

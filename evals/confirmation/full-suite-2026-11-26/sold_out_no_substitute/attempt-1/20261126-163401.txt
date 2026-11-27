@@ -1,0 +1,1 @@
+The call ended without an order (not_ordered). Reason: No acceptable dishes available within brief constraints

@@ -1,0 +1,59 @@
+{
+  "outcome": "not_ordered",
+  "reason": "No suitable items available within the brief.",
+  "items": [],
+  "delivery_fee_pkr": "0",
+  "tax_pkr": "0",
+  "cart_total_pkr": null,
+  "quoted_total_pkr": null,
+  "delivery_eta": null,
+  "fees_set": false,
+  "total_only": false,
+  "tool_events": [
+    {
+      "tool": "add_item",
+      "args": {
+        "name": "chicken biryani",
+        "quantity": 2,
+        "unit_price_pkr": null,
+        "price_corrected": false
+      },
+      "ok": true,
+      "message": "Added 2 x chicken biryani with no price recorded (the restaurant has not given one). Do not guess a price: if they only give a total, confirm with their total.",
+      "at": "2026-11-26T16:38:02.804626"
+    },
+    {
+      "tool": "remove_item",
+      "args": {
+        "name": "chicken biryani"
+      },
+      "ok": true,
+      "message": "Removed chicken biryani. Known so far: 0 PKR; the full cart total is not known yet (an item has no price or the fees are not recorded).",
+      "at": "2026-11-26T16:38:02.804626"
+    },
+    {
+      "tool": "end",
+      "args": {
+        "outcome": "not_ordered",
+        "reason": "No suitable items available within the brief."
+      },
+      "ok": true,
+      "message": "Call ended as not_ordered: No suitable items available within the brief.",
+      "at": "2026-11-26T16:38:02.804626"
+    }
+  ],
+  "transcript": [
+    {
+      "role": "agent",
+      "text": "Hello, I would like to place a delivery order, please.",
+      "at": "2026-11-26T16:38:14.972832"
+    },
+    {
+      "role": "agent",
+      "text": "Ah, no thank you. Do you have any other chicken items available?",
+      "at": "2026-11-26T16:38:46.718294"
+    }
+  ],
+  "started_at": "2026-11-26T16:38:02.804626",
+  "ended_at": "2026-11-26T16:38:48.454857"
+}

@@ -1,0 +1,94 @@
+   0.000  [ --]  run: simulation 'sold_out_no_substitute/sold_out_no_substitute' -> ws://localhost:7860/ws
+   0.000  [ --]  user  -> modality: text | persona: ollama/qwen3:8b | max_turns: 12 | max_duration_s: 240 | max_silence_s: 30
+   0.000  [ --]  judge -> modality: text | eval: factory:order_agent.eval_llm.groq_classifier
+   0.000  [ --]  goal  -> Try to take the customer's order. Do not call end_call until the customer has said goodbye or clearly said they will not order. Answer with one short line and wait. Never call end_call in the same turn as your own message.
+   0.000  [ --]  connected
+   4.469  [ --]  handshake: ok (bot-ready)
+   4.469  [ --]  persona: listening (up to 12 turn(s), 240s, 30s of silence)
+   4.469  [ --]  event: metrics  'ttfb, processing'
+   7.484  [ --]  event: llm_started
+  13.453  [ --]  event: metrics  'ttfb'
+  13.453  [ --]  event: metrics  'ttfat'
+  13.516  [ --]  event: metrics  'tokens'
+  13.516  [ --]  event: llm_response  'Hello, I would like to place a delivery order, please.'
+  14.875  [ --]  send: 'Sure, what would you like to order?' (persona, text)
+  14.875  [ --]  event: persona_turn  'Sure, what would you like to order?'
+  14.875  [ --]  event: bot_interrupted
+  14.891  [ --]  event: llm_started
+  34.906  [ --]  event: metrics  'tokens'
+  34.906  [ --]  event: llm_response
+  37.906  [ --]  event: llm_started
+  39.234  [ --]  event: metrics  'ttfb'
+  39.234  [ --]  event: metrics  'ttfat'
+  39.234  [ --]  event: metrics  'tokens'
+  39.234  [ --]  event: llm_response
+  39.234  [ --]  event: function_call  'add_item'
+  39.234  [ --]  event: function_call_stopped  'add_item'
+  39.234  [ --]  event: llm_started
+  39.953  [ --]  event: metrics  'ttfb'
+  39.953  [ --]  event: metrics  'ttfat'
+  40.094  [ --]  event: metrics
+  40.094  [ --]  event: metrics  'characters'
+  40.188  [ --]  event: metrics  'tokens'
+  40.188  [ --]  event: llm_response  'I would like to order two chicken biryanis for delivery. Do you have those available, and what is the price? Also, could you please make them less spicy if possible?'
+  41.188  [ --]  event: metrics  'ttfb'
+  41.203  [ --]  event: metrics  'ttfa'
+  41.203  [ --]  event: metrics  'processing'
+  41.203  [ --]  event: metrics
+  41.203  [ --]  event: metrics  'characters'
+  41.203  [ --]  event: bot_started_speaking
+  41.344  [ --]  send: 'Sorry, chicken biryanis are sold out today. Would you like to order prawn biryani instead?' (persona, text)
+  41.344  [ --]  event: persona_turn  'Sorry, chicken biryanis are sold out today. Would you like to order prawn biryani instead?'
+  41.359  [ --]  event: bot_interrupted
+  41.359  [ --]  event: metrics  'processing'
+  41.359  [ --]  event: bot_stopped_speaking
+  41.391  [ --]  event: llm_started
+  42.313  [ --]  event: metrics  'ttfb'
+  42.313  [ --]  event: metrics  'ttfat'
+  42.313  [ --]  event: metrics  'tokens'
+  42.313  [ --]  event: llm_response
+  42.313  [ --]  event: function_call  'remove_item'
+  42.313  [ --]  event: function_call_stopped  'remove_item'
+  42.313  [ --]  event: llm_started
+  43.172  [ --]  event: metrics  'ttfb'
+  43.172  [ --]  event: metrics  'ttfat'
+  43.203  [ --]  event: metrics
+  43.203  [ --]  event: metrics  'characters'
+  43.297  [ --]  event: metrics  'tokens'
+  43.297  [ --]  event: llm_response  'No thank you, I do not eat seafood. Do you have chicken pulao or chicken karahi instead?'
+  43.938  [ --]  event: metrics  'ttfb'
+  43.938  [ --]  event: metrics  'ttfa'
+  43.938  [ --]  event: metrics  'processing'
+  43.938  [ --]  event: metrics
+  43.938  [ --]  event: metrics  'characters'
+  43.938  [ --]  event: bot_started_speaking
+  44.531  [ --]  send: 'Sorry, chicken karahi and chicken pulao are also sold out today. Would you like to order raita instead?' (persona, text)
+  44.531  [ --]  event: persona_turn  'Sorry, chicken karahi and chicken pulao are also sold out today. Would you like to order raita instead?'
+  44.531  [ --]  event: bot_interrupted
+  44.531  [ --]  event: metrics  'processing'
+  44.531  [ --]  event: bot_stopped_speaking
+  44.578  [ --]  event: llm_started
+  45.266  [ --]  event: metrics  'ttfb'
+  45.266  [ --]  event: metrics  'ttfat'
+  45.266  [ --]  event: metrics  'tokens'
+  45.266  [ --]  event: llm_response  'Ah, no thank you. Do you have any other chicken items available?'
+  46.188  [ --]  send: 'Sorry, all chicken items are sold out today. Would you like to order something else?' (persona, text)
+  46.188  [ --]  event: persona_turn  'Sorry, all chicken items are sold out today. Would you like to order something else?'
+  46.188  [ --]  event: bot_interrupted
+  46.203  [ --]  event: llm_started
+  47.000  [ --]  event: metrics  'ttfb'
+  47.000  [ --]  event: metrics  'ttfat'
+  47.016  [ --]  event: metrics  'tokens'
+  47.016  [ --]  event: llm_response
+  47.016  [ --]  event: function_call  'end_call'
+  47.016  [ --]  event: function_call_stopped  'end_call'
+  47.016  [ --]  event: bot_ended
+  47.016  [ --]  persona: ended by bot after 4 turn(s)
+  47.016  [ --]  judge: the bot's tool calls: add_item({"name": "chicken biryani", "quantity": 2}); remove_item({"name": "chicken biryani"}); end_call({"outcome": "not_ordered", "reason": "No suitable items available within the brief."})
+ 167.484  [ --]  judge: turn 1 conduct yes: P(meets)=0.96, P(fails)=0.04, P(not_applicable)=0.00
+ 167.484  [ --]  judge: turn 2 conduct yes: P(meets)=0.99, P(fails)=0.01, P(not_applicable)=0.00
+ 167.484  [ --]  judge: turn 3 conduct yes: P(meets)=0.98, P(fails)=0.01, P(not_applicable)=0.01
+ 167.484  [ --]  judge: turn 4 conduct yes: P(meets)=0.99, P(fails)=0.01, P(not_applicable)=0.00
+ 167.484  [ --]  judge: conduct = 1.00: all 4 turn(s)
+ 167.484  [ --]  judge: goal achieved: P(yes)=0.95
+ 167.500  [ --]  done: PASS (0 failure(s))

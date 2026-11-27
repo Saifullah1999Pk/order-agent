@@ -1,0 +1,79 @@
+[
+  {
+    "role": "assistant",
+    "content": "Hello, I would like to place a delivery order, please."
+  },
+  {
+    "role": "user",
+    "content": "Sure, what would you like to order?"
+  },
+  {
+    "role": "assistant",
+    "content": "I would like to order two chicken biryanis and one raita, if possible, for delivery. Could you please let me know if these are available and what their prices are? Also, could you please make it less spicy?"
+  },
+  {
+    "role": "user",
+    "content": "We have two chicken biryanis and one raita available. The total will be Rs 2700, including delivery. Delivery takes 45 minutes. Would you like to place the order?"
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "name": "chicken biryani",
+      "quantity": 2
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "add_item",
+    "arguments": {
+      "quantity": 1,
+      "name": "raita"
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "confirm_order",
+    "arguments": {
+      "quoted_total_pkr": 2700,
+      "delivery_minutes": 45
+    },
+    "cancelled": false
+  },
+  {
+    "role": "assistant",
+    "content": "The total comes to twenty-seven hundred rupees, but my budget is twenty-five hundred rupees including delivery. Is there any way to make it cheaper, or remove something to fit twenty-five hundred?"
+  },
+  {
+    "role": "user",
+    "content": "We can remove the raita, making the total Rs 2450, including delivery. Would you like to proceed with that?"
+  },
+  {
+    "role": "tool_call",
+    "name": "remove_item",
+    "arguments": {
+      "name": "raita"
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "confirm_order",
+    "arguments": {
+      "delivery_minutes": 45,
+      "quoted_total_pkr": 2450
+    },
+    "cancelled": false
+  },
+  {
+    "role": "tool_call",
+    "name": "end_call",
+    "arguments": {
+      "outcome": "ordered",
+      "reason": "Order confirmed successfully within budget."
+    },
+    "cancelled": false
+  }
+]

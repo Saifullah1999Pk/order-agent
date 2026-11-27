@@ -40,6 +40,14 @@ def _fmt(amount: Decimal) -> str:
     return f"{amount:f}"
 
 
+TOTAL_MISMATCH = (
+    "Refused: the restaurant's total does not match the prices and fees you recorded. "
+    "Do not tell the restaurant a total of your own. Ask them to itemise the total: each item with its price, then the delivery fee and tax. "
+    "Do not edit the cart or the fees to make the totals match. Only if they clearly state a changed price or fee, correct it "
+    "(add_item with price_corrected=true, or set_fees with corrected=true); if they cannot explain it, end the call as not_ordered."
+)
+
+
 def _closed(state: str, what: str) -> ToolResult:
     return ToolResult(False, f"Refused: the order is already {state}; {what} can no longer change.")
 
@@ -53,6 +61,8 @@ class OrderSession:
         self.tax_pkr: Decimal = Decimal(0)
         self.minimum_order_pkr: Decimal | None = None
         self._fees_set = False
+        self._fee_known = False  # set_fees may record the fee and the tax separately (FR-014)
+        self._tax_known = False
         # What the restaurant first said, kept for the whole call (even after remove_item).
         self._price_lock: dict[frozenset[str], tuple[str, Decimal]] = {}
         self.state: Literal["open", "confirmed", "ended"] = "open"
@@ -68,6 +78,10 @@ class OrderSession:
         self.events.append(ToolEvent(tool, args, result.ok, result.message, self.now))
         return result
 
+    def record_refusal(self, tool: str, args: dict, message: str) -> ToolResult:
+        """Record a refusal made outside the rules engine (the Controller's same-turn guard), like any other event."""
+        return self._record(tool, args, ToolResult(False, message))
+
     def _items_total(self) -> Decimal:
         """Food subtotal of the priced items (unpriced items add nothing: see _has_unpriced)."""
         return sum((i.quantity * i.unit_price_pkr for i in self.items if i.unit_price_pkr is not None), Decimal(0))
@@ -79,6 +93,16 @@ class OrderSession:
 
     def _has_unpriced(self) -> bool:
         return any(i.unit_price_pkr is None for i in self.items)
+
+    def _stated_floor(self) -> Decimal:
+        """What is known plus, for unpriced cart items, the price the restaurant stated but that was refused
+        as over budget (FR-015). The restaurant's total can be no lower than this."""
+        stated = Decimal(0)
+        for item in self.items:
+            locked = self._price_lock.get(normalise(item.name))
+            if item.unit_price_pkr is None and locked:
+                stated += item.quantity * locked[1]
+        return self.cart_total() + stated
 
     def cart_total_known(self) -> bool:
         """The cart total is only honest to sum when every item has a price and the fees were set."""
@@ -133,12 +157,8 @@ class OrderSession:
                 )
             return f" {head}, and no addition fits within your {_fmt(budget)} PKR budget: end the call as not_ordered."
         _, item, n, cost = best
-        total = self.cart_total() + cost
-        if self._fees_set:
-            tail = f"The total would then be {_fmt(total)} PKR, within your {_fmt(budget)} PKR budget."
-        else:
-            tail = f"The total would then be {_fmt(total)} PKR before delivery fee and tax; delivery fee and tax are not recorded yet, so ask about them."
-        return f" {head}: add {n} more {item.name} ({_fmt(cost)} PKR) to reach it. {tail}"
+        tail = "" if self._fees_set else " Delivery fee and tax are not recorded yet, so ask about them."
+        return f" {head}: ask the restaurant to add {n} more {item.name} ({_fmt(cost)} PKR) to reach it, and record it with add_item only after they agree.{tail}"
 
     def _never_hit(self, name: str) -> str | None:
         words = normalise(name)
@@ -231,11 +251,13 @@ class OrderSession:
 
         # Budget: only what is known. An unpriced add costs nothing we can count yet.
         new_total = self.cart_total() + reprice + (quantity * eff if eff is not None else Decimal(0))
+        if price is not None:
+            # Lock the stated price before the budget check (FR-015): an over-budget price is still the
+            # price, and must not be replaced by one worked out from the budget.
+            self._price_lock[key] = (name, price)
         if new_total > self.brief.budget_pkr:
             return self._over_budget(f"adding {quantity} x {name}", new_total, line, name)
 
-        if price is not None and (locked is None or locked[1] != price):
-            self._price_lock[key] = (name, price)
         if existing:
             existing.unit_price_pkr = eff
             existing.quantity += quantity
@@ -262,12 +284,12 @@ class OrderSession:
         locked = self._price_lock.get(key)
         if locked and locked[1] != price and not corrected:
             return ToolResult(False, f"Refused: The restaurant already said {locked[0]} is {_fmt(locked[1])} PKR. Do not change prices to make a total match. Ask the restaurant to read out each item's price; if they clearly say the price changed, call set_price with price_corrected=true.")
+        self._price_lock[key] = (item.name, price)  # locked even if refused as over budget below (FR-015)
         old = item.unit_price_pkr
         new_total = self.cart_total() + item.quantity * (price - (old or Decimal(0)))
         if new_total > self.brief.budget_pkr:
             return self._over_budget(f"pricing {item.name} at {_fmt(price)} PKR each", new_total, None, item.name)
         item.unit_price_pkr = price
-        self._price_lock[key] = (item.name, price)
         return ToolResult(True, f"Price recorded: {item.name} at {_fmt(price)} PKR each. " + self._total_text() + self._minimum_hint())
 
     def remove_item(self, name: str) -> ToolResult:
@@ -284,26 +306,40 @@ class OrderSession:
         in_cart = ", ".join(i.name for i in self.items) or "nothing yet"
         return ToolResult(False, f"Refused: '{name}' is not in the cart. The cart holds: {in_cart}.")
 
-    def set_fees(self, delivery_fee_pkr: Decimal, tax_pkr: Decimal, corrected: bool = False) -> ToolResult:
+    def set_fees(self, delivery_fee_pkr: Decimal | None, tax_pkr: Decimal | None, corrected: bool = False) -> ToolResult:
         args = {"delivery_fee_pkr": delivery_fee_pkr, "tax_pkr": tax_pkr, "corrected": corrected}
         return self._record("set_fees", args, self._set_fees(delivery_fee_pkr, tax_pkr, corrected))
 
-    def _set_fees(self, fee: Decimal, tax: Decimal, corrected: bool = False) -> ToolResult:
+    def _set_fees(self, fee: Decimal | None, tax: Decimal | None, corrected: bool = False) -> ToolResult:
         if self.state != "open":
             return _closed(self.state, "fees")
+        if fee is None and tax is None:
+            return ToolResult(False, "Refused: Give the delivery fee, the tax, or both, as the restaurant stated them. Leave out one they have not said.")
         for value in (fee, tax):
+            if value is None:
+                continue
             if not isinstance(value, Decimal) or not value.is_finite() or value < 0:
                 return ToolResult(False, "Refused: fees must be numbers of zero or more. Ask the restaurant to repeat the delivery fee and tax (use 0 if there is none).")
         if not corrected:
             for label, old, new in (("delivery fee", self.delivery_fee_pkr, fee), ("tax", self.tax_pkr, tax)):
-                if old != 0 and new != old:
+                if new is not None and old != 0 and new != old:
                     return ToolResult(False, f"Refused: The restaurant already said the {label} is {_fmt(old)} PKR. Do not change fees to make a total match. Ask the restaurant to read out the delivery fee and tax; if they clearly say a fee changed, call set_fees with corrected=true.")
-        new_total = self._items_total() + fee + tax
+        new_fee = self.delivery_fee_pkr if fee is None else fee
+        new_tax = self.tax_pkr if tax is None else tax
+        new_total = self._items_total() + new_fee + new_tax
         if new_total > self.brief.budget_pkr:
-            return self._over_budget(f"a delivery fee of {_fmt(fee)} and tax of {_fmt(tax)}", new_total)
-        self.delivery_fee_pkr, self.tax_pkr = fee, tax
-        self._fees_set = True
-        return ToolResult(True, f"Fees recorded: delivery {_fmt(fee)} PKR, tax {_fmt(tax)} PKR. " + self._total_text() + self._minimum_hint())
+            return self._over_budget(f"a delivery fee of {_fmt(new_fee)} and tax of {_fmt(new_tax)}", new_total)
+        self.delivery_fee_pkr, self.tax_pkr = new_fee, new_tax
+        self._fee_known = self._fee_known or fee is not None
+        self._tax_known = self._tax_known or tax is not None
+        self._fees_set = self._fee_known and self._tax_known
+        recorded = ", ".join(f"{label} {_fmt(value)} PKR" for label, value in (("delivery", fee), ("tax", tax)) if value is not None)
+        missing = ""
+        if not self._fee_known:
+            missing = "The delivery fee is not recorded yet: ask the restaurant for it ('including delivery' is not a fee). "
+        elif not self._tax_known:
+            missing = "The tax is not recorded yet: ask the restaurant whether there is any. "
+        return ToolResult(True, f"Fees recorded: {recorded}. " + missing + self._total_text() + self._minimum_hint())
 
     def set_minimum_order(self, minimum_pkr: Decimal) -> ToolResult:
         return self._record("set_minimum_order", {"minimum_pkr": minimum_pkr}, self._set_minimum_order(minimum_pkr))
@@ -324,17 +360,46 @@ class OrderSession:
                 out.append(f"{line.item}: need {line.quantity}, have {have}")
         return out
 
-    def confirm_order(self, quoted_total_pkr: Decimal, delivery_minutes: int) -> ToolResult:
+    def confirm_order(self, quoted_total_pkr: Decimal, delivery_minutes: int, restaurant_items: list[tuple[str, int]] | None = None) -> ToolResult:
         args = {"quoted_total_pkr": quoted_total_pkr, "delivery_minutes": delivery_minutes}
-        return self._record("confirm_order", args, self._confirm_order(quoted_total_pkr, delivery_minutes))
+        if restaurant_items is not None:
+            args["restaurant_items"] = restaurant_items
+        return self._record("confirm_order", args, self._confirm_order(quoted_total_pkr, delivery_minutes, restaurant_items))
 
-    def _confirm_order(self, quoted: Decimal, minutes: int) -> ToolResult:
+    def _readback_differences(self, restaurant_items: list[tuple[str, int]]) -> list[str]:
+        """Differences between what the restaurant read back and the cart, as '<item>: restaurant n, order m'."""
+        held: dict[frozenset[str], list] = {}
+        for item in self.items:
+            held.setdefault(normalise(item.name), [item.name, 0])[1] += item.quantity
+        said: dict[frozenset[str], list] = {}  # cart line key (or the name's own words if unmatched) -> [display name, quantity]
+        for name, quantity in restaurant_items:
+            words = normalise(name)
+            if words in held:
+                key = words
+            else:
+                near = [k for k in held if words and (words <= k or k <= words)]
+                key = near[0] if len(near) == 1 else words
+            said.setdefault(key, [held[key][0] if key in held else name, 0])[1] += quantity
+        out = []
+        for key in [*held, *(k for k in said if k not in held)]:
+            name = held[key][0] if key in held else said[key][0]
+            heard, ordered = said.get(key, [name, 0])[1], held.get(key, [name, 0])[1]
+            if heard != ordered:
+                out.append(f"{name}: restaurant {heard}, order {ordered}")
+        return out
+
+    def _confirm_order(self, quoted: Decimal, minutes: int, restaurant_items: list[tuple[str, int]] | None = None) -> ToolResult:
         if self.state != "open":
             return _closed(self.state, "the order")
         if not isinstance(quoted, Decimal) or not quoted.is_finite() or quoted <= 0:
             return ToolResult(False, "Refused: the quoted total must be a number greater than zero. Ask the restaurant to repeat the total.")
         if not isinstance(minutes, int) or isinstance(minutes, bool) or minutes < 1:
             return ToolResult(False, "Refused: delivery time must be a whole number of minutes, at least 1 (use the latest end of a range). Ask the restaurant how long it will take.")
+
+        if restaurant_items is not None:
+            differences = self._readback_differences(restaurant_items)
+            if differences:
+                return ToolResult(False, f"Refused: the restaurant's read-back does not match your order ({'; '.join(differences)}). Politely correct the restaurant with your order's items and quantities. Do not change the order to match; then confirm again with their read-back. If they will not correct it, end the call as not_ordered.")
 
         missing = self.missing_lines()
         if missing:
@@ -353,11 +418,19 @@ class OrderSession:
             # Nothing honest to sum: hold the restaurant's own total to the budget (and the deadline below),
             # and it cannot be lower than what is already recorded.
             if quoted < total:
-                return ToolResult(False, f"Refused: The restaurant's total (Rs {_fmt(quoted)}) is less than the prices already recorded (Rs {_fmt(total)}). Ask them to check the total.")
+                return ToolResult(False, f"Refused: The restaurant's total (Rs {_fmt(quoted)}) is less than the prices already recorded. Ask them to check the total.")
+            unpriced = [i.name for i in self.items if i.unit_price_pkr is None]
+            if unpriced and quoted == total:
+                # FR-016: every item costs something, so a total equal to what is already recorded leaves the
+                # unpriced items free: the restaurant's total does not include them.
+                return ToolResult(False, f"Refused: Rs {_fmt(quoted)} is exactly what the other items and fees already add up to, so it does not include {', '.join(unpriced)}. Ask the restaurant whether {', '.join(unpriced)} is part of the order and for the total including it; if it is not available, remove it (remove_item).")
+            floor = self._stated_floor()
+            if quoted < floor:
+                return ToolResult(False, f"Refused: Rs {_fmt(quoted)} is less than the prices the restaurant already stated ({_fmt(floor)} PKR with the recorded fees). Never confirm a total the restaurant did not say. If they will not lower the price, end the call as not_ordered.")
             if quoted > self.brief.budget_pkr:
                 return ToolResult(False, f"Refused: the restaurant's total of {_fmt(quoted)} PKR is over your budget of {_fmt(self.brief.budget_pkr)} PKR. Ask whether something can be cheaper; otherwise end the call as not_ordered.")
         elif quoted != total:
-            return ToolResult(False, f"Refused: the restaurant quoted {_fmt(quoted)} PKR but the cart total is {_fmt(total)} PKR (items {_fmt(self._items_total())}, delivery {_fmt(self.delivery_fee_pkr)}, tax {_fmt(self.tax_pkr)}). Do not edit the cart or the fees to make the totals match. Ask the restaurant to itemise the total: each item with its price, then the delivery fee and tax. Only if they clearly state a changed price or fee, correct it (add_item with price_corrected=true, or set_fees with corrected=true); if they cannot explain it, end the call as not_ordered.")
+            return ToolResult(False, TOTAL_MISMATCH)
 
         if self._below_minimum():
             return ToolResult(False, self._minimum_refusal())
