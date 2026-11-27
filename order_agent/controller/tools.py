@@ -50,15 +50,10 @@ def _money(arguments: dict, key: str) -> Decimal:
 
 
 def _optional_money(arguments: dict, key: str) -> Decimal | None:
-    """A price that may be left out (None or absent = not given). A present but unreadable value is refused."""
+    """An amount that may be left out (None or absent = not given). A present but unreadable value is refused."""
     if arguments.get(key) is None:
         return None
     return _money(arguments, key)
-
-
-def _optional_money(arguments: dict, key: str) -> Decimal | None:
-    """An optional amount; absent (or null) means the restaurant has not stated it."""
-    return None if arguments.get(key) is None else _money(arguments, key)
 
 
 def _flag(arguments: dict, key: str) -> bool:
